@@ -228,8 +228,10 @@
             initMap(latitude, longitude);
             document.getElementById('welcome-overlay').style.display = 'none';
             document.getElementById('main-content').classList.add('visible');
-            await loadMenu(); syncQueue();
-        }, () => {
+            await loadMenu(); 
+    syncQueue();
+    initBanner(); // <--- TAMBAHKAN BARIS INI
+}, () => {
             showToast("⚠️ GPS Gagal. Pastikan GPS aktif.");
             btn.innerText = "MULAI SEKARANG"; btn.disabled = false;
         }, { enableHighAccuracy: true });
@@ -482,9 +484,13 @@
     }
 // CONFIG BANNER - Tambahkan sampai 10 link gambar di sini
 const MY_BANNERS = [
-    "https://ibb.co/v8Y5WMJ",
-    "https://ibb.co/C3LrdBzq",
-    "https://ibb.co/v8Y5WMJ"
+    "https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg",
+    "https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg",
+    "https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"
+ "https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg",
+"https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg",
+"https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg",
+"https://i.ibb.co/Y4gC1qCm/Chat-GPT-Image-Jan-20-2026-06-35-53-PM.jpg",
 ];
 
 let bannerIdx = 0;
@@ -497,6 +503,11 @@ function initBanner() {
     
     // Render Titik-titik (Dots)
     dots.innerHTML = MY_BANNERS.map((_, i) => `<div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.5); transition:0.3s"></div>`).join('');
+// Tambahkan ini di akhir fungsi initBanner()
+setInterval(() => {
+    bannerIdx = (bannerIdx + 1) % MY_BANNERS.length;
+    updateBannerUI();
+}, 5000); // Bergeser setiap 5 detik
     
     // Fungsi Swipe
     let xDown = null;
