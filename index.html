@@ -5,7 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <style>
+    <style>/* Efek getar dan border merah untuk input yang salah */
+.error-focus {
+    border-color: var(--danger) !important;
+    animation: shake 0.4s ease-in-out;
+    background-color: #fff5f5;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
         :root { 
             --primary: #7A3E1D; --accent: #F39C12; --bg: #F7F3EE; 
             --surface: #FFFFFF; --soft: #EFE6D8; --dark: #2C2C2C; --muted: #888; 
@@ -179,7 +190,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbx6ZvQKnq6poPZuU_SCzBYvC9LBZ1vC1h4DdAjlO5QZfAOLKO715_7s13FEi87BddfMZQ/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwHXCOop2otS0EtQ1UL45xMUDxt0yZxmZIxn97qz68A2CbYziZks-LGsnIY_9LTVK95bw/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -397,17 +408,55 @@
 
     async function submitOrder() {
         if (isSending) return;
-        const name = document.getElementById('custName').value.trim();
-        const tNo = document.getElementById('tableNo').value;
-        const addr = document.getElementById('addressDetail').value.trim();
 
-        if (!name) return showToast("❗ Nama wajib diisi");
-        if (currentMode === 'DINE IN' && !tNo) return showToast("❗ Nomor meja wajib diisi");
-        if (currentMode === 'DELIVERY' && !addr) return showToast("❗ Alamat wajib diisi");
+        const nameInput = document.getElementById('custName');
+        const tableInput = document.getElementById('tableNo');
+        const addrInput = document.getElementById('addressDetail');
+        
+        const name = nameInput.value.trim();
+        const tNo = tableInput.value;
+        const addr = addrInput.value.trim();
 
+        // 1. Reset state error sebelumnya (menghapus tanda merah)
+        [nameInput, tableInput, addrInput].forEach(el => {
+            if(el) el.parentElement.classList.remove('error-focus');
+        });
+
+        // 2. Validasi Nama
+        if (!name) {
+            closeModal(); // Menutup modal agar user bisa melihat input
+            showToast("❗ Nama wajib diisi");
+            nameInput.parentElement.classList.add('error-focus');
+            nameInput.focus();
+            nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        // 3. Validasi Meja (Hanya jika DINE IN)
+        if (currentMode === 'DINE IN' && !tNo) {
+            closeModal();
+            showToast("❗ Nomor meja wajib diisi");
+            tableInput.parentElement.classList.add('error-focus');
+            tableInput.focus();
+            tableInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        // 4. Validasi Alamat (Hanya jika DELIVERY)
+        if (currentMode === 'DELIVERY' && !addr) {
+            closeModal();
+            showToast("❗ Alamat wajib diisi");
+            addrInput.parentElement.classList.add('error-focus');
+            addrInput.focus();
+            addrInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        // Jika lolos validasi, lanjutkan proses pengiriman
         isSending = true;
         const btn = document.getElementById('btnFinal');
-        btn.innerText = "⏳ Memproses..."; btn.disabled = true;
+        btn.innerText = "⏳ Memproses..."; 
+        btn.disabled = true;
 
         try {
             const summary = {};
@@ -433,8 +482,12 @@
             const total = sub + ong;
 
             const params = new URLSearchParams({
-                token: CONFIG.TOKEN, nama: name, mode: currentMode, pesanan: pRows.join(', '),
-                total: total, catatan: document.getElementById('orderNote').value
+                token: CONFIG.TOKEN, 
+                nama: name, 
+                mode: currentMode, 
+                pesanan: pRows.join(', '),
+                total: total, 
+                catatan: document.getElementById('orderNote').value
             });
 
             const resp = await fetch(CONFIG.WEB_APP_URL + "?" + params.toString());
@@ -464,7 +517,9 @@
             location.reload();
         } catch (e) {
             showToast("❌ Gagal mengirim.");
-            isSending = false; btn.innerText = "Kirim!"; btn.disabled = false;
+            isSending = false; 
+            btn.innerText = "Kirim!"; 
+            btn.disabled = false;
         }
     }
 
@@ -485,16 +540,17 @@
     }
 
     async function syncQueue() {
-        while (true) {
-            try {
-                const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
-                const num = await resp.text();
-                if (num) document.getElementById('noAntrean').innerText = "#" + num;
-            } catch(e) {
-                await new Promise(r => setTimeout(r, 3000));
-            }
+    while (true) {
+        try {
+            const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
+            const num = await resp.text();
+            if (num) document.getElementById('noAntrean').innerText = "#" + num;
+            await new Promise(r => setTimeout(r, 10000)); // Cek setiap 10 detik
+        } catch(e) {
+            await new Promise(r => setTimeout(r, 5000)); // Jeda 5 detik jika error
         }
     }
+}
 
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
