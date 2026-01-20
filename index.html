@@ -250,7 +250,9 @@
     function renderMenu() {
         const container = document.getElementById('menu-container');
         const categories = [...new Set(menuData.map(m => m.kat))];
-        container.innerHTML = categories.map(cat => `
+        container.innerHTML = categories.map(cat => {
+            const cL = cat.toLowerCase();
+            return `
             <div class="cat-container">
                 <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('active')">
                     <span>${cat}</span><span>▼</span>
@@ -258,10 +260,31 @@
                 <div class="menu-list">
                     ${menuData.filter(m => m.kat === cat).map(m => {
                         const nL = m.nama.toLowerCase();
-                        const isNasi = cat.toLowerCase().includes("hemat") || (cat.toLowerCase().includes("wardoy") && nL.includes("nasi"));
-                        const isMinum = cat.toLowerCase().includes("minum") || cat.toLowerCase().includes("hemat");
+                        
+                        // 1. LOGIKA VARIAN NASI (TETAP AMAN)
+                        const isNasi = cL.includes("hemat") || (cL.includes("wardoy") && nL.includes("nasi"));
+                        
+                        // 2. LOGIKA VARIAN SUHU (SANGAT SPESIFIK)
+                        // Daftar pengecualian (Menu yang TIDAK boleh ada pilihan Es/Panas)
+                        const pengecualianSuhu = [
+                            'kopi klothok', 'kopi lelet', 'kopi coklat', 'kopi jahe', 
+                            'es kopi item', 'es kopiko', "kopi ka'amel", 'kopi susu beri',
+                            'es susu mantan', 'es jossu', 'es bissu', 'es jeruk susu',
+                            'es choco oren', 'es jeruk yakult', 'es milksex beri', 'es matcha',
+                            'es squash oren', 'jus mangga', 'jus stoberi', 'smoothies mary',
+                            'float mangga', 'float stoberi'
+                        ];
+
+                        // Cek apakah nama menu ada di daftar pengecualian
+                        const isDikecualikan = pengecualianSuhu.some(p => nL.includes(p));
+                        
+                        // Syarat Muncul Suhu: (Kategori Hemat ATAU Kategori Minuman) DAN BUKAN menu pengecualian
+                        const isSuhu = (cL.includes("hemat") || cL.includes("minum")) && !isDikecualikan;
+
+                        // 3. LOGIKA MIE (TETAP AMAN)
                         const isMieG = nL.includes("mie") && nL.includes("goreng") && !nL.includes("lik");
                         const isMieR = nL.includes("mie") && nL.includes("rebus") && !nL.includes("lik");
+
                         return `
                         <div class="menu-item">
                             <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -270,7 +293,7 @@
                                     <small style="color:var(--muted);">Rp ${m.harga.toLocaleString()}</small>
                                     <div class="variant-container">
                                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
-                                        ${isMinum ? `<select id="s-${m.id}" class="variant-select"><option value="Es">❄️ Es</option><option value="Panas">🔥 Panas</option></select>` : ''}
+                                        ${isSuhu ? `<select id="s-${m.id}" class="variant-select"><option value="Es">❄️ Es</option><option value="Panas">🔥 Panas</option></select>` : ''}
                                         ${isMieG ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍜 Pilih Rasa</option>${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                                         ${isMieR ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍲 Pilih Rasa</option>${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                                     </div>
@@ -284,7 +307,8 @@
                         </div>`;
                     }).join('')}
                 </div>
-            </div>`).join('');
+            </div>`;
+        }).join('');
     }
 
     function updateCart(id, change) {
