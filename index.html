@@ -251,7 +251,7 @@
         const container = document.getElementById('menu-container');
         const categories = [...new Set(menuData.map(m => m.kat))];
         container.innerHTML = categories.map(cat => {
-            const cL = cat.toLowerCase();
+            const cL = cat.toLowerCase().trim();
             return `
             <div class="cat-container">
                 <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('active')">
@@ -259,13 +259,13 @@
                 </div>
                 <div class="menu-list">
                     ${menuData.filter(m => m.kat === cat).map(m => {
-                        const nL = m.nama.toLowerCase();
+                        const nL = m.nama.toLowerCase().trim();
                         
                         // 1. LOGIKA VARIAN NASI (TETAP AMAN)
                         const isNasi = cL.includes("hemat") || (cL.includes("wardoy") && nL.includes("nasi"));
                         
-                        // 2. LOGIKA VARIAN SUHU (SANGAT SPESIFIK)
-                        // Daftar pengecualian (Menu yang TIDAK boleh ada pilihan Es/Panas)
+                        // 2. LOGIKA VARIAN SUHU (DIPERKETAT)
+                        // Daftar menu yang HANYA es atau HANYA panas (TIDAK boleh ada pilihan)
                         const pengecualianSuhu = [
                             'kopi klothok', 'kopi lelet', 'kopi coklat', 'kopi jahe', 
                             'es kopi item', 'es kopiko', "kopi ka'amel", 'kopi susu beri',
@@ -275,10 +275,11 @@
                             'float mangga', 'float stoberi'
                         ];
 
-                        // Cek apakah nama menu ada di daftar pengecualian
+                        // Cek apakah menu termasuk dalam daftar pengecualian di atas
                         const isDikecualikan = pengecualianSuhu.some(p => nL.includes(p));
                         
-                        // Syarat Muncul Suhu: (Kategori Hemat ATAU Kategori Minuman) DAN BUKAN menu pengecualian
+                        // Syarat Muncul Suhu: 
+                        // Harus di kategori (Hemat atau Minuman) DAN namanya TIDAK ada di daftar pengecualian
                         const isSuhu = (cL.includes("hemat") || cL.includes("minum")) && !isDikecualikan;
 
                         // 3. LOGIKA MIE (TETAP AMAN)
