@@ -406,7 +406,7 @@
         xS = null;
     };
 
-    async function submitOrder() {
+async function submitOrder() {
         if (isSending) return;
 
         const nameInput = document.getElementById('custName');
@@ -417,48 +417,42 @@
         const tNo = tableInput.value;
         const addr = addrInput.value.trim();
 
-        // 1. Reset state error sebelumnya (menghapus tanda merah)
+        // Validasi Input
         [nameInput, tableInput, addrInput].forEach(el => {
             if(el) el.parentElement.classList.remove('error-focus');
         });
 
-        // 2. Validasi Nama
         if (!name) {
-            closeModal(); // Menutup modal agar user bisa melihat input
+            closeModal();
             showToast("❗ Nama wajib diisi");
             nameInput.parentElement.classList.add('error-focus');
             nameInput.focus();
-            nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
-        // 3. Validasi Meja (Hanya jika DINE IN)
         if (currentMode === 'DINE IN' && !tNo) {
             closeModal();
             showToast("❗ Nomor meja wajib diisi");
             tableInput.parentElement.classList.add('error-focus');
             tableInput.focus();
-            tableInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
-        // 4. Validasi Alamat (Hanya jika DELIVERY)
         if (currentMode === 'DELIVERY' && !addr) {
             closeModal();
             showToast("❗ Alamat wajib diisi");
             addrInput.parentElement.classList.add('error-focus');
             addrInput.focus();
-            addrInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
-        // Jika lolos validasi, lanjutkan proses pengiriman
         isSending = true;
         const btn = document.getElementById('btnFinal');
         btn.innerText = "⏳ Memproses..."; 
         btn.disabled = true;
 
         try {
+            // Mengelompokkan Pesanan untuk Tampilan WA
             const summary = {};
             cart.forEach(c => {
                 let l = c.nama; let tags = [];
@@ -474,13 +468,14 @@
                     if(tags.length) cl += ` [${tags.join(", ")}]`;
                     return cl === n;
                 });
-                return `✅ *${q}x* ${n} (Rp ${(proto.harga + (proto.ex || 0)).toLocaleString()})`;
+                return `📦 *${q}x* ${n} (Rp ${(proto.harga + (proto.ex || 0)).toLocaleString()})`;
             });
 
             let sub = cart.reduce((a, b) => a + b.harga + (b.ex || 0), 0);
             let ong = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
             const total = sub + ong;
 
+            // Kirim ke Google Sheets
             const params = new URLSearchParams({
                 token: CONFIG.TOKEN, 
                 nama: name, 
@@ -493,28 +488,52 @@
             const resp = await fetch(CONFIG.WEB_APP_URL + "?" + params.toString());
             const qNo = await resp.text();
             
+            // Konfigurasi WhatsApp
             const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-            const locLink = userCoords ? `https://www.google.com/maps?q=${userCoords.lat},${userCoords.lng}` : 'Lokasi tidak terdeteksi';
+            // Cari baris ini di submitOrder() dan ganti menjadi:
+const locLink = userCoords ? `https://www.google.com/maps?q=${userCoords.lat},${userCoords.lng}` : 'Lokasi tidak terdeteksi';
+            const gmapsReview = "https://www.google.com/maps/place/Warung+Doyong/@-7.0452872,110.3921172,17z/data=!4m8!3m7!1s0x2e708bc5a0388b8f:0x222e286905ff8a10!8m2!3d-7.0452872!4d110.3921172!9m1!1b1!16s%2Fg%2F11fxx8xrjp?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D"; // Ganti dengan link review asli Anda
 
-            let msg = `Halo cloudkitchen.dyg++!\n\n`;
-            msg += `📦 *${currentMode}*\n`;
+            // MENYUSUN FORMAT PESAN SESUAI PERMINTAAN
+            let msg = `"Halo cloudkitchen.dyg++!\n\n`;
+            
+            // Mode Emoji
+            const modeEmoji = currentMode === 'DELIVERY' ? '🛵' : (currentMode === 'DINE IN' ? '🍽️' : '🛍️');
+            msg += `${modeEmoji} *${currentMode}*\n`;
             msg += `👤 *Nama:* ${name}\n`;
             msg += `🔢 *ANTREAN: #${qNo}*\n`;
             msg += `━━━━━━━━━━━━━━\n`;
             
-            if (currentMode === 'DINE IN') msg += `🪑 *Meja:* ${tNo}\n`;
-            else if (currentMode === 'DELIVERY') {
+            if (currentMode === 'DINE IN') {
+                msg += `🪑 *Meja:* ${tNo}\n`;
+            } else if (currentMode === 'DELIVERY') {
                 msg += `🏠 *Alamat:* ${addr}\n`;
                 msg += `📍 *Lokasi:* ${locLink}\n`;
                 msg += `🛵 *Ongkir (${(userDist/1000).toFixed(1)} km):* Rp ${ong.toLocaleString()}\n`;
             }
 
             msg += `\n*PESANAN:*\n${pRows.join('\n')}\n\n`;
+            
+            const catatan = document.getElementById('orderNote').value.trim();
+            msg += `*CATATAN:* ${catatan ? catatan : '-'}\n\n`;
+            
             msg += `*TOTAL BAYAR: Rp ${total.toLocaleString()}*\n\n`;
-            msg += `_Pesanan diteruskan via Web App._`;
+            
+            msg += `⏳ *PROSES PESANAN:*\n`;
+            msg += `Mohon tunggu sebentar ya kak, tim jaga kami sedang mengecek ketersediaan stok menu. Kami akan konfirmasi segera.\n\n`;
+            
+            msg += `💳 *INFO PEMBAYARAN:*\n`;
+            msg += `• *DINE IN / TAKE AWAY:* Langsung di kasir.\n`;
+            msg += `• *DELIVERY ORDER:* Khusus via Transfer Bank / QRIS.\n\n`;
+            
+            msg += `⭐ *REVIEW:*\n`;
+            msg += `Bantu *kami berkembang dengan ulasan di G-Maps* ya kak:\n${gmapsReview}\n\n`;
+            
+            msg += `Terimakasih! "`;
 
             window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, '_blank');
             location.reload();
+            
         } catch (e) {
             showToast("❌ Gagal mengirim.");
             isSending = false; 
@@ -522,7 +541,6 @@
             btn.disabled = false;
         }
     }
-
     function changeMode(m, el) {
         currentMode = m;
         document.querySelectorAll('.mode-option').forEach(o => o.classList.remove('active'));
