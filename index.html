@@ -17,72 +17,46 @@
             font-family: 'Inter', system-ui, -apple-system, sans-serif; color: var(--dark); 
             padding-bottom: 160px; overflow-x: hidden; scroll-behavior: smooth;
         }
-
-        /* Error Focus Animation */
-        .error-focus {
-            border: 2px solid var(--danger) !important;
-            animation: shake 0.4s ease-in-out;
-            background-color: #fff5f5 !important;
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
+        .error-focus { border: 2px solid var(--danger) !important; animation: shake 0.4s ease-in-out; background-color: #fff5f5 !important; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .card { max-width: 480px; margin: auto; background: var(--surface); border-radius: 28px; padding: 20px; box-shadow: 0 15px 35px rgba(0,0,0,.06); opacity: 0; transform: translateY(20px); transition: 0.6s cubic-bezier(0.2, 1, 0.3, 1); }
         .card.visible { opacity: 1; transform: translateY(0); }
-        
         .title { text-align: center; font-size: 26px; font-weight: 900; color: var(--primary); margin: 0; letter-spacing: -0.5px; }
         .address-info { text-align: center; font-size: 11px; color: var(--muted); margin: 5px 0; }
-        
         .queue-box { background: linear-gradient(135deg, #FFF9F0 0%, #FFF2E0 100%); border: 2px solid var(--accent); border-radius: 20px; padding: 15px; text-align: center; margin: 20px 0; }
         .queue-number { font-size: 42px; font-weight: 900; color: var(--primary); display: block; }
-
         .mode-selector { display: flex; gap: 10px; margin-bottom: 20px; }
         .mode-option { flex: 1; padding: 12px 5px; text-align: center; border-radius: 18px; border: 2px solid var(--soft); cursor: pointer; background: #fff; transition: 0.3s; font-weight: 700; font-size: 12px; }
         .mode-option.active { background: #FFF3E6; border-color: var(--accent); color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 15px rgba(243,156,18,0.15); }
-
         .section-title { font-size: 13px; font-weight: 800; margin: 25px 0 10px; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
         .box { background: #fff; border: 1.5px solid var(--soft); border-radius: 16px; padding: 4px 15px; transition: 0.3s; }
         .box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(243,156,18,0.1); }
-
         input, textarea, select { width: 100%; padding: 12px 0; border: none; font-family: inherit; font-size: 14px; background: transparent; color: var(--dark); }
-
         .cat-container { border: 1.5px solid var(--soft); border-radius: 20px; margin-bottom: 12px; overflow: hidden; background: #fff; }
         .cat-header { padding: 16px 20px; font-weight: 800; background: #FBF8F3; display: flex; justify-content: space-between; cursor: pointer; color: var(--primary); }
         .menu-list { display: none; padding: 0 20px; }
         .menu-list.active { display: block; }
         .menu-item { padding: 15px 0; border-bottom: 1px dashed var(--soft); }
-        
         .variant-container { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
         .variant-select { padding: 8px; border-radius: 10px; border: 1.5px solid var(--soft); font-size: 11px; background: #fafafa; }
-
         .order-row { position: relative; overflow: hidden; background: var(--danger); border-radius: 15px; margin-bottom: 10px; }
         .order-content { background: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s ease; position: relative; z-index: 2; border: 1px solid var(--soft); border-radius: 15px; }
         .swipe-delete-hint { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: white; font-weight: 800; font-size: 12px; z-index: 1; }
-
         .qty-control { display: flex; align-items: center; gap: 12px; }
         .btn-qty { width: 34px; height: 34px; border-radius: 10px; border: none; background: var(--primary); color: #fff; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-qty:disabled { background: #E0D5C5; cursor: not-allowed; }
-
         .sticky-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.92); backdrop-filter: blur(15px); padding: 15px 20px calc(15px + env(safe-area-inset-bottom)); border-top: 1px solid var(--soft); z-index: 999; }
         .mini-summary { max-width: 480px; margin: auto; display: flex; justify-content: space-between; align-items: center; }
         .btn-main { background: var(--primary); color: #fff; padding: 16px 30px; border-radius: 18px; border: none; font-weight: 800; cursor: pointer; font-size: 15px; transition: 0.3s; }
         .btn-main:disabled { background: #ccc; transform: scale(0.98); }
-
         #toast-container { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); z-index: 10000; width: 85%; max-width: 320px; }
         .toast { background: var(--dark); color: #fff; padding: 14px 20px; border-radius: 16px; font-size: 13px; font-weight: 600; margin-bottom: 10px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); opacity: 0; transform: translateY(-20px); transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
         .toast.show { opacity: 1; transform: translateY(0); }
-
         #welcome-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 10002; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .welcome-box { background: white; padding: 40px 30px; border-radius: 32px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 400px; }
-
         #ongkir-label { display: none; color: var(--success); font-size: 11px; font-weight: 800; margin-bottom: 3px; }
-
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 10001; display: none; align-items: center; justify-content: center; }
         .modal-box { background: #fff; width: 90%; max-width: 360px; border-radius: 32px; padding: 35px; text-align: center; }
-
         .branding-footer { text-align: center; margin-top: 40px; margin-bottom: 20px; font-size: 11px; color: #aaa; font-style: italic; letter-spacing: 0.5px; }
     </style>
 </head>
@@ -198,12 +172,17 @@
         { n: 'Nasi cabeIjo', e: 2000 }, { n: 'Nasi kecombrang', e: 2000 },
         { n: 'Nasi rumputLaut', e: 2000 }, { n: 'Nasi margarin', e: 2000 }
     ];
+    const VARIAN_MIE_GORENG = [
+        { n: 'Original (Biasa)', e: 0 }, { n: 'Rasa Rendang', e: 0 }, { n: 'Rasa Salero Padang', e: 0 }
+    ];
+    const VARIAN_MIE_REBUS = [
+        { n: 'Rasa Ayam Bawang', e: 0 }, { n: 'Rasa Soto', e: 0 }
+    ];
 
     const showToast = (msg) => {
         const container = document.getElementById('toast-container');
         const t = document.createElement('div');
-        t.className = 'toast';
-        t.innerText = msg;
+        t.className = 'toast'; t.innerText = msg;
         container.appendChild(t);
         requestAnimationFrame(() => t.classList.add('show'));
         setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 2500);
@@ -217,9 +196,7 @@
     }
 
     async function calculateRouteDistanceOSRM(userLat, userLng) {
-        const warLat = CONFIG.WARUNG_LOCATION[0];
-        const warLng = CONFIG.WARUNG_LOCATION[1];
-        const url = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${warLng},${warLat}?overview=false`;
+        const url = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${CONFIG.WARUNG_LOCATION[1]},${CONFIG.WARUNG_LOCATION[0]}?overview=false`;
         const resp = await fetch(url);
         const data = await resp.json();
         if (!data.routes || !data.routes.length) throw "Route not found";
@@ -228,8 +205,7 @@
 
     async function startApp() {
         const btn = document.querySelector("#welcome-overlay .btn-main");
-        btn.innerText = "🔍 Mencari Lokasi...";
-        btn.disabled = true;
+        btn.innerText = "🔍 Mencari Lokasi..."; btn.disabled = true;
         if (!navigator.geolocation) return showToast("Geolokasi tidak didukung");
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords;
@@ -237,19 +213,16 @@
             try {
                 userDist = await calculateRouteDistanceOSRM(latitude, longitude);
             } catch (e) {
-                const straight = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-                userDist = straight * 1.3; 
+                userDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.3; 
             }
             if (userDist > CONFIG.RADIUS_DINE_IN) {
-                showToast(`📍 Jarak: ${(userDist/1000).toFixed(1)}km. Mode Dine In ditutup.`);
                 document.getElementById('mDine').style.display = 'none';
                 changeMode('DELIVERY', document.getElementById('mDeliv'));
             }
             initMap(latitude, longitude);
             document.getElementById('welcome-overlay').style.display = 'none';
             document.getElementById('main-content').classList.add('visible');
-            await loadMenu();
-            syncQueue();
+            await loadMenu(); syncQueue();
         }, () => {
             showToast("⚠️ GPS Gagal. Pastikan GPS aktif.");
             btn.innerText = "MULAI SEKARANG"; btn.disabled = false;
@@ -278,8 +251,11 @@
                 </div>
                 <div class="menu-list">
                     ${menuData.filter(m => m.kat === cat).map(m => {
-                        const isNasi = cat.toLowerCase().includes("hemat") || (cat.toLowerCase().includes("wardoy") && m.nama.toLowerCase().includes("nasi"));
+                        const nL = m.nama.toLowerCase();
+                        const isNasi = cat.toLowerCase().includes("hemat") || (cat.toLowerCase().includes("wardoy") && nL.includes("nasi"));
                         const isMinum = cat.toLowerCase().includes("minum") || cat.toLowerCase().includes("hemat");
+                        const isMieG = nL.includes("mie") && nL.includes("goreng") && !nL.includes("lik");
+                        const isMieR = nL.includes("mie") && nL.includes("rebus") && !nL.includes("lik");
                         return `
                         <div class="menu-item">
                             <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -289,6 +265,8 @@
                                     <div class="variant-container">
                                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
                                         ${isMinum ? `<select id="s-${m.id}" class="variant-select"><option value="Es">❄️ Es</option><option value="Panas">🔥 Panas</option></select>` : ''}
+                                        ${isMieG ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍜 Pilih Rasa</option>${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                                        ${isMieR ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍲 Pilih Rasa</option>${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                                     </div>
                                 </div>
                                 <div class="qty-control">
@@ -305,15 +283,16 @@
 
     function updateCart(id, change) {
         const item = menuData.find(m => m.id === id);
-        const selNasi = document.getElementById(`n-${id}`)?.value || null;
-        const selSuhu = document.getElementById(`s-${id}`)?.value || null;
-        const extra = selNasi ? VARIAN_NASI.find(v => v.n === selNasi).e : 0;
+        const selN = document.getElementById(`n-${id}`)?.value || null;
+        const selS = document.getElementById(`s-${id}`)?.value || null;
+        const selM = document.getElementById(`m-${id}`)?.value || null;
+        const extra = selN ? (VARIAN_NASI.find(v => v.n === selN)?.e || 0) : 0;
         if (change > 0) {
-            cart.push({ ...item, vN: selNasi, vS: selSuhu, ex: extra });
+            cart.push({ ...item, vN: selN, vS: selS, vM: selM, ex: extra });
             showToast(`✅ ${item.nama} +1`);
         } else {
             const idx = cart.map(c => c.id).lastIndexOf(id);
-            if (idx !== -1) { cart.splice(idx, 1); showToast(`➖ ${item.nama} -1`); }
+            if (idx !== -1) cart.splice(idx, 1);
         }
         refreshUI();
     }
@@ -322,19 +301,17 @@
         let sub = 0; const counts = {};
         cart.forEach(c => { sub += (c.harga + (c.ex || 0)); counts[c.id] = (counts[c.id] || 0) + 1; });
         menuData.forEach(m => {
-            const el = document.getElementById(`qty-${m.id}`);
-            if(el) el.innerText = counts[m.id] || 0;
-            const btn = document.getElementById(`min-${m.id}`);
-            if(btn) btn.disabled = (counts[m.id] || 0) === 0;
+            if(document.getElementById(`qty-${m.id}`)) document.getElementById(`qty-${m.id}`).innerText = counts[m.id] || 0;
+            if(document.getElementById(`min-${m.id}`)) document.getElementById(`min-${m.id}`).disabled = (counts[m.id] || 0) === 0;
         });
-        let ongkir = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
+        let ong = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
         document.getElementById('delivery-fee-row').style.display = (currentMode === 'DELIVERY') ? 'flex' : 'none';
         document.getElementById('ongkir-label').style.display = (currentMode === 'DELIVERY') ? 'block' : 'none';
         if(currentMode === 'DELIVERY') {
-            document.getElementById('feeDisplay').innerText = "Rp " + ongkir.toLocaleString();
+            document.getElementById('feeDisplay').innerText = "Rp " + ong.toLocaleString();
             document.getElementById('distDisplay').innerText = (userDist/1000).toFixed(1);
         }
-        const total = sub + ongkir;
+        const total = sub + ong;
         document.getElementById('totalDisplay').innerText = total.toLocaleString();
         document.getElementById('miniPrice').innerText = total.toLocaleString();
         document.getElementById('miniInfo').style.display = sub > 0 ? 'block' : 'none';
@@ -344,15 +321,14 @@
         const summary = {};
         cart.forEach(c => {
             let l = c.nama; let tags = [];
-            if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS);
+            if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS); if(c.vM) tags.push(c.vM);
             if(tags.length) l += ` [${tags.join(", ")}]`;
             summary[l] = (summary[l] || 0) + 1;
         });
-
         document.getElementById('order-list').innerHTML = Object.entries(summary).map(([n, q]) => {
             const proto = cart.find(c => {
                 let cl = c.nama; let tags = [];
-                if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS);
+                if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS); if(c.vM) tags.push(c.vM);
                 if(tags.length) cl += ` [${tags.join(", ")}]`;
                 return cl === n;
             });
@@ -376,12 +352,11 @@
             setTimeout(() => {
                 cart = cart.filter(c => {
                     let cl = c.nama; let tags = [];
-                    if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS);
+                    if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS); if(c.vM) tags.push(c.vM);
                     if(tags.length) cl += ` [${tags.join(", ")}]`;
                     return cl !== lbl;
                 });
-                showToast(`🗑️ ${lbl} dihapus`);
-                refreshUI();
+                showToast(`🗑️ ${lbl} dihapus`); refreshUI();
             }, 300);
         } else { e.currentTarget.style.transform = `translateX(0)`; }
         xS = null;
@@ -389,46 +364,28 @@
 
     async function submitOrder() {
         if (isSending) return;
-        const nameInput = document.getElementById('custName');
-        const tableInput = document.getElementById('tableNo');
-        const addrInput = document.getElementById('addressDetail');
-        const name = nameInput.value.trim();
-        const tNo = tableInput.value;
-        const addr = addrInput.value.trim();
+        const nI = document.getElementById('custName'); const tI = document.getElementById('tableNo'); const aI = document.getElementById('addressDetail');
+        const name = nI.value.trim(); const tNo = tI.value; const addr = aI.value.trim();
+        [nI, tI, aI].forEach(el => { if(el) el.parentElement.classList.remove('error-focus'); });
+        if (!name) { closeModal(); showToast("❗ Nama wajib diisi"); nI.parentElement.classList.add('error-focus'); nI.focus(); return; }
+        if (currentMode === 'DINE IN' && !tNo) { closeModal(); showToast("❗ Nomor meja wajib diisi"); tI.parentElement.classList.add('error-focus'); tI.focus(); return; }
+        if (currentMode === 'DELIVERY' && !addr) { closeModal(); showToast("❗ Alamat wajib diisi"); aI.parentElement.classList.add('error-focus'); aI.focus(); return; }
 
-        [nameInput, tableInput, addrInput].forEach(el => {
-            if(el) el.parentElement.classList.remove('error-focus');
-        });
-
-        if (!name) {
-            closeModal(); showToast("❗ Nama wajib diisi");
-            nameInput.parentElement.classList.add('error-focus'); nameInput.focus(); return;
-        }
-        if (currentMode === 'DINE IN' && !tNo) {
-            closeModal(); showToast("❗ Nomor meja wajib diisi");
-            tableInput.parentElement.classList.add('error-focus'); tableInput.focus(); return;
-        }
-        if (currentMode === 'DELIVERY' && !addr) {
-            closeModal(); showToast("❗ Alamat wajib diisi");
-            addrInput.parentElement.classList.add('error-focus'); addrInput.focus(); return;
-        }
-
-        isSending = true;
-        const btn = document.getElementById('btnFinal');
+        isSending = true; const btn = document.getElementById('btnFinal');
         btn.innerText = "⏳ Memproses..."; btn.disabled = true;
 
         try {
             const summary = {};
             cart.forEach(c => {
                 let l = c.nama; let tags = [];
-                if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS);
+                if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS); if(c.vM) tags.push(c.vM);
                 if(tags.length) l += ` [${tags.join(", ")}]`;
                 summary[l] = (summary[l] || 0) + 1;
             });
             const pRows = Object.entries(summary).map(([n, q]) => {
                 const proto = cart.find(c => {
                     let cl = c.nama; let tags = [];
-                    if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS);
+                    if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS); if(c.vM) tags.push(c.vM);
                     if(tags.length) cl += ` [${tags.join(", ")}]`;
                     return cl === n;
                 });
@@ -438,49 +395,23 @@
             let sub = cart.reduce((a, b) => a + b.harga + (b.ex || 0), 0);
             let ong = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
             const total = sub + ong;
-
-            const params = new URLSearchParams({
-                token: CONFIG.TOKEN, nama: name, mode: currentMode, 
-                pesanan: pRows.join(', '), total: total, catatan: document.getElementById('orderNote').value
-            });
-
+            const params = new URLSearchParams({ token: CONFIG.TOKEN, nama: name, mode: currentMode, pesanan: pRows.join(', '), total: total, catatan: document.getElementById('orderNote').value });
             const resp = await fetch(CONFIG.WEB_APP_URL + "?" + params.toString());
             const qNo = await resp.text();
             
             const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
             const locLink = userCoords ? `https://www.google.com/maps?q=${userCoords.lat},${userCoords.lng}` : 'Tidak terdeteksi';
-            // Link sakti langsung muncul jendela ulasan bintang 5 untuk Warung Doyong
-const gmapsReview = "https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI";
-
-            let msg = `Halo cloudkitchen.dyg++!\n\n`;
-            const modeEmoji = currentMode === 'DELIVERY' ? '🛵' : (currentMode === 'DINE IN' ? '🍽️' : '🛍️');
-            msg += `${modeEmoji} *${currentMode}*\n👤 *Nama:* ${name}\n🔢 *ANTREAN: #${qNo}*\n━━━━━━━━━━━━━━\n`;
-            
+            let msg = `Halo cloudkitchen.dyg++!\n\n${currentMode === 'DELIVERY' ? '🛵' : (currentMode === 'DINE IN' ? '🍽️' : '🛍️')} *${currentMode}*\n👤 *Nama:* ${name}\n🔢 *ANTREAN: #${qNo}*\n━━━━━━━━━━━━━━\n`;
             if (currentMode === 'DINE IN') msg += `🪑 *Meja:* ${tNo}\n`;
-            else if (currentMode === 'DELIVERY') {
-                msg += `🏠 *Alamat:* ${addr}\n📍 *Lokasi:* ${locLink}\n🛵 *Ongkir (${(userDist/1000).toFixed(1)} km):* Rp ${ong.toLocaleString()}\n`;
-            }
-
-            msg += `\n*PESANAN:*\n${pRows.join('\n')}\n\n`;
-            const catatan = document.getElementById('orderNote').value.trim();
-            msg += `*CATATAN:* ${catatan ? catatan : '-'}\n*TOTAL BAYAR: Rp ${total.toLocaleString()}*\n\n`;
-            msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n⭐ *REVIEW:* ${gmapsReview}\n\nTerimakasih!`;
-
-            // METODE KIRIM WA PALING STABIL
-            const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-            window.location.href = waUrl;
-
+            else if (currentMode === 'DELIVERY') msg += `🏠 *Alamat:* ${addr}\n📍 *Lokasi:* ${locLink}\n🛵 *Ongkir:* Rp ${ong.toLocaleString()}\n`;
+            msg += `\n*PESANAN:*\n${pRows.join('\n')}\n\n*CATATAN:* ${document.getElementById('orderNote').value || '-'}\n*TOTAL BAYAR: Rp ${total.toLocaleString()}*\n\n⭐ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\nTerimakasih!`;
+            window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
             setTimeout(() => { location.reload(); }, 3000);
-        } catch (e) {
-            showToast("❌ Gagal mengirim."); isSending = false;
-            btn.innerText = "Kirim!"; btn.disabled = false;
-        }
+        } catch (e) { showToast("❌ Gagal mengirim."); isSending = false; btn.innerText = "Kirim!"; btn.disabled = false; }
     }
 
     function changeMode(m, el) {
-        currentMode = m;
-        document.querySelectorAll('.mode-option').forEach(o => o.classList.remove('active'));
-        el.classList.add('active');
+        currentMode = m; document.querySelectorAll('.mode-option').forEach(o => o.classList.remove('active')); el.classList.add('active');
         document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
         document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
         refreshUI();
@@ -506,23 +437,16 @@ const gmapsReview = "https://search.google.com/local/writereview?placeid=ChIJj4s
 
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-
     function filterMenu() {
         const k = document.getElementById('searchMenu').value.toLowerCase();
-        const categories = document.querySelectorAll('.cat-container');
-        categories.forEach(cat => {
-            const items = cat.querySelectorAll('.menu-item');
-            const menuList = cat.querySelector('.menu-list');
+        document.querySelectorAll('.cat-container').forEach(cat => {
             let hasMatch = false;
-            items.forEach(item => {
-                const itemName = item.querySelector('div[style*="font-weight:700"]').innerText.toLowerCase();
-                if (itemName.includes(k)) { item.style.display = 'block'; hasMatch = true; } 
-                else { item.style.display = 'none'; }
+            cat.querySelectorAll('.menu-item').forEach(item => {
+                const iN = item.querySelector('div[style*="font-weight:700"]').innerText.toLowerCase();
+                if (iN.includes(k)) { item.style.display = 'block'; hasMatch = true; } else { item.style.display = 'none'; }
             });
-            if (k.length > 0) {
-                if (hasMatch) { cat.style.display = 'block'; menuList.classList.add('active'); } 
-                else { cat.style.display = 'none'; }
-            } else { cat.style.display = 'block'; menuList.classList.remove('active'); }
+            cat.style.display = (k.length > 0 && !hasMatch) ? 'none' : 'block';
+            if(k.length > 0 && hasMatch) cat.querySelector('.menu-list').classList.add('active');
         });
     }
 </script>
