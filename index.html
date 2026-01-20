@@ -443,44 +443,58 @@ function filterMenu() {
     }
 
     function updateCart(id, delta) {
-        const item = menuData.find(m => m.id === id);
-        const qtyEl = document.getElementById(`qty-${id}`);
-        const minBtn = document.getElementById(`min-${id}`);
-        let currentQty = parseInt(qtyEl.innerText);
-        
-        if (delta > 0) {
-            currentQty++;
-            let variant = "";
-            if (document.getElementById(`n-${id}`)) variant = document.getElementById(`n-${id}`).value;
-            if (document.getElementById(`s-${id}`)) variant = document.getElementById(`s-${id}`).value;
-            if (document.getElementById(`m-${id}`)) variant = document.getElementById(`m-${id}`).value;
-            
-            let extra = 0;
-            if (variant.includes('Nasi')) {
-                const vObj = VARIAN_NASI.find(v => v.n === variant);
-                if (vObj) extra = vObj.e;
-            }
-if (document.getElementById(`s-${id}`)) {
-    const suhu = document.getElementById(`s-${id}`).value;
-    if (!suhu) {
-        showToast("Pilih suhu minuman dulu ya ☕");
-        return;
-    }
-    variant = suhu;
-}
-            cart.push({ ...item, variant, extra, cartId: Date.now() + Math.random() });
-        } else {
-            const index = cart.findLastIndex(c => c.id === id);
-            if (index !== -1) {
-                cart.splice(index, 1);
-                currentQty--;
-            }
+    const item = menuData.find(m => m.id === id);
+    const qtyEl = document.getElementById(`qty-${id}`);
+    const minBtn = document.getElementById(`min-${id}`);
+    let currentQty = parseInt(qtyEl.innerText);
+
+    if (delta > 0) {
+        currentQty++;
+
+        let variant = "";
+        let extra = 0;
+
+        // ✅ VARIAN NASI
+        if (document.getElementById(`n-${id}`)) {
+            variant = document.getElementById(`n-${id}`).value;
+            const vObj = VARIAN_NASI.find(v => v.n === variant);
+            if (vObj) extra = vObj.e;
         }
 
-        qtyEl.innerText = currentQty;
-        minBtn.disabled = currentQty <= 0;
-        refreshUI();
+        // ✅ VARIAN SUHU (WAJIB PILIH)
+        if (document.getElementById(`s-${id}`)) {
+            const suhu = document.getElementById(`s-${id}`).value;
+            if (!suhu) {
+                showToast("Pilih suhu minuman dulu ya ☕");
+                return;
+            }
+            variant = suhu;
+        }
+
+        // ✅ VARIAN MIE
+        if (document.getElementById(`m-${id}`)) {
+            variant = document.getElementById(`m-${id}`).value;
+        }
+
+        cart.push({
+            ...item,
+            variant,
+            extra,
+            cartId: Date.now() + Math.random()
+        });
+
+    } else {
+        const index = cart.findLastIndex(c => c.id === id);
+        if (index !== -1) {
+            cart.splice(index, 1);
+            currentQty--;
+        }
     }
+
+    qtyEl.innerText = currentQty;
+    minBtn.disabled = currentQty <= 0;
+    refreshUI();
+}
 
     function refreshUI() {
         const summary = document.getElementById('summary-section');
