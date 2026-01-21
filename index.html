@@ -122,6 +122,30 @@
     padding-bottom: 5px;
     border-bottom: 1px dashed #f0f0f0;
 }
+/* Perbaikan Box Pencarian */
+.search-wrapper {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1.5px solid var(--soft);
+    border-radius: 16px;
+    padding: 0 15px; /* Padding di kiri-kanan dalam box */
+}
+
+.search-wrapper:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(243,156,18,0.1);
+}
+
+#searchMenu {
+    width: 100%;       /* Memastikan input memenuhi kontainer */
+    padding: 12px 0;   /* Padding atas bawah saja karena kiri-kanan sudah ada di wrapper */
+    border: none;
+    outline: none;
+    font-size: 14px;
+    background: transparent;
+}
     </style>
 </head>
 <body>
@@ -179,11 +203,11 @@
         </div>
     </div>
 
-    <div class="section-title">Kategori Menu</div>
-    <div class="category-tabs" id="cat-tabs"></div>
-<div class="search-section">
-    <input type="text" id="searchMenu" class="search-bar" placeholder="Cari Mie Lik, Nasi Goreng..." oninput="filterMenu()">
+    <div class="section-title">🍴 Pilihan Menu</div>
+<div class="search-wrapper">
+    <input type="text" id="searchMenu" placeholder="Cari Mie Lik, Nasi Goreng..." oninput="filterMenu()">
 </div>
+<div id="menu-container">Memuat menu...</div>
     
     <div class="menu-grid" id="menu-container"></div>
 
@@ -192,10 +216,15 @@
 </div>
 
 <div id="orderSummaryPanel" class="order-summary-mini">
-    <div style="font-weight: 800; font-size: 11px; color: var(--muted); margin-bottom: 8px;">RINGKASAN PESANAN</div>
+    <div style="font-weight: 800; font-size: 11px; color: var(--primary); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+        <span>RINGKASAN PESANAN</span>
+        <button onclick="toggleSummary()" style="background:none; border:none; font-size:16px; color:var(--muted); padding:0 5px;">✕</button>
+    </div>
     <div id="summaryItems"></div>
 </div>
-
+<div class="sticky-bar">
+    <div class="mini-summary">
+        <div id="miniInfo" style="display: none;">
 <div class="bottom-bar">
     <div>
         <div id="ongkir-label" class="ongkir-tag">✓ Biaya Ongkir Dihitung</div>
