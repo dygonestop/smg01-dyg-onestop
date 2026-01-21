@@ -357,38 +357,35 @@ mark {
         const counts = {}; 
         cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
 
-        // 1. Daftar pengecualian (mentah)
+        // Daftar pengecualian menu DRINK yang sudah fix suhunya (tidak perlu pilih Es/Panas)
         const rawExclusions = [
             "Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", 
             "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", 
             "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", 
             "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", 
-            "Float Mangga", "Float Stoberi","Kopi Kapal Api", "Nescafe Blue"
+            "Float Mangga", "Float Stoberi",
+            "Kopi Kapal Api", "Nescafe Blue" // Tambahan pengecualian baru
         ];
 
-        // 2. Normalisasi daftar pengecualian (huruf kecil semua & trim spasi)
+        // Normalisasi daftar pengecualian agar tahan banting terhadap typo huruf besar/kecil & spasi liar
         const cleanExclusions = rawExclusions.map(name => name.toLowerCase().trim());
 
         document.getElementById('menu-container').innerHTML = items.map(m => {
             const kl = m.kat.toLowerCase().trim();
-            const nl = m.nama.toLowerCase().trim(); // Nama menu dari CSV yang sudah dibersihkan
-            const originalName = m.nama; // Untuk tampilan UI
+            const nl = m.nama.toLowerCase().trim(); 
+            const originalName = m.nama;
 
             const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
             const isMieG = nl.includes("mie") && nl.includes("goreng");
             const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"));
             
-            // 3. Logika Filter DRINK yang Ketat
             const isPaket = kl.includes("paket");
-            
-            // Cek apakah kategori adalah DRINK
             const isDrinkKat = kl.includes("drink");
             
-            // Cek apakah nama menu ada di daftar pengecualian (menggunakan data yang sudah di-clean)
+            // Logika pengecekan exact match pada daftar pengecualian
             const isExcluded = cleanExclusions.includes(nl);
 
-            // Tampilkan varian suhu jika:
-            // (Kategori PAKET) ATAU (Kategori DRINK tapi BUKAN menu pengecualian)
+            // Munculkan varian suhu jika kategori PAKET atau kategori DRINK (kecuali yang ada di list)
             const showSuhu = isPaket || (isDrinkKat && !isExcluded);
 
             return `
