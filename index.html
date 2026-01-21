@@ -458,40 +458,64 @@
     }
 
     async function submitOrder() {
-        const nI = document.getElementById('custName');
-        const tI = document.getElementById('tableNo');
-        const aI = document.getElementById('addressDetail');
-        
-        if (!nI.value.trim()) return alert("Isi Nama dulu ya!");
-        if (currentMode === 'DINE IN' && !tI.value.trim()) return alert("Isi No Meja!");
-        if (currentMode === 'DELIVERY' && !aI.value.trim()) return alert("Isi Alamat Lengkap!");
+    const nI = document.getElementById('custName');
+    const tI = document.getElementById('tableNo');
+    const aI = document.getElementById('addressDetail');
 
-        const summary = {};
-        cart.forEach(c => {
-            let label = c.nama;
-            let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-            if(tags) label += ` (${tags})`;
-            summary[label] = (summary[label] || 0) + 1;
-        });
+    // Hapus efek error lama
+    [nI, tI, aI].forEach(el => {
+        if(el) el.classList.remove('error-field', 'shake-ani');
+    });
 
-        const pesananTeks = Object.entries(summary).map(([n, q]) => `${q}x ${n}`).join(', ');
-        const finalPrice = document.getElementById('miniPrice').innerText.replace(/\./g, '');
+    let target = null;
 
-        fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice}`, { mode: 'no-cors' });
+    if (!nI.value.trim()) target = nI;
+    else if (currentMode === 'DINE IN' && !tI.value.trim()) target = tI;
+    else if (currentMode === 'DELIVERY' && !aI.value.trim()) target = aI;
 
-        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-        const pRowsWA = Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`);
-        let msg = `*PESANAN BARU - ${currentMode}*\n\n👤 Nama: ${nI.value}\n`;
-        if (currentMode === 'DINE IN') msg += `🪑 Meja: ${tI.value}\n`;
-        else if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value}\n📍 Jarak: ${(userDist/1000).toFixed(1)} KM\n`;
-        
-        msg += `\n*DAFTAR MENU:*\n${pRowsWA.join('\n')}\n`;
-        const catatan = document.getElementById('orderNote').value;
-        if(catatan) msg += `\n📝 Catatan: ${catatan}\n`;
-        msg += `\n*TOTAL BAYAR: Rp ${document.getElementById('miniPrice').innerText}*`;
+    if (target) {
+        // Tambah efek merah & shake
+        target.classList.add('error-field', 'shake-ani');
 
-        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+        // Scroll ke input
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Getar HP (jika mendukung)
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+        // Hapus shake setelah animasi
+        setTimeout(() => target.classList.remove('shake-ani'), 400);
+        return; // Stop submit
     }
+
+    // Jika lolos validasi, lanjut kirim
+    const summary = {};
+    cart.forEach(c => {
+        let label = c.nama;
+        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+        if(tags) label += ` (${tags})`;
+        summary[label] = (summary[label] || 0) + 1;
+    });
+
+    const pesananTeks = Object.entries(summary).map(([n, q]) => `${q}x ${n}`).join(', ');
+    const finalPrice = document.getElementById('miniPrice').innerText.replace(/\./g, '');
+
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice}`, { mode: 'no-cors' });
+
+    const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+    const pRowsWA = Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`);
+    let msg = `*PESANAN BARU - ${currentMode}*\n\n👤 Nama: ${nI.value}\n`;
+    if (currentMode === 'DINE IN') msg += `🪑 Meja: ${tI.value}\n`;
+    else if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value}\n📍 Jarak: ${(userDist/1000).toFixed(1)} KM\n`;
+
+    msg += `\n*DAFTAR MENU:*\n${pRowsWA.join('\n')}\n`;
+    const catatan = document.getElementById('orderNote').value;
+    if(catatan) msg += `\n📝 Catatan: ${catatan}\n`;
+    msg += `\n*TOTAL BAYAR: Rp ${document.getElementById('miniPrice').innerText}*`;
+
+    window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+}
+
 
     function toggleSummary(open) {
         if (cart.length === 0 && open) return;
