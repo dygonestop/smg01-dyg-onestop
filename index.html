@@ -485,8 +485,6 @@
 
     container.innerHTML = Object.entries(groups).map(([key, item]) => `
         <div class="summary-item"
-     ontouchstart="swipeStart(event)"
-     ontouchend="swipeEnd(event, '${key}')">
             <div class="item-detail-name">
     <b>${item.nama}</b>
     <span>${[item.vN, item.vM, item.vR, item.vS].filter(Boolean).join(', ') || 'Original'}</span>
@@ -575,31 +573,6 @@ function changeCartFromSummary(id, delta, groupKey) {
     function showOutOfRangeAlert() { alert("Maaf, lokasi kamu terlalu jauh untuk Dine-In. Pakai Take Away atau Delivery ya!"); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
-/* ===============================
-   SWIPE HAPUS ITEM (KERANJANG)
-   =============================== */
-
-let swipeX = 0;
-
-function swipeStart(e) {
-    swipeX = e.changedTouches[0].clientX;
-}
-
-function swipeEnd(e, key) {
-    const endX = e.changedTouches[0].clientX;
-    if (swipeX - endX > 60) {
-        removeGroupFromCart(key);
-    }
-}
-
-function removeGroupFromCart(groupKey) {
-    cart = cart.filter(c => {
-        const k = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
-        return k !== groupKey;
-    });
-    refreshUI();
-}
-
 </script>
 <div id="modalComingSoon" class="modal-overlay">
     <div class="modal-card">
