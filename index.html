@@ -13,32 +13,28 @@
             --soft: #F0F0F0; --danger: #D63031; --success: #00B894;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { margin: 0; padding: 0; background: var(--bg); font-family: 'Inter', system-ui, sans-serif; color: var(--text); overflow-x: hidden; }
+        body { margin: 0; background: var(--bg); font-family: 'Inter', sans-serif; color: var(--text); overflow-x: hidden; }
 
         .header-top { background: var(--primary); padding: 15px 20px 35px; color: white; border-radius: 0 0 30px 30px; }
         .nav-row { display: flex; justify-content: space-between; align-items: center; }
         .brand-logo { font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 8px; }
-        .brand-icon { width: 28px; height: 28px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 11px; font-weight: 900; }
-        .queue-badge { background: var(--danger); color: white; padding: 5px 12px; border-radius: 15px; font-size: 11px; font-weight: 800; }
-
-        .banner-container { margin: -20px 20px 15px; position: relative; overflow: hidden; border-radius: 20px; height: 150px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); background: #eee; }
+        
+        .banner-container { margin: -20px 20px 15px; position: relative; overflow: hidden; border-radius: 20px; height: 140px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); background: #eee; }
         #banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
         #banner-track img { min-width: 100%; object-fit: cover; }
 
-        /* Mode Grid - 6 Buttons (DIKEMBALIKAN) */
         .mode-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 0 20px 15px; }
-        .mode-item { background: white; padding: 12px 5px; border-radius: 12px; text-align: center; font-size: 10px; font-weight: 700; border: 1.5px solid #F0F0F0; cursor: pointer; transition: 0.2s; }
+        .mode-item { background: white; padding: 10px 5px; border-radius: 12px; text-align: center; font-size: 10px; font-weight: 700; border: 1.5px solid #F0F0F0; cursor: pointer; }
         .mode-item.active { background: #E8F5E9; border-color: var(--success); color: var(--primary); }
-        .mode-item.disabled { background: #f5f5f5; color: #aaa; cursor: not-allowed; }
 
-        #map { height: 130px; border-radius: 20px; margin: 0 20px 20px; border: 1px solid #EFEFEF; }
+        #map { height: 130px; border-radius: 20px; margin: 0 20px 20px; border: 1px solid #eee; }
         .main-content { padding: 0 20px 180px; }
         
         .input-card { background: white; border-radius: 16px; padding: 12px 15px; margin-bottom: 10px; border: 1.5px solid #F0F0F0; }
         .input-card label { display: block; font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
         .input-card input, .input-card textarea { width: 100%; border: none; font-size: 13px; font-weight: 600; outline: none; background: transparent; }
 
-        .category-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 15px; padding: 0 2px; }
+        .category-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 15px; }
         .tab { padding: 8px 16px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1px solid #F0F0F0; white-space: nowrap; }
         .tab.active { background: var(--primary); color: white; }
 
@@ -47,44 +43,38 @@
         .menu-info h4 { margin: 0 0 4px; font-size: 12px; font-weight: 800; min-height: 32px; line-height: 1.2; }
         .variant-select { width: 100%; padding: 6px; border-radius: 8px; border: 1px solid #F0F0F0; font-size: 10px; background: #FAFAFA; margin-top: 4px; font-weight: 600; }
         
-        .price { font-size: 13px; font-weight: 900; color: var(--primary); margin-top: 4px; }
+        .price { font-size: 13px; font-weight: 900; color: var(--primary); margin-top: 5px; }
         .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 10px; padding: 4px; margin-top: 10px; }
-        .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
+        .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; font-size: 16px; }
 
+        /* Bottom Bar */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 20px 25px; border-radius: 25px 25px 0 0; box-shadow: 0 -8px 25px rgba(0,0,0,0.1); z-index: 2000; display: flex; justify-content: space-between; align-items: center; }
-        .dist-info { font-size: 9px; color: var(--muted); font-weight: 700; }
-        .ongkir-info { font-size: 10px; color: var(--accent); font-weight: 800; }
         .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
         .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
-        
-        #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 1500; backdrop-filter: blur(2px); }
-        .order-summary-mini { position: fixed; bottom: -100%; left: 0; right: 0; background: white; border-radius: 25px 25px 0 0; z-index: 1501; transition: 0.4s; max-height: 70vh; overflow-y: auto; padding: 20px; }
+
+        /* Summary Panel */
+        #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 2100; backdrop-filter: blur(3px); }
+        .order-summary-mini { position: fixed; bottom: -100%; left: 0; right: 0; background: white; border-radius: 25px 25px 0 0; z-index: 2200; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1); max-height: 80vh; overflow-y: auto; padding: 25px 20px; }
         .order-summary-mini.active { bottom: 0; }
+        .summary-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
     </style>
 </head>
 <body>
 
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10000; display:flex; align-items:center; justify-content:center; padding:30px; text-align:center;">
-    <div>
-        <div style="font-size: 60px; margin-bottom: 15px;">📍</div>
-        <h2 style="font-weight: 900;">Cek Jarak Realistis</h2>
-        <p style="color: var(--muted); font-size: 13px; margin-bottom: 25px;">Mohon izinkan lokasi untuk menghitung rute pengiriman ke tempat Anda.</p>
-        <button onclick="startApp()" class="order-btn" style="width: 100%;">IZINKAN AKSES</button>
-    </div>
+    <div><div style="font-size: 60px;">📍</div><h2>Cek Jarak</h2><button onclick="startApp()" class="order-btn" style="width: 200px;">IZINKAN GPS</button></div>
 </div>
 
 <div class="header-top">
     <div class="nav-row">
-        <div class="brand-logo"><div class="brand-icon">D+</div> cloudkitchen.dyg++</div>
+        <div class="brand-logo">cloudkitchen.dyg++</div>
         <div class="queue-badge" id="noAntrean">#0</div>
     </div>
 </div>
 
-<div class="banner-container">
-    <div id="banner-track"></div>
-</div>
+<div class="banner-container"><div id="banner-track"></div></div>
 
-<div class="mode-grid" style="margin-top: -10px;">
+<div class="mode-grid" style="margin-top:-10px">
     <div id="mDine" class="mode-item active" onclick="changeMode('DINE IN', this)">🍽️ Makan Sini</div>
     <div id="mTake" class="mode-item" onclick="changeMode('TAKE AWAY', this)">🛍️ Bawa Pulang</div>
     <div id="mDeliv" class="mode-item" onclick="changeMode('DELIVERY', this)">🛵 Pesan Antar</div>
@@ -96,28 +86,33 @@
 <div id="map"></div>
 
 <div class="main-content">
-    <div class="input-card"><label>Nama Anda</label><input type="text" id="custName" placeholder="..."></div>
+    <div class="input-card"><label>Nama</label><input type="text" id="custName" placeholder="Nama anda..."></div>
     <div id="boxMeja" class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="00"></div>
-    <div id="boxAlamat" style="display:none;" class="input-card"><label>Alamat Pengiriman</label><textarea id="addressDetail" rows="2" placeholder="Detail alamat..."></textarea></div>
+    <div id="boxAlamat" style="display:none;" class="input-card"><label>Alamat</label><textarea id="addressDetail" rows="2"></textarea></div>
 
-    <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Pilih Menu</div>
-    <div class="category-tabs" id="cat-tabs" style="margin-top:10px;"></div>
-    <div id="menu-container" class="menu-grid">Memuat...</div>
+    <div class="category-tabs" id="cat-tabs" style="margin-top:20px;"></div>
+    <div id="menu-container" class="menu-grid"></div>
 </div>
 
 <div id="summaryOverlay" onclick="toggleSummary(false)"></div>
 <div id="orderSummaryPanel" class="order-summary-mini">
-    <h3 style="margin-top:0; text-align:center;">Rincian Pesanan</h3>
+    <div style="width:40px; height:4px; background:#ddd; border-radius:10px; margin: 0 auto 15px;"></div>
+    <h3 style="margin-top:0; text-align:center;">Detail Pesanan</h3>
     <div id="summaryItems"></div>
+    <div style="margin-top:20px; padding:15px; background:#f9f9f9; border-radius:12px;">
+        <div style="display:flex; justify-content:space-between; font-size:13px;"><span>Jarak:</span><b id="sumDist">-</b></div>
+        <div style="display:flex; justify-content:space-between; font-size:13px;"><span>Ongkir:</span><b id="sumOngkir">-</b></div>
+    </div>
+    <button onclick="submitOrder()" class="order-btn" style="width:100%; margin-top:15px; padding:15px;">KIRIM WHATSAPP</button>
 </div>
 
-<div class="bottom-bar" onclick="toggleSummary(true)">
-    <div class="price-container">
-        <span id="distLabel" class="dist-info"></span>
-        <span id="ongkirLabel" class="ongkir-info"></span>
+<div class="bottom-bar">
+    <div onclick="toggleSummary(true)" style="cursor:pointer">
+        <div id="distLabel" style="font-size:9px; font-weight:bold; color:var(--muted)"></div>
+        <div id="ongkirLabel" style="font-size:10px; font-weight:800; color:var(--accent)"></div>
         <div class="price-total">Rp <span id="miniPrice">0</span></div>
     </div>
-    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); submitOrder()" disabled>PILIH MENU</button>
+    <button id="btnOrder" class="order-btn" onclick="toggleSummary(true)" disabled>PILIH MENU</button>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -125,91 +120,64 @@
     const CONFIG = {
         WARUNG_LOC: [-7.045132799426078, 110.39216011095742],
         MENU_CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
-        ROAD_FACTOR: 1.35, // Faktor agar 9.8km udara menjadi ~13km darat
+        ROAD_FACTOR: 1.35, 
         WA_NUM: '6281393048132'
     };
 
-    const VARIAN_NASI = ["Nasi Putih", "Nasi Uduk", "Nasi Cabe Ijo (+2rb)"];
-    const VARIAN_SUHU = ["Es", "Panas"];
-    const BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg"];
-
     let menuData = [], cart = [], currentMode = 'DINE IN', userDistance = 0, currentCat = 'ALL';
+    const BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg"];
 
     async function startApp() {
         navigator.geolocation.getCurrentPosition(pos => {
-            const airDist = L.latLng(pos.coords.latitude, pos.coords.longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOC));
-            userDistance = airDist * CONFIG.ROAD_FACTOR;
-            
-            if (airDist > 150) {
-                document.getElementById('mDine').classList.add('disabled');
-                changeMode('DELIVERY', document.getElementById('mDeliv'));
-            }
+            const air = L.latLng(pos.coords.latitude, pos.coords.longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOC));
+            userDistance = air * CONFIG.ROAD_FACTOR;
+            if (air > 150) { document.getElementById('mDine').style.opacity = '0.5'; changeMode('DELIVERY', document.getElementById('mDeliv')); }
             initMap(pos.coords.latitude, pos.coords.longitude);
-            initBanner();
-            loadMenu();
+            initBanner(); loadMenu();
             document.getElementById('welcome-overlay').style.display = 'none';
-        }, () => alert("GPS wajib aktif!"));
+        }, () => alert("GPS wajib!"));
     }
 
     function initMap(lat, lng) {
         const map = L.map('map', {zoomControl: false}).setView([lat, lng], 14);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.marker([lat, lng]).addTo(map).bindPopup("Kamu");
-        L.marker(CONFIG.WARUNG_LOC).addTo(map).bindPopup("Warung");
+        L.marker([lat, lng]).addTo(map); L.marker(CONFIG.WARUNG_LOC).addTo(map);
     }
 
     function initBanner() {
-        const track = document.getElementById('banner-track');
-        track.innerHTML = BANNERS.map(img => `<img src="${img}">`).join('');
-        let idx = 0;
-        setInterval(() => {
-            idx = (idx + 1) % BANNERS.length;
-            track.style.transform = `translateX(-${idx * 100}%)`;
-        }, 4000);
+        const t = document.getElementById('banner-track');
+        t.innerHTML = BANNERS.map(img => `<img src="${img}">`).join('');
+        let i = 0; setInterval(() => { i = (i+1)%BANNERS.length; t.style.transform = `translateX(-${i*100}%)`; }, 4000);
     }
 
     async function loadMenu() {
         const res = await fetch(CONFIG.MENU_CSV);
-        const csv = await res.text();
-        menuData = csv.split('\n').slice(1).map((row, i) => {
-            const col = row.split(',');
-            return { id: i, kat: col[0].trim(), nama: col[1].trim(), harga: parseInt(col[2]) || 0 };
+        const txt = await res.text();
+        menuData = txt.split('\n').slice(1).map((r, i) => {
+            const c = r.split(',');
+            return { id: i, kat: c[0].trim(), nama: c[1].trim(), harga: parseInt(c[2]) || 0 };
         }).filter(m => m.nama);
-        renderTabs();
+        const cats = [...new Set(menuData.map(m => m.kat))];
+        document.getElementById('cat-tabs').innerHTML = `<div class="tab active" onclick="filterByTab('ALL', this)">Semua</div>` + cats.map(c => `<div class="tab" onclick="filterByTab('${c}', this)">${c}</div>`).join('');
         renderMenu();
     }
 
-    function renderTabs() {
-        const cats = [...new Set(menuData.map(m => m.kat))];
-        document.getElementById('cat-tabs').innerHTML = `<div class="tab active" onclick="filterByTab('ALL', this)">Semua</div>` + 
-            cats.map(c => `<div class="tab" onclick="filterByTab('${c}', this)">${c}</div>`).join('');
-    }
-
-    function renderMenu(kat = 'ALL') {
-        currentCat = kat;
-        const items = kat === 'ALL' ? menuData : menuData.filter(m => m.kat === kat);
+    function renderMenu() {
+        const items = currentCat === 'ALL' ? menuData : menuData.filter(m => m.kat === currentCat);
         document.getElementById('menu-container').innerHTML = items.map(m => {
-            const qty = cart.filter(c => c.id === m.id).length;
-            const isWardoy = m.kat.toLowerCase().includes('wardoy');
-            const isHemat = m.kat.toLowerCase().includes('paket hemat');
-            
+            const count = cart.filter(c => c.id === m.id).length;
+            const isW = m.kat.toLowerCase().includes('wardoy'), isH = m.kat.toLowerCase().includes('paket hemat');
             return `
                 <div class="menu-item">
                     <div class="menu-info">
                         <h4>${m.nama}</h4>
-                        ${(isWardoy || isHemat) ? `
-                            <select id="vn-${m.id}" class="variant-select">
-                                ${VARIAN_NASI.map(v => `<option value="${v}">${v}</option>`).join('')}
-                            </select>` : ''}
-                        ${isHemat ? `
-                            <select id="vs-${m.id}" class="variant-select">
-                                ${VARIAN_SUHU.map(v => `<option value="${v}">${v}</option>`).join('')}
-                            </select>` : ''}
+                        ${(isW || isH) ? `<select id="vn-${m.id}" class="variant-select"><option>Nasi Putih</option><option>Nasi Uduk</option><option>Nasi Cabe Ijo (+2rb)</option></select>` : ''}
+                        ${isH ? `<select id="vs-${m.id}" class="variant-select"><option>Es</option><option>Panas</option></select>` : ''}
                         <div class="price">Rp ${m.harga.toLocaleString()}</div>
                     </div>
                     <div class="qty-box">
                         <button class="qty-btn" onclick="updateCart(${m.id}, -1)">-</button>
-                        <span>${qty}</span>
+                        <span style="font-weight:800">${count}</span>
                         <button class="qty-btn" onclick="updateCart(${m.id}, 1)">+</button>
                     </div>
                 </div>
@@ -218,63 +186,52 @@
         refreshUI();
     }
 
-    function updateCart(id, change) {
-        if (change > 0) {
-            const vn = document.getElementById(`vn-${id}`)?.value || null;
-            const vs = document.getElementById(`vs-${id}`)?.value || null;
-            cart.push({...menuData.find(m => m.id === id), vn, vs});
+    function updateCart(id, chg, vnManual = null, vsManual = null) {
+        if (chg > 0) {
+            const vn = vnManual || document.getElementById(`vn-${id}`)?.value || null;
+            const vs = vsManual || document.getElementById(`vs-${id}`)?.value || null;
+            cart.push({...menuData.find(m => m.id === id), vn, vs, key: `${id}-${vn}-${vs}`});
         } else {
-            const idx = cart.findLastIndex(c => c.id === id);
+            const idx = cart.findLastIndex(c => (vnManual ? c.key === `${id}-${vnManual}-${vsManual}` : c.id === id));
             if (idx !== -1) cart.splice(idx, 1);
         }
-        renderMenu(currentCat);
-    }
-
-    function getOngkir() {
-        if (currentMode !== 'DELIVERY') return 0;
-        const km = userDistance / 1000;
-        if (km <= 1) return 3000;
-        if (km <= 3) return 5000;
-        return 5000 + (Math.ceil(km - 3) * 2000);
+        renderMenu();
+        if (cart.length === 0) toggleSummary(false);
     }
 
     function refreshUI() {
-        let subtotal = 0;
-        cart.forEach(c => {
-            let extra = (c.vn && c.vn.includes('Cabe Ijo')) ? 2000 : 0;
-            subtotal += (c.harga + extra);
-        });
-
-        const ongkir = getOngkir();
-        const total = subtotal + ongkir;
-        const km = (userDistance / 1000).toFixed(1);
-
-        document.getElementById('miniPrice').innerText = total.toLocaleString();
+        let sub = 0; cart.forEach(c => sub += (c.harga + (c.vn?.includes('Cabe Ijo') ? 2000 : 0)));
+        const km = (userDistance/1000).toFixed(1);
+        const ongkir = (currentMode === 'DELIVERY') ? (km <= 1 ? 3000 : km <= 3 ? 5000 : 5000 + Math.ceil(km-3)*2000) : 0;
+        
+        document.getElementById('miniPrice').innerText = (sub + ongkir).toLocaleString();
         document.getElementById('btnOrder').disabled = cart.length === 0;
-        document.getElementById('btnOrder').innerText = cart.length === 0 ? "PILIH MENU" : "LANJUT PESAN";
-
-        if (currentMode === 'DELIVERY') {
-            document.getElementById('distLabel').innerText = `📍 Rute Jalan: ${km} km`;
-            document.getElementById('ongkirLabel').innerText = `+ Ongkir: Rp ${ongkir.toLocaleString()}`;
-        } else {
-            document.getElementById('distLabel').innerText = "";
-            document.getElementById('ongkirLabel').innerText = "";
-        }
-
-        const summary = {};
-        cart.forEach(c => {
-            const key = `${c.nama}${c.vn ? ` (${c.vn})` : ''}${c.vs ? ` [${c.vs}]` : ''}`;
-            summary[key] = (summary[key] || 0) + 1;
-        });
-        document.getElementById('summaryItems').innerHTML = Object.entries(summary).map(([n, q]) => `
-            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-size:13px;">
-                <span>${n}</span><b>${q}x</b>
+        document.getElementById('btnOrder').innerText = cart.length === 0 ? "PILIH MENU" : "DETAIL PESANAN";
+        
+        document.getElementById('distLabel').innerText = currentMode === 'DELIVERY' ? `📍 Rute: ${km} km` : "";
+        document.getElementById('ongkirLabel').innerText = currentMode === 'DELIVERY' ? `+ Ongkir Rp ${ongkir.toLocaleString()}` : "";
+        
+        // Render Detail Panel
+        const groups = {}; 
+        cart.forEach(c => { const k = `${c.nama}|${c.vn}|${c.vs}`; groups[k] = groups[k] || { ...c, q: 0 }; groups[k].q++; });
+        document.getElementById('summaryItems').innerHTML = Object.values(groups).map(i => `
+            <div class="summary-item">
+                <div>
+                    <div style="font-weight:800; font-size:13px;">${i.nama}</div>
+                    <div style="font-size:10px; color:var(--muted)">${i.vn || ''} ${i.vs ? `[${i.vs}]` : ''}</div>
+                </div>
+                <div class="qty-box" style="margin-top:0; width:90px;">
+                    <button class="qty-btn" onclick="updateCart(${i.id}, -1, '${i.vn}', '${i.vs}')" style="width:24px; height:24px;">-</button>
+                    <b style="font-size:12px;">${i.q}</b>
+                    <button class="qty-btn" onclick="updateCart(${i.id}, 1, '${i.vn}', '${i.vs}')" style="width:24px; height:24px;">+</button>
+                </div>
             </div>
         `).join('');
+        document.getElementById('sumDist').innerText = km + " km";
+        document.getElementById('sumOngkir').innerText = "Rp " + ongkir.toLocaleString();
     }
 
     function changeMode(m, el) {
-        if (el.classList.contains('disabled')) return Swal.fire('Jarak Terlalu Jauh', 'Silakan pilih mode DELIVERY.', 'info');
         currentMode = m;
         document.querySelectorAll('.mode-item').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
@@ -285,37 +242,26 @@
 
     function filterByTab(c, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        el.classList.add('active');
-        renderMenu(c);
+        el.classList.add('active'); currentCat = c; renderMenu();
     }
 
-    function devMode() { Swal.fire('Info', 'Fitur ini sedang dalam pengembangan.', 'info'); }
-
-    function toggleSummary(show) {
-        if (cart.length === 0 && show) return;
-        document.getElementById('orderSummaryPanel').classList.toggle('active', show);
-        document.getElementById('summaryOverlay').style.display = show ? 'block' : 'none';
+    function toggleSummary(s) { 
+        if (s && cart.length === 0) return;
+        document.getElementById('orderSummaryPanel').classList.toggle('active', s);
+        document.getElementById('summaryOverlay').style.display = s ? 'block' : 'none';
     }
+
+    function devMode() { Swal.fire('Informasi', 'Fitur ini dalam pengembangan mitra.', 'info'); }
 
     function submitOrder() {
         const name = document.getElementById('custName').value;
-        if (!name) return Swal.fire('Nama Kosong', 'Masukkan nama Anda.', 'warning');
-
-        let msg = `*PESANAN BARU (${currentMode})*\n👤 Nama: ${name}\n`;
-        if (currentMode === 'DELIVERY') {
-            msg += `🏠 Alamat: ${document.getElementById('addressDetail').value}\n`;
-            msg += `📍 Jarak Rute: ${(userDistance/1000).toFixed(1)} km\n`;
-        }
-
-        const summary = {};
-        cart.forEach(c => {
-            const key = `${c.nama}${c.vn ? ` (${c.vn})` : ''}${c.vs ? ` [${c.vs}]` : ''}`;
-            summary[key] = (summary[key] || 0) + 1;
-        });
-        msg += `\n*MENU:*\n` + Object.entries(summary).map(([n, q]) => `- ${n} (${q}x)`).join('\n');
-        msg += `\n\n*TOTAL: Rp ${document.getElementById('miniPrice').innerText}*`;
-
-        window.location.href = `https://wa.me/${CONFIG.WA_NUM}?text=${encodeURIComponent(msg)}`;
+        if(!name) return Swal.fire('Nama Wajib', 'Mohon isi nama anda.', 'warning');
+        let txt = `*PESANAN BARU (${currentMode})*\nNama: ${name}\n`;
+        if(currentMode === 'DELIVERY') txt += `Alamat: ${document.getElementById('addressDetail').value}\nJarak: ${(userDistance/1000).toFixed(1)}km\n`;
+        const groups = {}; cart.forEach(c => { const k = `${c.nama} (${c.vn||''}${c.vs?` - ${c.vs}`:''})`; groups[k] = (groups[k]||0)+1; });
+        txt += `\n*MENU:*\n` + Object.entries(groups).map(([k,q])=>`- ${k} x${q}`).join('\n');
+        txt += `\n\n*TOTAL: Rp ${document.getElementById('miniPrice').innerText}*`;
+        window.location.href = `https://wa.me/${CONFIG.WA_NUM}?text=${encodeURIComponent(txt)}`;
     }
 </script>
 </body>
