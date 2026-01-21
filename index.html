@@ -172,6 +172,17 @@ mark {
     border-radius: 2px;
     font-weight: 800;
 }
+/* Animasi tombol saat ditekan (Touch Effect) */
+.order-btn:active, .modal-card button:active {
+    transform: scale(0.92); /* Mengecil sedikit */
+    filter: brightness(1.2); /* Menjadi lebih terang */
+    transition: transform 0.1s ease;
+}
+
+/* Tambahan agar transisi kembali ke ukuran normal tidak kaku */
+.order-btn {
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
     </style>
 </head>
 <body>
@@ -492,6 +503,7 @@ mark {
     }
 
     async function submitOrder() {
+if (navigator.vibrate) navigator.vibrate(50); // Getar halus 50ms (seperti sentuhan sistem)
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
@@ -535,18 +547,16 @@ mark {
     });
 
     const pRowsWA = Object.entries(summary).map(([name, data]) => 
-        `🍴 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
+        `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
     );
 
-    // --- 3. Hitung Data Delivery ---
+    // --- 3. Hitung Data & Link Lokasi ---
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    
-    // Gunakan format standar Google Maps agar langsung bisa diklik di WA
-const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
+    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
 
-    // --- 4. Susun Pesanan Teks untuk WhatsApp ---
+    // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
@@ -556,7 +566,7 @@ const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${windo
     if (currentMode === 'DINE IN') {
         msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
     } else {
-        msg += `📍 *Alamat:* ${aI.value}\n`;
+        msg += `🏠 *Alamat:* ${aI.value}\n`;
         msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
         msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
     }
@@ -572,9 +582,27 @@ const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${windo
     msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
     msg += `Terimakasih!`;
 
-    // --- 5. Kirim ---
-    const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-    window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+    // --- 5. Animasi Feedback Tombol & Pengiriman ---
+    // Memicu getar halus saat klik
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    // Mengubah tombol menjadi loading
+    const btnKirim = document.querySelector('#modalConfirm button:last-child');
+    if (btnKirim) {
+        btnKirim.innerHTML = "⌛ Menghubungkan...";
+        btnKirim.style.opacity = "0.7";
+        btnKirim.style.pointerEvents = "none";
+    }
+
+    // Kirim data ke database di latar belakang
+    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
+
+    // Tunggu animasi sebentar baru pindah ke WA
+    setTimeout(() => {
+        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+    }, 600); 
 }
 
 
