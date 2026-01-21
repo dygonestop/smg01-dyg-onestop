@@ -142,6 +142,11 @@
         
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 360px; padding: 25px; border-radius: 20px; text-align: center; }
+.summary-item.removing {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.25s ease;
+}
     </style>
 </head>
 <body>
@@ -354,10 +359,18 @@
                 ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
             };
             cart.push({ ...item, ...vData });
-        } else {
-            let idx = forceVariant ? cart.findLastIndex(c => c.id === id && c.vN === forceVariant.vN) : cart.findLastIndex(c => c.id === id);
-            if (idx !== -1) cart.splice(idx, 1);
-        }
+        }else {
+    let idx = cart.findLastIndex(c =>
+        c.id === id &&
+        (!forceVariant || (
+            c.vN === forceVariant.vN &&
+            c.vM === forceVariant.vM &&
+            c.vR === forceVariant.vR &&
+            c.vS === forceVariant.vS
+        ))
+    );
+    if (idx !== -1) cart.splice(idx, 1);
+}
         refreshUI();
     }
 
@@ -453,24 +466,65 @@
 
     // --- FUNGSI UI LAINNYA ---
     function updateOrderSummary() {
-        const container = document.getElementById('summaryItems');
-        const groups = {};
-        cart.forEach(c => {
-            const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
-            if(!groups[key]) groups[key] = { ...c, qty: 0 };
-            groups[key].qty++;
-        });
-        container.innerHTML = Object.values(groups).map(item => `
-            <div class="summary-item">
-                <div class="item-detail-name">
-                    <b>${item.nama}</b>
-                    <span>${[item.vN, item.vM, item.vR, item.vS].filter(x => x).join(', ') || 'Original'}</span>
-                </div>
-                <div class="mini-qty-box">
-                    <span>${item.qty}x</span>
-                </div>
-            </div>`).join('');
+    const container = document.getElementById('summaryItems');
+
+    if (cart.length === 0) {
+        container.innerHTML = `<div style="text-align:center;font-size:12px;color:#999;padding:30px;">
+            Keranjang masih kosong
+        </div>`;
+        toggleSummary(false);
+        return;
     }
+
+    const groups = {};
+    cart.forEach(c => {
+        const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
+        if (!groups[key]) groups[key] = { ...c, qty: 0 };
+        groups[key].qty++;
+    });
+
+    container.innerHTML = Object.entries(groups).map(([key, item]) => `
+        <div class="summary-item"
+     ontouchstart="swipeStart(event)"
+     ontouchend="swipeEnd(event, '${key}')">
+            <div class="item-detail-name">
+    <b>${item.nama}</b>
+    <span>${[item.vN, item.vM, item.vR, item.vS].filter(Boolean).join(', ') || 'Original'}</span>
+    <div style="font-size:11px;font-weight:800;color:var(--primary);margin-top:3px;">
+        Rp ${(item.qty * (item.harga + (item.ex || 0))).toLocaleString('id-ID')}
+    </div>
+</div>
+            <div class="mini-qty-box">
+                <button class="mini-qty-btn"
+                    onclick="changeCartFromSummary('${item.id}', -1, '${key}')">−</button>
+                <span style="font-weight:800;">${item.qty}</span>
+                <button class="mini-qty-btn"
+                    onclick="changeCartFromSummary('${item.id}', 1, '${key}')">+</button>
+            </div>
+        </div>
+    `).join('');
+}
+function changeCartFromSummary(id, delta, groupKey) {
+    const parts = groupKey.split('-');
+
+    const vN = parts[1] || null;
+    const vM = parts[2] || null;
+    const vR = parts[3] || null;
+    const vS = parts[4] || null;
+
+    if (delta > 0) {
+        // tambah item dengan varian yang sama
+        updateCart(id, 1, { vN, vM, vR, vS, ex: 0 });
+    } else {
+        // kurangi item spesifik (berdasarkan varian)
+        updateCart(id, -1, { vN, vM, vR, vS });
+    }
+
+    // kalau cart kosong → tutup keranjang & kembali ke menu
+    if (cart.length === 0) {
+        toggleSummary(false);
+    }
+}
 
     function toggleSummary(open) {
         if (cart.length === 0) return;
@@ -521,6 +575,31 @@
     function showOutOfRangeAlert() { alert("Maaf, lokasi kamu terlalu jauh untuk Dine-In. Pakai Take Away atau Delivery ya!"); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
+/* ===============================
+   SWIPE HAPUS ITEM (KERANJANG)
+   =============================== */
+
+let swipeX = 0;
+
+function swipeStart(e) {
+    swipeX = e.changedTouches[0].clientX;
+}
+
+function swipeEnd(e, key) {
+    const endX = e.changedTouches[0].clientX;
+    if (swipeX - endX > 60) {
+        removeGroupFromCart(key);
+    }
+}
+
+function removeGroupFromCart(groupKey) {
+    cart = cart.filter(c => {
+        const k = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
+        return k !== groupKey;
+    });
+    refreshUI();
+}
+
 </script>
 <div id="modalComingSoon" class="modal-overlay">
     <div class="modal-card">
