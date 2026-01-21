@@ -74,12 +74,12 @@
 
         .summary-scroll { flex: 1; overflow-y: auto; padding: 0 20px 140px; }
         
-        /* SWIPE ITEM ACTION */
         .summary-item-wrapper { position: relative; margin-bottom: 5px; overflow: hidden; border-radius: 15px; }
         .delete-action { 
             position: absolute; right: 0; top: 0; bottom: 0; width: 80px; 
             background: var(--danger); color: white; display: flex; align-items: center; 
             justify-content: center; font-weight: 800; font-size: 12px; border-radius: 0 15px 15px 0;
+            z-index: 1;
         }
         .summary-item { 
             position: relative; background: white; padding: 15px; 
@@ -96,7 +96,6 @@
 
         #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 998; backdrop-filter: blur(2px); }
 
-        /* BOTTOM BAR FIXED */
         .bottom-bar { 
             position: fixed; bottom: 0; left: 0; right: 0; background: white; 
             padding: 15px 25px 25px; border-radius: 30px 30px 0 0; 
@@ -104,7 +103,6 @@
             display: flex; justify-content: space-between; align-items: center; 
         }
         
-        /* TOMBOL KECIL DI ATAS BAR UNTUK INDIKATOR */
         .swipe-indicator {
             position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
             background: var(--primary); color: white; padding: 5px 15px; border-radius: 20px;
@@ -216,6 +214,7 @@
     const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000},{n:'Nasi Rumput Laut',e:2000},{n:'Nasi Margarin',e:2000}];
     const VARIAN_MIE_GORENG = [{n:'Original',e:0},{n:'Rendang',e:0},{n:'Salero Padang',e:0}];
     const VARIAN_MIE_REBUS = [{n:'Ayam Bawang',e:0},{n:'Soto',e:0}];
+    const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
     let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0, startX = 0, startY = 0;
@@ -242,7 +241,7 @@
             const csv = await resp.text();
             menuData = csv.split('\n').slice(1).map((row, i) => {
                 const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
-                return { id: 'm'+i, kat: cols[0], nama: cols[1], harga: parseInt(cols[2]) };
+                return { id: 'm'+i, kat: cols[0] || '', nama: cols[1] || '', harga: parseInt(cols[2]) || 0 };
             }).filter(m => m.nama);
             renderTabs();
             renderMenu();
@@ -262,9 +261,12 @@
         document.getElementById('menu-container').innerHTML = items.map(m => {
             const nameLower = m.nama.toLowerCase();
             const catLower = m.kat.toLowerCase();
+            
             const isNasi = catLower.includes("hemat") || (catLower.includes("wardoy") && nameLower.includes("nasi"));
             const isMieGoreng = nameLower.includes("mie") && nameLower.includes("goreng") && !nameLower.includes("lik");
             const isMieRebus = nameLower.includes("mie") && (nameLower.includes("rebus") || nameLower.includes("kuah")) && !nameLower.includes("lik");
+            // Suhu hanya muncul di Paket, TIDAK di Drink (sesuai request)
+            const isPaketSuhu = catLower.includes("paket");
 
             return `
             <div class="menu-item">
@@ -275,6 +277,7 @@
                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
                         ${isMieGoreng ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                         ${isMieRebus ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${isPaketSuhu ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                     </div>
                 </div>
                 <div class="qty-box">
@@ -286,33 +289,41 @@
         }).join('');
     }
 
-    function updateCart(id, change, customVariant = null) {
+    function updateCart(id, change, forceVariant = null) {
         const item = menuData.find(m => m.id === id);
+        if (!item) return;
+
         if (change > 0) {
-            let v = customVariant;
-            if(!v) {
+            let v;
+            if (forceVariant) {
+                v = forceVariant;
+            } else {
                 const selN = document.getElementById(`n-${id}`)?.value || null;
                 const selM = document.getElementById(`m-${id}`)?.value || null;
                 const selR = document.getElementById(`r-${id}`)?.value || null;
-                const extra = selN ? (VARIAN_NASI.find(v => v.n === selN)?.e || 0) : 0;
-                v = { vN: selN, vM: selM, vR: selR, ex: extra };
+                const selS = document.getElementById(`s-${id}`)?.value || null;
+                const extra = selN ? (VARIAN_NASI.find(x => x.n === selN)?.e || 0) : 0;
+                v = { vN: selN, vM: selM, vR: selR, vS: selS, ex: extra };
             }
             cart.push({ ...item, ...v });
         } else {
-            // Jika hapus dari ringkasan, harus cari yang variannya sama persis
             let idx = -1;
-            if(customVariant) {
-                idx = cart.findLastIndex(c => c.id === id && c.vN === customVariant.vN && c.vM === customVariant.vM && c.vR === customVariant.vR);
+            if (forceVariant) {
+                idx = cart.findLastIndex(c => 
+                    c.id === id && c.vN === forceVariant.vN && 
+                    c.vM === forceVariant.vM && c.vR === forceVariant.vR && 
+                    c.vS === forceVariant.vS
+                );
             } else {
-                idx = cart.map(c => c.id).lastIndexOf(id);
+                idx = cart.findLastIndex(c => c.id === id);
             }
             if (idx !== -1) cart.splice(idx, 1);
         }
         refreshUI();
     }
 
-    function removeAllOfThis(id, variant) {
-        cart = cart.filter(c => !(c.id === id && c.vN === variant.vN && c.vM === variant.vM && c.vR === variant.vR));
+    function removeFull(id, v) {
+        cart = cart.filter(c => !(c.id === id && c.vN === v.vN && c.vM === v.vM && c.vR === v.vR && c.vS === v.vS));
         refreshUI();
     }
 
@@ -354,94 +365,73 @@
         updateOrderSummary();
     }
 
-    // LOGIKA SWIPE & BOTTOM SHEET
-    function toggleSummary(forceState) {
-        const panel = document.getElementById('orderSummaryPanel');
-        const overlay = document.getElementById('summaryOverlay');
+    function toggleSummary(s) {
+        const p = document.getElementById('orderSummaryPanel');
+        const o = document.getElementById('summaryOverlay');
         const ind = document.getElementById('swipeInd');
         if (cart.length === 0) return;
 
-        const isOpen = forceState !== undefined ? forceState : !panel.classList.contains('active');
-        if (isOpen) {
-            panel.classList.add('active');
-            overlay.style.display = 'block';
-            ind.innerHTML = "▼ TUTUP DETAIL";
-        } else {
-            panel.classList.remove('active');
-            overlay.style.display = 'none';
-            ind.innerHTML = "▲ LIHAT DETAIL";
-        }
+        const open = s !== undefined ? s : !p.classList.contains('active');
+        if (open) { p.classList.add('active'); o.style.display = 'block'; ind.innerHTML = "▼ TUTUP DETAIL"; }
+        else { p.classList.remove('active'); o.style.display = 'none'; ind.innerHTML = "▲ LIHAT DETAIL"; }
     }
 
-    // TOUCH EVENTS UNTUK SWIPE UP/DOWN
     document.addEventListener('touchstart', e => { 
-        startY = e.touches[0].clientY; 
-        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY; startX = e.touches[0].clientX; 
     }, {passive: true});
-
+    
     document.addEventListener('touchend', e => {
-        const endY = e.changedTouches[0].clientY;
-        const diffY = startY - endY;
-        if (diffY > 70 && startY > window.innerHeight - 150) toggleSummary(true); 
-        if (diffY < -70 && panelIsActive()) toggleSummary(false);
+        const dy = startY - e.changedTouches[0].clientY;
+        if (dy > 70 && startY > window.innerHeight - 150) toggleSummary(true); 
+        if (dy < -70 && document.getElementById('orderSummaryPanel').classList.contains('active')) toggleSummary(false);
     }, {passive: true});
-
-    function panelIsActive() { return document.getElementById('orderSummaryPanel').classList.contains('active'); }
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
         if (cart.length === 0) { toggleSummary(false); return; }
         
-        // Grouping berdasarkan ID + Varian
         const groups = {};
         cart.forEach(c => {
-            const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}`;
+            const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
             if(!groups[key]) groups[key] = { ...c, qty: 0 };
             groups[key].qty++;
         });
 
         container.innerHTML = Object.values(groups).map(item => {
-            const variantText = [item.vN, item.vM, item.vR].filter(x => x).join(', ');
-            const varObj = { vN: item.vN, vM: item.vM, vR: item.vR, ex: item.ex };
+            const tags = [item.vN, item.vM, item.vR, item.vS].filter(x => x).join(', ');
+            const varObj = { vN: item.vN, vM: item.vM, vR: item.vR, vS: item.vS, ex: item.ex };
+            const varStr = JSON.stringify(varObj).replace(/"/g, '&quot;');
             
             return `
             <div class="summary-item-wrapper">
-                <div class="delete-action" onclick="removeAllOfThis('${item.id}', ${JSON.stringify(varObj)})">HAPUS</div>
-                <div class="summary-item" ontouchstart="handleItemTouchStart(this, event)" ontouchmove="handleItemTouchMove(this, event)" ontouchend="handleItemTouchEnd(this)">
+                <div class="delete-action" onclick="removeFull('${item.id}', ${varStr})">HAPUS</div>
+                <div class="summary-item" ontouchstart="hS(this, event)" ontouchmove="hM(this, event)" ontouchend="hE(this)">
                     <div class="item-detail-name">
                         <b>${item.nama}</b>
-                        <span>${variantText || 'Tanpa Varian'}</span>
+                        <span>${tags || 'Tanpa Varian'}</span>
                         <div style="font-weight:700; color:var(--primary); margin-top:3px;">Rp ${((item.harga + (item.ex || 0)) * item.qty).toLocaleString()}</div>
                     </div>
                     <div class="mini-qty-box">
-                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', -1, ${JSON.stringify(varObj)})">−</button>
+                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', -1, ${varStr})">−</button>
                         <span style="font-weight:900; font-size:14px; min-width:20px; text-align:center;">${item.qty}</span>
-                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', 1, ${JSON.stringify(varObj)})">+</button>
+                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', 1, ${varStr})">+</button>
                     </div>
                 </div>
             </div>`;
         }).join('');
     }
 
-    // SWIPE TO DELETE LOGIC PER ITEM
-    let itemStartX = 0;
-    function handleItemTouchStart(el, e) { itemStartX = e.touches[0].clientX; }
-    function handleItemTouchMove(el, e) {
-        let diffX = itemStartX - e.touches[0].clientX;
-        if (diffX > 0 && diffX < 100) {
-            el.style.transform = `translateX(-${diffX}px)`;
-        }
+    let iSX = 0;
+    function hS(el, e) { iSX = e.touches[0].clientX; }
+    function hM(el, e) {
+        let dx = iSX - e.touches[0].clientX;
+        if (dx > 0 && dx < 100) el.style.transform = `translateX(-${dx}px)`;
     }
-    function handleItemTouchEnd(el) {
-        let currentTranslate = parseInt(el.style.transform.replace(/[^\d.-]/g, '')) || 0;
-        if (currentTranslate < -50) {
-            el.style.transform = `translateX(-80px)`;
-        } else {
-            el.style.transform = `translateX(0px)`;
-        }
+    function hE(el) {
+        let tx = parseInt(el.style.transform.replace(/[^\d.-]/g, '')) || 0;
+        el.style.transform = tx < -50 ? `translateX(-80px)` : `translateX(0px)`;
     }
 
-    // OTHER APP LOGIC
     function filterByTab(cat, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
@@ -503,7 +493,7 @@
         const summary = {};
         cart.forEach(c => {
             let l = c.nama; 
-            let tags = [c.vN, c.vM, c.vR].filter(x => x).join(', ');
+            let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
             if(tags) l += ` [${tags}]`;
             summary[l] = (summary[l] || 0) + 1;
         });
