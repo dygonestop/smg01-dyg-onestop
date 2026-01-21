@@ -57,24 +57,24 @@
         .qty-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
 
-        /* BOTTOM SHEET */
+        /* MODIFIKASI BOTTOM SHEET */
         .order-summary-mini {
             position: fixed; bottom: -100%; left: 0; right: 0; 
             background: white; border-radius: 30px 30px 0 0; 
-            box-shadow: 0 -15px 40px rgba(0,0,0,0.15); 
-            z-index: 999; max-height: 85vh; border-top: 1px solid #eee;
-            transition: bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 -15px 40px rgba(0,0,0,0.2); 
+            z-index: 999; max-height: 80vh; border-top: 1px solid #eee;
+            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column;
         }
         .order-summary-mini.active { bottom: 0; }
         
-        .sheet-header { padding: 15px 20px; text-align: center; background: white; border-radius: 30px 30px 0 0; }
+        .sheet-header { padding: 15px 20px; text-align: center; background: white; border-radius: 30px 30px 0 0; border-bottom: 1px solid #F5F5F5; }
         .sheet-handle { width: 50px; height: 5px; background: #E0E0E0; border-radius: 10px; margin: 0 auto 10px; }
-        .sheet-title { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: 1px; }
+        .sheet-title { font-size: 12px; font-weight: 800; color: var(--muted); letter-spacing: 1px; }
 
-        .summary-scroll { flex: 1; overflow-y: auto; padding: 0 20px 140px; }
+        .summary-scroll { flex: 1; overflow-y: auto; padding: 10px 20px 140px; }
         
-        .summary-item-wrapper { position: relative; margin-bottom: 5px; overflow: hidden; border-radius: 15px; background: var(--danger); }
+        .summary-item-wrapper { position: relative; margin-bottom: 10px; overflow: hidden; border-radius: 15px; background: var(--danger); }
         .delete-action { 
             position: absolute; right: 0; top: 0; bottom: 0; width: 80px; 
             background: var(--danger); color: white; display: flex; align-items: center; 
@@ -84,35 +84,35 @@
         .summary-item { 
             position: relative; background: white; padding: 15px; 
             display: flex; justify-content: space-between; align-items: center; 
-            z-index: 2; transition: transform 0.3s ease; border-bottom: 1px solid #F5F5F5;
+            z-index: 2; transition: transform 0.2s ease-out;
         }
 
         .item-detail-name { flex: 1; margin-right: 10px; }
-        .item-detail-name b { display: block; font-size: 14px; }
+        .item-detail-name b { display: block; font-size: 14px; margin-bottom: 2px; }
         .item-detail-name span { font-size: 11px; color: var(--muted); }
 
-        .mini-qty-box { display: flex; align-items: center; gap: 10px; background: #f8f8f8; padding: 5px; border-radius: 10px; }
-        .mini-qty-btn { width: 28px; height: 28px; border-radius: 6px; border: none; background: white; color: var(--primary); font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .mini-qty-box { display: flex; align-items: center; gap: 12px; background: #F8F9FA; padding: 6px 10px; border-radius: 12px; }
+        .mini-qty-btn { width: 28px; height: 28px; border-radius: 8px; border: none; background: white; color: var(--primary); font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
         #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 998; backdrop-filter: blur(2px); }
 
         .bottom-bar { 
             position: fixed; bottom: 0; left: 0; right: 0; background: white; 
-            padding: 15px 25px 25px; border-radius: 30px 30px 0 0; 
+            padding: 15px 25px 30px; border-radius: 30px 30px 0 0; 
             box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 1000; 
             display: flex; justify-content: space-between; align-items: center; 
         }
         
-        .swipe-indicator {
-            position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
-            background: var(--primary); color: white; padding: 5px 15px; border-radius: 20px;
-            font-size: 10px; font-weight: 800; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            display: none; align-items: center; gap: 5px;
+        .swipe-hint {
+            position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px;
+            font-size: 10px; font-weight: 800; display: none;
         }
 
         .price-total { font-size: 20px; font-weight: 900; color: var(--primary); }
         .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
-        .order-btn { background: var(--primary); color: white; border: none; padding: 15px 25px; border-radius: 15px; font-weight: 800; }
+        .order-btn { background: var(--primary); color: white; border: none; padding: 15px 25px; border-radius: 15px; font-weight: 800; transition: opacity 0.3s; }
+        .order-btn:disabled { opacity: 0.5; }
         
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 400px; padding: 30px; border-radius: 25px; text-align: center; }
@@ -175,13 +175,13 @@
     <div class="sheet-header" onclick="toggleSummary(false)">
         <div class="sheet-handle"></div>
         <div class="sheet-title">RINCIAN PESANAN</div>
-        <div style="font-size: 10px; color: var(--muted); margin-top: 5px;">Swipe kiri pada item untuk menghapus</div>
+        <div style="font-size: 10px; color: var(--muted); margin-top: 5px;">Swipe kiri untuk menghapus</div>
     </div>
     <div class="summary-scroll" id="summaryItems"></div>
 </div>
 
 <div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
-    <div class="swipe-indicator" id="swipeInd">▲ LIHAT DETAIL</div>
+    <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
     <div>
         <div id="ongkir-label" class="ongkir-tag"></div>
         <div class="price-total">Rp <span id="miniPrice">0</span></div>
@@ -217,7 +217,7 @@
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0, startY = 0;
+    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0;
 
     async function startApp() {
         navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -245,7 +245,7 @@
             }).filter(m => m.nama);
             renderTabs();
             renderMenu();
-        } catch (e) { alert("Gagal memuat menu."); }
+        } catch (e) { console.error(e); }
     }
 
     function renderTabs() {
@@ -259,12 +259,12 @@
         const counts = {}; cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
         
         document.getElementById('menu-container').innerHTML = items.map(m => {
-            const nameLower = m.nama.toLowerCase();
-            const catLower = m.kat.toLowerCase();
-            const isNasi = catLower.includes("hemat") || (catLower.includes("wardoy") && nameLower.includes("nasi"));
-            const isMieGoreng = nameLower.includes("mie") && nameLower.includes("goreng") && !nameLower.includes("lik");
-            const isMieRebus = nameLower.includes("mie") && (nameLower.includes("rebus") || nameLower.includes("kuah")) && !nameLower.includes("lik");
-            const isPaketSuhu = catLower.includes("paket");
+            const nl = m.nama.toLowerCase();
+            const kl = m.kat.toLowerCase();
+            const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
+            const isMieG = nl.includes("mie") && nl.includes("goreng") && !nl.includes("lik");
+            const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah")) && !nl.includes("lik");
+            const isPaket = kl.includes("paket");
 
             return `
             <div class="menu-item">
@@ -273,9 +273,9 @@
                     <div class="price">Rp ${m.harga.toLocaleString()}</div>
                     <div class="variant-area">
                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
-                        ${isMieGoreng ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${isMieRebus ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${isPaketSuhu ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${isPaket ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                     </div>
                 </div>
                 <div class="qty-box">
@@ -287,30 +287,31 @@
         }).join('');
     }
 
-    function updateCart(id, change, forceVariant = null) {
+    // Logic Fix: updateCart dengan Varian
+    function updateCart(id, change, customVariant = null) {
         const item = menuData.find(m => m.id === id);
         if (!item) return;
 
         if (change > 0) {
-            let v;
-            if (forceVariant) {
-                v = forceVariant;
+            let vData;
+            if (customVariant) {
+                vData = customVariant;
             } else {
-                const selN = document.getElementById(`n-${id}`)?.value || null;
-                const selM = document.getElementById(`m-${id}`)?.value || null;
-                const selR = document.getElementById(`r-${id}`)?.value || null;
-                const selS = document.getElementById(`s-${id}`)?.value || null;
-                const extra = selN ? (VARIAN_NASI.find(x => x.n === selN)?.e || 0) : 0;
-                v = { vN: selN, vM: selM, vR: selR, vS: selS, ex: extra };
+                const sN = document.getElementById(`n-${id}`)?.value || null;
+                const sM = document.getElementById(`m-${id}`)?.value || null;
+                const sR = document.getElementById(`r-${id}`)?.value || null;
+                const sS = document.getElementById(`s-${id}`)?.value || null;
+                const ex = sN ? (VARIAN_NASI.find(x => x.n === sN)?.e || 0) : 0;
+                vData = { vN: sN, vM: sM, vR: sR, vS: sS, ex: ex };
             }
-            cart.push({ ...item, ...v });
+            cart.push({ ...item, ...vData });
         } else {
             let idx = -1;
-            if (forceVariant) {
+            if (customVariant) {
                 idx = cart.findLastIndex(c => 
-                    c.id === id && c.vN === forceVariant.vN && 
-                    c.vM === forceVariant.vM && c.vR === forceVariant.vR && 
-                    c.vS === forceVariant.vS
+                    c.id === id && c.vN === customVariant.vN && 
+                    c.vM === customVariant.vM && c.vR === customVariant.vR && 
+                    c.vS === customVariant.vS
                 );
             } else {
                 idx = cart.findLastIndex(c => c.id === id);
@@ -320,7 +321,9 @@
         refreshUI();
     }
 
-    function removeFull(id, v) {
+    // Logic Fix: Hapus Full
+    function removeFullGroup(id, vStr) {
+        const v = JSON.parse(decodeURIComponent(vStr));
         cart = cart.filter(c => !(c.id === id && c.vN === v.vN && c.vM === v.vM && c.vR === v.vR && c.vS === v.vS));
         refreshUI();
     }
@@ -333,28 +336,30 @@
             counts[c.id] = (counts[c.id] || 0) + 1; 
         });
         
+        // Update angka di list menu
         menuData.forEach(m => {
             const el = document.getElementById(`qty-${m.id}`);
             if(el) {
-                el.innerText = counts[m.id] || 0;
-                el.previousElementSibling.disabled = !(counts[m.id]);
+                const val = counts[m.id] || 0;
+                el.innerText = val;
+                el.previousElementSibling.disabled = val === 0;
             }
         });
 
         let total = 0;
+        const bTrigger = document.getElementById('bottomBarTrigger');
+        const sInd = document.getElementById('swipeInd');
+
         if (sub > 0) {
             let ong = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
             total = sub + ong;
-            document.getElementById('swipeInd').style.display = 'flex';
-            if(currentMode === 'DELIVERY') {
-                document.getElementById('ongkir-label').style.display = 'block';
-                document.getElementById('ongkir-label').innerText = `+ Ongkir Rp ${ong.toLocaleString()}`;
-            } else {
-                document.getElementById('ongkir-label').style.display = 'none';
-            }
+            sInd.style.display = 'block';
+            document.getElementById('ongkir-label').style.display = (currentMode === 'DELIVERY') ? 'block' : 'none';
+            document.getElementById('ongkir-label').innerText = `+ Ongkir Rp ${ong.toLocaleString()}`;
         } else {
-            document.getElementById('swipeInd').style.display = 'none';
+            sInd.style.display = 'none';
             document.getElementById('ongkir-label').style.display = 'none';
+            toggleSummary(false); // Tutup otomatis jika kosong
         }
 
         document.getElementById('miniPrice').innerText = total.toLocaleString();
@@ -363,20 +368,18 @@
         updateOrderSummary();
     }
 
-    function toggleSummary(s) {
-        const p = document.getElementById('orderSummaryPanel');
-        const o = document.getElementById('summaryOverlay');
-        const ind = document.getElementById('swipeInd');
-        if (cart.length === 0) return;
+    function toggleSummary(open) {
+        const panel = document.getElementById('orderSummaryPanel');
+        const overlay = document.getElementById('summaryOverlay');
+        if (cart.length === 0 && open) return;
 
-        const open = s !== undefined ? s : !p.classList.contains('active');
-        if (open) { p.classList.add('active'); o.style.display = 'block'; ind.innerHTML = "▼ TUTUP DETAIL"; }
-        else { p.classList.remove('active'); o.style.display = 'none'; ind.innerHTML = "▲ LIHAT DETAIL"; }
+        if (open) { panel.classList.add('active'); overlay.style.display = 'block'; }
+        else { panel.classList.remove('active'); overlay.style.display = 'none'; }
     }
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
-        if (cart.length === 0) { toggleSummary(false); return; }
+        if (cart.length === 0) { container.innerHTML = ""; return; }
         
         const groups = {};
         cart.forEach(c => {
@@ -387,41 +390,46 @@
 
         container.innerHTML = Object.values(groups).map(item => {
             const tags = [item.vN, item.vM, item.vR, item.vS].filter(x => x).join(', ');
-            const varObj = { vN: item.vN, vM: item.vM, vR: item.vR, vS: item.vS, ex: item.ex };
-            const varStr = JSON.stringify(varObj).replace(/"/g, '&quot;');
+            const vObj = { vN: item.vN, vM: item.vM, vR: item.vR, vS: item.vS, ex: item.ex };
+            const vEnc = encodeURIComponent(JSON.stringify(vObj));
             
             return `
             <div class="summary-item-wrapper">
-                <div class="delete-action" onclick="removeFull('${item.id}', ${varStr})">HAPUS</div>
+                <div class="delete-action" onclick="removeFullGroup('${item.id}', '${vEnc}')">HAPUS</div>
                 <div class="summary-item" ontouchstart="hS(this, event)" ontouchmove="hM(this, event)" ontouchend="hE(this)">
                     <div class="item-detail-name">
                         <b>${item.nama}</b>
-                        <span>${tags || 'Tanpa Varian'}</span>
-                        <div style="font-weight:700; color:var(--primary); margin-top:3px;">Rp ${((item.harga + (item.ex || 0)) * item.qty).toLocaleString()}</div>
+                        <span>${tags || 'Original'}</span>
+                        <div style="font-weight:800; color:var(--primary); margin-top:4px;">Rp ${((item.harga + (item.ex || 0)) * item.qty).toLocaleString()}</div>
                     </div>
                     <div class="mini-qty-box">
-                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', -1, ${varStr})">−</button>
-                        <span style="font-weight:900; font-size:14px; min-width:20px; text-align:center;">${item.qty}</span>
-                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', 1, ${varStr})">+</button>
+                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', -1, ${JSON.stringify(vObj)})">−</button>
+                        <span style="font-weight:900; font-size:14px; min-width:15px; text-align:center;">${item.qty}</span>
+                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', 1, ${JSON.stringify(vObj)})">+</button>
                     </div>
                 </div>
             </div>`;
         }).join('');
     }
 
-    let iSX = 0;
-    function hS(el, e) { iSX = e.touches[0].clientX; el.style.transition = 'none'; }
+    // SWIPE LOGIC FIX
+    let startX = 0;
+    function hS(el, e) { 
+        startX = e.touches[0].clientX; 
+        el.style.transition = 'none'; 
+    }
     function hM(el, e) {
-        let dx = iSX - e.touches[0].clientX;
-        if (dx > 0 && dx < 120) el.style.transform = `translateX(-${dx}px)`;
+        let diff = startX - e.touches[0].clientX;
+        if (diff > 0 && diff < 100) el.style.transform = `translateX(-${diff}px)`;
     }
     function hE(el) {
-        el.style.transition = 'transform 0.3s ease';
-        let tx = parseInt(el.style.transform.replace(/[^\d.-]/g, '')) || 0;
-        el.style.transform = tx < -60 ? `translateX(-80px)` : `translateX(0px)`;
+        el.style.transition = 'transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
+        const currentTransform = new WebKitCSSMatrix(getComputedStyle(el).transform).m41;
+        if (currentTransform < -50) el.style.transform = 'translateX(-80px)';
+        else el.style.transform = 'translateX(0)';
     }
 
-    // Navigasi & Utility
+    // Nav & Utils
     function filterByTab(cat, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
