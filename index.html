@@ -74,8 +74,24 @@
         .input-card input::placeholder, .input-card textarea::placeholder { font-weight: 400; color: #BBB; }
 
         /* Validasi Efek */
-        .error-field { border-color: var(--danger) !important; background-color: #FFF5F5 !important; box-shadow: 0 0 10px rgba(214, 48, 49, 0.15); }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 50% { transform: translateX(4px); } 75% { transform: translateX(-4px); } }
+        /* Sinyal merah tegas pada input yang kosong */
+.error-field { 
+    border: 2px solid var(--danger) !important; 
+    background-color: #FFF5F5 !important; 
+    box-shadow: 0 0 12px rgba(214, 48, 49, 0.2); 
+}
+
+/* Animasi Getar (Shake) */
+@keyframes shake { 
+    0%, 100% { transform: translateX(0); } 
+    25% { transform: translateX(-6px); } 
+    50% { transform: translateX(6px); } 
+    75% { transform: translateX(-6px); } 
+}
+
+.shake-ani { 
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; 
+}
         .shake-ani { animation: shake 0.4s ease-in-out; }
 
         .search-wrapper { margin: 12px 0; background: white; border-radius: 12px; border: 1.2px solid var(--soft); padding: 0 12px; display: flex; align-items: center; }
@@ -146,6 +162,15 @@
     opacity: 0;
     transform: translateX(-20px);
     transition: all 0.25s ease;
+}
+
+/* Efek stabilo kuning untuk teks yang cocok dengan pencarian */
+mark {
+    background-color: #FFEB3B; /* Warna kuning stabilo */
+    color: black;
+    padding: 0 2px;
+    border-radius: 2px;
+    font-weight: 800;
 }
     </style>
 </head>
@@ -462,33 +487,50 @@
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
 
-    // Hapus efek error lama
-    [nI, tI, aI].forEach(el => {
-        if(el) el.classList.remove('error-field', 'shake-ani');
+    // 1. Ambil semua card pembungkus untuk membersihkan efek lama
+    const cards = [
+        nI.closest('.input-card'), 
+        tI ? tI.closest('.input-card') : null, 
+        aI ? aI.closest('.input-card') : null
+    ];
+
+    cards.forEach(card => {
+        if(card) card.classList.remove('error-field', 'shake-ani');
     });
 
-    let target = null;
+    // 2. Tentukan target input mana yang kosong
+    let targetEl = null;
+    if (!nI.value.trim()) targetEl = nI;
+    else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
+    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
 
-    if (!nI.value.trim()) target = nI;
-    else if (currentMode === 'DINE IN' && !tI.value.trim()) target = tI;
-    else if (currentMode === 'DELIVERY' && !aI.value.trim()) target = aI;
+    if (targetEl) {
+        // Ambil kartu pembungkusnya agar efek visual lebih luas & friendly
+        const targetCard = targetEl.closest('.input-card');
 
-    if (target) {
-        // Tambah efek merah & shake
-        target.classList.add('error-field', 'shake-ani');
+        // Tutup modal konfirmasi dulu agar user bisa melihat kolom yang kosong
+        closeModal();
 
-        // Scroll ke input
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Tambah efek merah & picu ulang animasi shake (Magic Reflow)
+        targetCard.classList.add('error-field');
+        void targetCard.offsetWidth; // Memicu ulang render browser
+        targetCard.classList.add('shake-ani');
 
-        // Getar HP (jika mendukung)
+        // Scroll smooth ke arah kartu yang bermasalah
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Fokuskan kursor agar pelanggan langsung bisa mengetik
+        targetEl.focus();
+
+        // Getar HP (Vibrate)
         if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
-        // Hapus shake setelah animasi
-        setTimeout(() => target.classList.remove('shake-ani'), 400);
-        return; // Stop submit
+        // Hapus class shake setelah animasi selesai agar bersih kembali
+        setTimeout(() => targetCard.classList.remove('shake-ani'), 500);
+        return; 
     }
 
-    // Jika lolos validasi, lanjut kirim
+    // --- PROSES KIRIM (Jika Validasi Lolos) ---
     const summary = {};
     cart.forEach(c => {
         let label = c.nama;
@@ -500,10 +542,13 @@
     const pesananTeks = Object.entries(summary).map(([n, q]) => `${q}x ${n}`).join(', ');
     const finalPrice = document.getElementById('miniPrice').innerText.replace(/\./g, '');
 
+    // Kirim data ke Google Sheets/Database
     fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice}`, { mode: 'no-cors' });
 
+    // Format Pesanan WhatsApp
     const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
     const pRowsWA = Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`);
+    
     let msg = `*PESANAN BARU - ${currentMode}*\n\n👤 Nama: ${nI.value}\n`;
     if (currentMode === 'DINE IN') msg += `🪑 Meja: ${tI.value}\n`;
     else if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value}\n📍 Jarak: ${(userDist/1000).toFixed(1)} KM\n`;
@@ -547,13 +592,30 @@
     }
 
     function filterMenu() {
-        const q = document.getElementById('searchMenu').value.toLowerCase();
-        const items = document.querySelectorAll('.menu-item');
-        items.forEach(it => {
-            const name = it.querySelector('h4').dataset.name.toLowerCase();
-            it.style.display = name.includes(q) ? 'flex' : 'none';
-        });
-    }
+    const q = document.getElementById('searchMenu').value.toLowerCase();
+    const items = document.querySelectorAll('.menu-item');
+
+    items.forEach(it => {
+        const titleEl = it.querySelector('h4');
+        const originalName = titleEl.dataset.name; // Mengambil nama asli dari atribut data-name
+
+        if (q === "") {
+            // Jika pencarian kosong, kembalikan ke nama asli tanpa highlight
+            titleEl.innerHTML = originalName;
+            it.style.display = 'flex';
+        } else if (originalName.toLowerCase().includes(q)) {
+            // Jika cocok, buat efek highlight menggunakan tag <mark>
+            const regex = new RegExp(`(${q})`, 'gi');
+            const highlightedName = originalName.replace(regex, '<mark>$1</mark>');
+            
+            titleEl.innerHTML = highlightedName;
+            it.style.display = 'flex';
+        } else {
+            // Jika tidak cocok, sembunyikan menu
+            it.style.display = 'none';
+        }
+    });
+}
 
     function filterByTab(cat, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
