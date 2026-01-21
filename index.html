@@ -36,9 +36,14 @@
         #map { height: 140px; border-radius: 20px; margin: 0 20px 25px; border: 1px solid #EFEFEF; }
 
         .main-content { padding: 0 20px 180px; }
-        .input-card { background: white; border-radius: 18px; padding: 15px; margin-bottom: 12px; border: 1.5px solid #F0F0F0; }
+        .input-card { background: white; border-radius: 18px; padding: 15px; margin-bottom: 12px; border: 1.5px solid #F0F0F0; transition: all 0.3s ease; }
         .input-card label { display: block; font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
         .input-card input, .input-card textarea { width: 100%; border: none; font-size: 14px; font-weight: 600; outline: none; background: transparent; }
+
+        /* Gaya Khusus Validasi Error */
+        .error-field { border-color: var(--danger) !important; background-color: #FFF5F5 !important; box-shadow: 0 0 10px rgba(214, 48, 49, 0.2); }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } }
+        .shake-ani { animation: shake 0.4s ease-in-out; }
 
         .search-wrapper { margin: 15px 0; background: white; border-radius: 15px; border: 1.5px solid var(--soft); padding: 0 15px; display: flex; align-items: center; }
         #searchMenu { width: 100%; padding: 12px 0; border: none; font-size: 14px; background: transparent; }
@@ -211,11 +216,7 @@
  async function startApp() {
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
-        
-        // Menghitung jarak garis lurus (haversine)
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-        
-        // Menggunakan faktor pengali 1.45 agar mendekati jarak tempuh jalan raya (lebih realistis)
         userDist = straightLineDist * 1.45; 
 
         if (userDist > CONFIG.RADIUS_DINE_IN) {
@@ -341,11 +342,8 @@ function refreshUI() {
         if (currentMode === 'DELIVERY') {
             let ong = calculateOngkir(userDist);
             document.getElementById('miniPrice').innerText = (sub + ong).toLocaleString();
-            
-            // Transparansi jarak rute
             distEl.style.display = 'block';
             distEl.innerText = `Estimasi Rute: ${(userDist/1000).toFixed(1)} KM`;
-            
             ongEl.style.display = 'block';
             ongEl.innerText = `+ Ongkir Delivery Rp ${ong.toLocaleString()}`;
         } else {
@@ -425,6 +423,9 @@ function refreshUI() {
         el.classList.add('active');
         document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
         document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
+        
+        // Reset error fields saat ganti mode agar bersih
+        document.querySelectorAll('.input-card').forEach(c => c.classList.remove('error-field', 'shake-ani'));
         refreshUI();
     }
 
@@ -461,7 +462,39 @@ function refreshUI() {
 
     function submitOrder() {
         const nI = document.getElementById('custName');
-        if(!nI.value.trim()) { nI.focus(); alert("Masukkan nama Anda."); return; }
+        const tI = document.getElementById('tableNo');
+        const aI = document.getElementById('addressDetail');
+        const wrapN = document.getElementById('wrapName');
+        const wrapT = document.getElementById('wrapMeja');
+        const wrapA = document.getElementById('wrapAddr');
+
+        // Reset status error sebelumnya
+        [wrapN, wrapT, wrapA].forEach(el => el.classList.remove('error-field', 'shake-ani'));
+
+        // Logika Validasi Interaktif
+        let targetError = null;
+
+        if (!nI.value.trim()) {
+            wrapN.classList.add('error-field', 'shake-ani');
+            targetError = wrapN;
+        } else if (currentMode === 'DINE IN' && !tI.value.trim()) {
+            wrapT.classList.add('error-field', 'shake-ani');
+            targetError = wrapT;
+        } else if (currentMode === 'DELIVERY' && !aI.value.trim()) {
+            wrapA.classList.add('error-field', 'shake-ani');
+            targetError = wrapA;
+        }
+
+        if (targetError) {
+            closeModal();
+            toggleSummary(false);
+            if (navigator.vibrate) navigator.vibrate(200);
+            targetError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => { targetError.querySelector('input, textarea').focus(); }, 500);
+            return;
+        }
+
+        // Jika valid, lanjutkan kirim WhatsApp
         const summary = {};
         cart.forEach(c => {
             let l = c.nama; 
@@ -469,13 +502,17 @@ function refreshUI() {
             if(tags) l += ` [${tags}]`;
             summary[l] = (summary[l] || 0) + 1;
         });
+
         const pRows = Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`);
         const total = document.getElementById('miniPrice').innerText;
         const note = document.getElementById('orderNote').value;
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+        const distInfo = (currentMode === 'DELIVERY') ? `\n📍 Jarak: ${(userDist/1000).toFixed(1)} KM` : '';
+
         let msg = `Halo Waroeng Doyong!\n\n*${currentMode}*\n👤 Nama: ${nI.value}\n`;
-        if (currentMode === 'DINE IN') msg += `🪑 Meja: ${document.getElementById('tableNo').value || '-'}\n`;
-        else if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${document.getElementById('addressDetail').value}\n`;
+        if (currentMode === 'DINE IN') msg += `🪑 Meja: ${tI.value}\n`;
+        else if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value}${distInfo}\n`;
+        
         msg += `\n*PESANAN:*\n${pRows.join('\n')}\n`;
         if(note) msg += `\n📝 Catatan: ${note}\n`;
         msg += `\n*TOTAL: Rp ${total}*`;
