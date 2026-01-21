@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { 
             --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
@@ -19,102 +20,72 @@
             overflow-x: hidden;
         }
 
-        /* Header & Brand */
-        .header-top { background: var(--primary); padding: 20px 20px 40px; color: white; border-radius: 0 0 35px 35px; }
-        .nav-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .brand-logo { font-weight: 900; font-size: 18px; display: flex; align-items: center; gap: 8px; }
-        .brand-icon { width: 32px; height: 32px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 12px; }
-        .queue-badge { background: var(--danger); color: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 800; }
+        .header-top { background: var(--primary); padding: 15px 20px 35px; color: white; border-radius: 0 0 30px 30px; }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; }
+        .brand-logo { font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .brand-icon { width: 28px; height: 28px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 11px; font-weight: 900; }
+        .queue-badge { background: var(--danger); color: white; padding: 5px 12px; border-radius: 15px; font-size: 11px; font-weight: 800; }
 
-        /* Banner */
-        .banner-container { margin: -25px 20px 20px; position: relative; overflow: hidden; border-radius: 20px; height: 160px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); background: #eee; }
+        .banner-container { margin: -20px 20px 15px; position: relative; overflow: hidden; border-radius: 20px; height: 150px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); background: #eee; }
         #banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
         #banner-track img { min-width: 100%; object-fit: cover; }
 
-        /* Mode Selector */
-        .mode-container { display: flex; gap: 10px; overflow-x: auto; padding: 0 20px 15px; scrollbar-width: none; }
-        .mode-item { white-space: nowrap; padding: 12px 20px; border-radius: 12px; background: white; font-size: 13px; font-weight: 700; border: 1.5px solid #EFEFEF; cursor: pointer; transition: 0.2s; }
+        /* Mode Selector 2 Baris */
+        .mode-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 0 20px 15px; }
+        .mode-item { background: white; padding: 12px 5px; border-radius: 12px; text-align: center; font-size: 11px; font-weight: 700; border: 1.5px solid #F0F0F0; cursor: pointer; transition: 0.2s; }
         .mode-item.active { background: #E8F5E9; border-color: var(--success); color: var(--primary); }
 
-        #map { height: 140px; border-radius: 20px; margin: 0 20px 25px; border: 1px solid #EFEFEF; }
+        #map { height: 130px; border-radius: 20px; margin: 0 20px 20px; border: 1px solid #EFEFEF; }
 
-        /* Input & Validation Style */
         .main-content { padding: 0 20px 180px; }
-        .input-card { background: white; border-radius: 18px; padding: 15px; margin-bottom: 12px; border: 1.5px solid #F0F0F0; transition: all 0.3s ease; }
-        .input-card label { display: block; font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
-        .input-card input, .input-card textarea { width: 100%; border: none; font-size: 14px; font-weight: 600; outline: none; background: transparent; color: var(--text); }
+        .input-card { background: white; border-radius: 16px; padding: 12px 15px; margin-bottom: 10px; border: 1.5px solid #F0F0F0; transition: all 0.3s ease; }
+        .input-card label { display: block; font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+        .input-card input, .input-card textarea { width: 100%; border: none; font-size: 13px; font-weight: 600; outline: none; background: transparent; color: var(--text); }
 
-        /* CSS VALIDASI SINYAL MERAH & GETAR */
-        .error-field { border: 2px solid var(--danger) !important; background-color: #FFF5F5 !important; box-shadow: 0 0 10px rgba(214, 48, 49, 0.1); }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 50% { transform: translateX(8px); } 75% { transform: translateX(-8px); } }
+        /* Validasi & Shake */
+        .error-field { border-color: var(--danger) !important; background-color: #FFF5F5 !important; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-6px); } }
         .shake-ani { animation: shake 0.4s ease-in-out; }
 
-        /* Menu & Tabs */
-        .search-wrapper { margin: 15px 0; background: white; border-radius: 15px; border: 1.5px solid var(--soft); padding: 0 15px; display: flex; align-items: center; }
-        #searchMenu { width: 100%; padding: 12px 0; border: none; font-size: 14px; background: transparent; }
-        .category-tabs { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; margin-bottom: 20px; }
-        .tab { padding: 10px 18px; border-radius: 12px; background: white; font-size: 13px; font-weight: 700; border: 1px solid #F0F0F0; white-space: nowrap; }
+        .search-wrapper { margin: 15px 0; background: white; border-radius: 12px; border: 1.5px solid var(--soft); padding: 0 12px; display: flex; align-items: center; }
+        #searchMenu { width: 100%; padding: 10px 0; border: none; font-size: 13px; background: transparent; }
+        .category-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 15px; }
+        .tab { padding: 8px 16px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1px solid #F0F0F0; white-space: nowrap; }
         .tab.active { background: var(--primary); color: white; }
 
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .menu-item { background: white; border-radius: 20px; padding: 12px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between; }
-        .menu-info h4 { margin: 0 0 4px; font-size: 13px; font-weight: 800; min-height: 34px; line-height: 1.3; }
-        .menu-info .price { font-size: 14px; font-weight: 900; color: var(--primary); margin-bottom: 10px; }
-        .variant-select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #F0F0F0; font-size: 11px; background: #FAFAFA; margin-bottom: 6px; font-weight: 600; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .menu-item { background: white; border-radius: 18px; padding: 12px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between; }
+        .menu-info h4 { margin: 0 0 4px; font-size: 12px; font-weight: 800; min-height: 32px; line-height: 1.3; }
+        .menu-info .price { font-size: 13px; font-weight: 900; color: var(--primary); }
+        .variant-select { width: 100%; padding: 7px; border-radius: 8px; border: 1px solid #F0F0F0; font-size: 10px; background: #FAFAFA; margin-top: 5px; font-weight: 600; }
         
         .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 10px; padding: 4px; margin-top: 10px; }
-        .qty-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: 900; }
+        .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
 
-        /* Bottom Sheet Rincian */
-        .order-summary-mini {
-            position: fixed; bottom: -100%; left: 0; right: 0; 
-            background: white; border-radius: 30px 30px 0 0; 
-            box-shadow: 0 -15px 40px rgba(0,0,0,0.2); 
-            z-index: 999; max-height: 80vh; border-top: 1px solid #eee;
-            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex; flex-direction: column;
-        }
+        .order-summary-mini { position: fixed; bottom: -100%; left: 0; right: 0; background: white; border-radius: 25px 25px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.2); z-index: 999; max-height: 70vh; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; }
         .order-summary-mini.active { bottom: 0; }
-        .sheet-header { padding: 15px 20px; text-align: center; background: white; border-radius: 30px 30px 0 0; border-bottom: 1px solid #F5F5F5; }
-        .sheet-handle { width: 50px; height: 5px; background: #E0E0E0; border-radius: 10px; margin: 0 auto 10px; }
-        .sheet-title { font-size: 12px; font-weight: 800; color: var(--muted); letter-spacing: 1px; }
-        .summary-scroll { flex: 1; overflow-y: auto; padding: 10px 20px 140px; }
-        .summary-item { background: white; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F5F5F5; }
-        .item-detail-name { flex: 1; margin-right: 10px; }
-        .item-detail-name b { display: block; font-size: 14px; margin-bottom: 2px; }
-        .item-detail-name span { font-size: 11px; color: var(--muted); }
-        .mini-qty-box { display: flex; align-items: center; gap: 12px; background: #F8F9FA; padding: 6px 10px; border-radius: 12px; }
-        .mini-qty-btn { width: 28px; height: 28px; border-radius: 8px; border: none; background: white; color: var(--primary); font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-
+        .sheet-header { padding: 15px; text-align: center; border-bottom: 1px solid #F5F5F5; }
+        .sheet-handle { width: 40px; height: 4px; background: #DDD; border-radius: 10px; margin: 0 auto 8px; }
         #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 998; backdrop-filter: blur(2px); }
 
-        /* Bottom Bar */
-        .bottom-bar { 
-            position: fixed; bottom: 0; left: 0; right: 0; background: white; 
-            padding: 15px 25px 30px; border-radius: 30px 30px 0 0; 
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 1000; 
-            display: flex; justify-content: space-between; align-items: center; 
-        }
-        .swipe-hint { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; display: none; }
-        .price-total { font-size: 20px; font-weight: 900; color: var(--primary); }
-        .dist-info { font-size: 9px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
-        .ongkir-tag { font-size: 11px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
-        .order-btn { background: var(--primary); color: white; border: none; padding: 15px 25px; border-radius: 15px; font-weight: 800; }
-        .order-btn:disabled { opacity: 0.5; }
-        
-        /* Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-card { background: white; width: 100%; max-width: 400px; padding: 30px; border-radius: 25px; text-align: center; }
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px 20px 25px; border-radius: 25px 25px 0 0; box-shadow: 0 -8px 25px rgba(0,0,0,0.1); z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
+        .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
+
+        /* Modal Custom */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: white; width: 100%; max-width: 350px; padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 15px 50px rgba(0,0,0,0.3); }
+        .powered-by { margin-top: 18px; font-size: 10px; color: #999; font-weight: 500; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
 
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
     <div style="text-align: center;">
-        <div style="font-size: 70px; margin-bottom: 20px;">📍</div>
-        <h2 style="font-weight: 900;">Cek Jarak Lokasi</h2>
-        <p style="color: var(--muted); font-size: 14px; margin-bottom: 30px;">Mohon izinkan akses lokasi untuk menghitung ongkir otomatis.</p>
+        <div style="font-size: 60px; margin-bottom: 15px;">📍</div>
+        <h2 style="font-weight: 900; font-size: 20px;">Cek Jarak Lokasi</h2>
+        <p style="color: var(--muted); font-size: 13px; margin-bottom: 25px;">Mohon izinkan akses lokasi untuk menghitung ongkir.</p>
         <button onclick="startApp()" class="order-btn" style="width: 100%;">IZINKAN AKSES</button>
     </div>
 </div>
@@ -130,10 +101,13 @@
     <div id="banner-track"></div>
 </div>
 
-<div class="mode-container" style="margin-top: -10px;">
+<div class="mode-grid" style="margin-top: -10px;">
     <div id="mDine" class="mode-item active" onclick="changeMode('DINE IN', this)">🍽️ Makan Sini</div>
     <div id="mTake" class="mode-item" onclick="changeMode('TAKE AWAY', this)">🛍️ Bawa Pulang</div>
     <div id="mDeliv" class="mode-item" onclick="changeMode('DELIVERY', this)">🛵 Pesan Antar</div>
+    <div class="mode-item" onclick="devMode()">🍱 Katering</div>
+    <div class="mode-item" onclick="devMode()">🤝 Jadi Mitra</div>
+    <div class="mode-item" onclick="devMode()">📺 NgIKLAN</div>
 </div>
 
 <div id="map"></div>
@@ -143,47 +117,39 @@
         <label>Nama Anda</label>
         <input type="text" id="custName" placeholder="Masukkan nama...">
     </div>
-    
     <div id="boxMeja">
         <div id="wrapMeja" class="input-card">
             <label>Nomor Meja</label>
             <input type="number" id="tableNo" placeholder="Contoh: 08">
         </div>
     </div>
-
     <div id="boxAlamat" style="display:none;">
         <div id="wrapAddr" class="input-card">
             <label>Alamat Pengiriman</label>
-            <textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea>
+            <textarea id="addressDetail" placeholder="Nama Jalan, Blok, No..." rows="2"></textarea>
         </div>
     </div>
 
-    <div style="font-weight: 800; font-size: 15px; margin-top: 25px;">🍴 Pilih Menu</div>
-    <div class="search-wrapper">
-        <input type="text" id="searchMenu" placeholder="Cari menu favorit..." oninput="filterMenu()">
-    </div>
+    <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Pilih Menu</div>
+    <div class="search-wrapper"><input type="text" id="searchMenu" placeholder="Cari menu..." oninput="filterMenu()"></div>
     <div class="category-tabs" id="cat-tabs"></div>
-    <div class="menu-grid" id="menu-container">Memuat menu...</div>
+    <div id="menu-container" class="menu-grid">Memuat...</div>
 
-    <div style="font-weight: 800; font-size: 15px; margin: 25px 0 10px;">Catatan Tambahan</div>
-    <div class="input-card"><textarea id="orderNote" placeholder="Contoh: Pedas sedang, tanpa timun..." rows="2"></textarea></div>
+    <div style="font-weight: 800; font-size: 14px; margin: 20px 0 10px;">Catatan</div>
+    <div class="input-card"><textarea id="orderNote" placeholder="Contoh: Pedas sedang..." rows="2"></textarea></div>
 </div>
 
 <div id="summaryOverlay" onclick="toggleSummary(false)"></div>
 <div id="orderSummaryPanel" class="order-summary-mini">
     <div class="sheet-header" onclick="toggleSummary(false)">
         <div class="sheet-handle"></div>
-        <div class="sheet-title">RINCIAN PESANAN</div>
-        <div style="font-size: 10px; color: var(--muted); margin-top: 5px;">Tekan − sampai 0 untuk menghapus item</div>
+        <div style="font-weight: 800; font-size: 11px; color: var(--muted);">RINCIAN PESANAN</div>
     </div>
-    <div class="summary-scroll" id="summaryItems"></div>
+    <div class="summary-scroll" id="summaryItems" style="padding: 15px; overflow-y: auto;"></div>
 </div>
 
-<div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
-    <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
+<div class="bottom-bar" onclick="toggleSummary(true)">
     <div>
-        <div id="dist-info" class="dist-info"></div>
-        <div id="ongkir-label" class="ongkir-tag"></div>
         <div class="price-total">Rp <span id="miniPrice">0</span></div>
     </div>
     <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
@@ -192,11 +158,12 @@
 <div id="modalConfirm" class="modal-overlay">
     <div class="modal-card">
         <h3 style="font-weight: 900; margin-bottom: 10px;">Kirim Pesanan?</h3>
-        <p style="font-size: 14px; color: var(--muted); margin-bottom: 25px;">Data akan dikirim ke WhatsApp resmi cloudkitchen.dyg++</p>
-        <div style="display: flex; gap: 10px;">
-            <button onclick="closeModal()" style="flex:1; padding:15px; border-radius:15px; border:none; background:#F5F5F5; font-weight:700;">Batal</button>
-            <button onclick="submitOrder()" style="flex:1; padding:15px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:700;">Kirim WA</button>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 25px;">Data akan dikirim ke WhatsApp resmi cloudkitchen.dyg++</p>
+        <div style="display: flex; gap: 8px;">
+            <button onclick="closeModal()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700;">Batal</button>
+            <button onclick="submitOrder()" style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700;">Kirim WA</button>
         </div>
+        <div class="powered-by">powered by cloudkitchen.dyg++</div>
     </div>
 </div>
 
@@ -207,35 +174,32 @@
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
-        TOKEN: 'dyg-access-v2',
-        RADIUS_DINE_IN: 150
+        TOKEN: 'dyg-access-v2'
     };
 
-    const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000},{n:'Nasi Rumput Laut',e:2000},{n:'Nasi Margarin',e:2000}];
-    const VARIAN_MIE_GORENG = [{n:'Original',e:0},{n:'Rendang',e:0},{n:'Salero Padang',e:0}];
-    const VARIAN_MIE_REBUS = [{n:'Ayam Bawang',e:0},{n:'Soto',e:0}];
-    const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
-    const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
+    const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000}];
+    const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg"];
 
-    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0;
+    let menuData = [], cart = [], currentMode = 'DINE IN', bannerIdx = 0;
 
     async function startApp() {
         navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-            userDist = straightLineDist * 1.45; 
-
-            if (userDist > CONFIG.RADIUS_DINE_IN) {
-                document.getElementById('mDine').style.display = 'none';
-                changeMode('DELIVERY', document.getElementById('mDeliv'));
-            }
-            
-            initMap(latitude, longitude);
+            initMap(pos.coords.latitude, pos.coords.longitude);
             initBanner();
             document.getElementById('welcome-overlay').style.display = 'none';
             await loadMenu();
             syncQueue();
         }, () => alert("Mohon aktifkan GPS."), { enableHighAccuracy: true });
+    }
+
+    function devMode() {
+        Swal.fire({
+            title: 'MAAF!',
+            text: 'SEDANG DALAM PENGEMBANGAN, TUNGGU UPDATE SELANJUTNYA.',
+            icon: 'info',
+            confirmButtonText: 'KEMBALI',
+            confirmButtonColor: '#1B4332'
+        });
     }
 
     async function loadMenu() {
@@ -246,167 +210,60 @@
                 const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
                 return { id: 'm'+i, kat: cols[0] || '', nama: cols[1] || '', harga: parseInt(cols[2]) || 0 };
             }).filter(m => m.nama);
-            renderTabs();
-            renderMenu();
-        } catch (e) { console.error(e); }
+            renderTabs(); renderMenu();
+        } catch (e) {}
     }
 
     function renderTabs() {
         const cats = [...new Set(menuData.map(m => m.kat))];
-        document.getElementById('cat-tabs').innerHTML = `<div class="tab active" onclick="filterByTab('ALL', this)">Semua</div>` + 
-            cats.map(c => `<div class="tab" onclick="filterByTab('${c}', this)">${c}</div>`).join('');
+        document.getElementById('cat-tabs').innerHTML = `<div class="tab active" onclick="filterByTab('ALL', this)">Semua</div>` + cats.map(c => `<div class="tab" onclick="filterByTab('${c}', this)">${c}</div>`).join('');
     }
 
     function renderMenu(filterKat = 'ALL') {
         const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
         const counts = {}; cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
-        
         document.getElementById('menu-container').innerHTML = items.map(m => {
-            const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
-            const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
-            const isMieG = nl.includes("mie") && nl.includes("goreng") && !nl.includes("lik");
-            const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah")) && !nl.includes("lik");
-            const isPaket = kl.includes("paket");
-
-            return `
-            <div class="menu-item">
-                <div class="menu-info">
-                    <h4 data-name="${m.nama}">${m.nama}</h4>
-                    <div class="price">Rp ${m.harga.toLocaleString()}</div>
-                    <div class="variant-area">
-                        ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
-                        ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${isPaket ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                    </div>
+            const hasNas = m.nama.toLowerCase().includes("nasi");
+            return `<div class="menu-item">
+                <div class="menu-info"><h4>${m.nama}</h4><div class="price">Rp ${m.harga.toLocaleString()}</div>
+                ${hasNas ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                 </div>
-                <div class="qty-box">
-                    <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
-                    <span id="qty-${m.id}">${counts[m.id] || 0}</span>
-                    <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
-                </div>
+                <div class="qty-box"><button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button><span>${counts[m.id] || 0}</span><button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button></div>
             </div>`;
         }).join('');
     }
 
-    function updateCart(id, change, forceVariant = null) {
+    function updateCart(id, change) {
         const item = menuData.find(m => m.id === id);
-        if (!item) return;
-
         if (change > 0) {
-            let vData;
-            if (forceVariant) {
-                vData = forceVariant;
-            } else {
-                const sN = document.getElementById(`n-${id}`)?.value || null;
-                const sM = document.getElementById(`m-${id}`)?.value || null;
-                const sR = document.getElementById(`r-${id}`)?.value || null;
-                const sS = document.getElementById(`s-${id}`)?.value || null;
-                const ex = sN ? (VARIAN_NASI.find(x => x.n === sN)?.e || 0) : 0;
-                vData = { vN: sN, vM: sM, vR: sR, vS: sS, ex: ex };
-            }
-            cart.push({ ...item, ...vData });
+            const vN = document.getElementById(`n-${id}`)?.value || null;
+            cart.push({ ...item, vN });
         } else {
-            let idx = -1;
-            if (forceVariant) {
-                idx = cart.findLastIndex(c => 
-                    c.id === id && c.vN === forceVariant.vN && 
-                    c.vM === forceVariant.vM && c.vR === forceVariant.vR && 
-                    c.vS === forceVariant.vS
-                );
-            } else {
-                idx = cart.findLastIndex(c => c.id === id);
-            }
-            if (idx !== -1) cart.splice(idx, 1);
+            const idx = cart.findLastIndex(c => c.id === id); if (idx !== -1) cart.splice(idx, 1);
         }
         refreshUI();
+        renderMenu(document.querySelector('.tab.active').innerText === 'Semua' ? 'ALL' : document.querySelector('.tab.active').innerText);
     }
 
     function refreshUI() {
-        let sub = 0; 
-        const counts = {};
-        cart.forEach(c => { 
-            sub += (c.harga + (c.ex || 0)); 
-            counts[c.id] = (counts[c.id] || 0) + 1; 
-        });
-        
-        menuData.forEach(m => {
-            const el = document.getElementById(`qty-${m.id}`);
-            if(el) {
-                const val = counts[m.id] || 0;
-                el.innerText = val;
-                el.previousElementSibling.disabled = val === 0;
-            }
-        });
-
-        const sInd = document.getElementById('swipeInd');
-        const distEl = document.getElementById('dist-info');
-        const ongEl = document.getElementById('ongkir-label');
-
-        if (sub > 0) {
-            sInd.style.display = 'block';
-            if (currentMode === 'DELIVERY') {
-                let ong = calculateOngkir(userDist);
-                document.getElementById('miniPrice').innerText = (sub + ong).toLocaleString();
-                distEl.style.display = 'block';
-                distEl.innerText = `Estimasi Rute: ${(userDist/1000).toFixed(1)} KM`;
-                ongEl.style.display = 'block';
-                ongEl.innerText = `+ Ongkir Delivery Rp ${ong.toLocaleString()}`;
-            } else {
-                document.getElementById('miniPrice').innerText = sub.toLocaleString();
-                distEl.style.display = 'none';
-                ongEl.style.display = 'none';
-            }
-        } else {
-            // FIX BUG BLUR: Tutup rincian jika item kosong
-            sInd.style.display = 'none';
-            distEl.style.display = 'none';
-            ongEl.style.display = 'none';
-            document.getElementById('miniPrice').innerText = "0";
-            toggleSummary(false); 
-        }
-
+        let sub = 0; cart.forEach(c => sub += c.harga);
+        document.getElementById('miniPrice').innerText = sub.toLocaleString();
         document.getElementById('btnOrder').disabled = sub === 0;
         document.getElementById('btnOrder').innerText = sub > 0 ? 'PESAN SEKARANG' : 'PILIH MENU';
+        if(sub === 0) toggleSummary(false);
         updateOrderSummary();
-    }
-
-    function toggleSummary(open) {
-        const panel = document.getElementById('orderSummaryPanel');
-        const overlay = document.getElementById('summaryOverlay');
-        if (cart.length === 0) { panel.classList.remove('active'); overlay.style.display = 'none'; return; }
-        if (open) { panel.classList.add('active'); overlay.style.display = 'block'; }
-        else { panel.classList.remove('active'); overlay.style.display = 'none'; }
     }
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
-        if (cart.length === 0) { container.innerHTML = ""; return; }
-        
-        const groups = {};
-        cart.forEach(c => {
-            const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
-            if(!groups[key]) groups[key] = { ...c, qty: 0 };
-            groups[key].qty++;
-        });
+        const groups = {}; cart.forEach(c => { const k = `${c.id}-${c.vN}`; groups[k] = groups[k] || { ...c, qty: 0 }; groups[k].qty++; });
+        container.innerHTML = Object.values(groups).map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:13px;"><div><b>${i.nama}</b><br><small>${i.vN || ''}</small></div><div>${i.qty}x</div></div>`).join('');
+    }
 
-        container.innerHTML = Object.values(groups).map(item => {
-            const tags = [item.vN, item.vM, item.vR, item.vS].filter(x => x).join(', ');
-            const vObj = { vN: item.vN, vM: item.vM, vR: item.vR, vS: item.vS, ex: item.ex };
-            return `
-            <div class="summary-item">
-                <div class="item-detail-name">
-                    <b>${item.nama}</b>
-                    <span>${tags || 'Original'}</span>
-                    <div style="font-weight:800; color:var(--primary); margin-top:4px;">Rp ${((item.harga + (item.ex || 0)) * item.qty).toLocaleString()}</div>
-                </div>
-                <div class="mini-qty-box">
-                    <button class="mini-qty-btn" onclick='updateCart("${item.id}", -1, ${JSON.stringify(vObj)})'>−</button>
-                    <span style="font-weight:900; font-size:14px; min-width:15px; text-align:center;">${item.qty}</span>
-                    <button class="mini-qty-btn" onclick='updateCart("${item.id}", 1, ${JSON.stringify(vObj)})'>+</button>
-                </div>
-            </div>`;
-        }).join('');
+    function toggleSummary(open) {
+        if (cart.length === 0) return;
+        document.getElementById('orderSummaryPanel').classList.toggle('active', open);
+        document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
     }
 
     function changeMode(m, el) {
@@ -415,71 +272,43 @@
         el.classList.add('active');
         document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
         document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
-        
-        // Reset status error saat ganti mode
-        document.querySelectorAll('.input-card').forEach(c => c.classList.remove('error-field', 'shake-ani'));
-        refreshUI();
     }
 
-    // --- FUNGSI VALIDASI UTAMA ---
     function submitOrder() {
-        const nI = document.getElementById('custName'), 
-              tI = document.getElementById('tableNo'), 
-              aI = document.getElementById('addressDetail');
-        
-        const wN = document.getElementById('wrapName'), 
-              wM = document.getElementById('wrapMeja'), 
-              wA = document.getElementById('wrapAddr');
+        const nI = document.getElementById('custName'), tI = document.getElementById('tableNo'), aI = document.getElementById('addressDetail');
+        const wN = document.getElementById('wrapName'), wM = document.getElementById('wrapMeja'), wA = document.getElementById('wrapAddr');
 
-        // Reset status error
         [wN, wM, wA].forEach(el => el.classList.remove('error-field', 'shake-ani'));
+        let target = null;
 
-        let errorTarget = null;
+        if (!nI.value.trim()) { wN.classList.add('error-field', 'shake-ani'); target = wN; }
+        else if (currentMode === 'DINE IN' && !tI.value.trim()) { wM.classList.add('error-field', 'shake-ani'); target = wM; }
+        else if (currentMode === 'DELIVERY' && !aI.value.trim()) { wA.classList.add('error-field', 'shake-ani'); target = wA; }
 
-        if (!nI.value.trim()) { wN.classList.add('error-field', 'shake-ani'); errorTarget = wN; } 
-        else if (currentMode === 'DINE IN' && !tI.value.trim()) { wM.classList.add('error-field', 'shake-ani'); errorTarget = wM; }
-        else if (currentMode === 'DELIVERY' && !aI.value.trim()) { wA.classList.add('error-field', 'shake-ani'); errorTarget = wA; }
-
-        if (errorTarget) {
+        if (target) {
             closeModal();
-            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            errorTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => errorTarget.querySelector('input, textarea').focus(), 600);
+            if (navigator.vibrate) navigator.vibrate(200);
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
-        // Jalankan pengiriman jika valid
-        const summary = {};
-        cart.forEach(c => {
-            let l = c.nama; 
-            let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-            if(tags) l += ` [${tags}]`;
-            summary[l] = (summary[l] || 0) + 1;
-        });
-        
-        const pRows = Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`);
-        const total = document.getElementById('miniPrice').innerText;
-        const note = document.getElementById('orderNote').value;
-        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-        
-        let msg = `Halo Waroeng Doyong!\n\n*${currentMode}*\n👤 Nama: ${nI.value}\n`;
+        let msg = `Halo cloudkitchen.dyg++!\n*MODE: ${currentMode}*\n👤 Nama: ${nI.value}\n`;
         if (currentMode === 'DINE IN') msg += `🪑 Meja: ${tI.value}\n`;
-        else if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value}\n`;
+        if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value}\n`;
         
-        msg += `\n*PESANAN:*\n${pRows.join('\n')}\n`;
-        if(note) msg += `\n📝 Catatan: ${note}\n`;
-        msg += `\n*TOTAL: Rp ${total}*`;
-        
+        const summary = {}; cart.forEach(c => { let l = c.nama; if(c.vN) l += ` (${c.vN})`; summary[l] = (summary[l] || 0) + 1; });
+        msg += `\n*PESANAN:*\n` + Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`).join('\n');
+        msg += `\n\n*TOTAL: Rp ${document.getElementById('miniPrice').innerText}*`;
+
+        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
     }
 
-    // Fungsi Pembantu Lainnya
-    function filterByTab(cat, el) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderMenu(cat); }
-    function filterMenu() { const k = document.getElementById('searchMenu').value.toLowerCase(); document.querySelectorAll('.menu-item').forEach(card => { const name = card.querySelector('h4').getAttribute('data-name').toLowerCase(); card.style.display = name.includes(k) ? 'flex' : 'none'; }); }
-    function calculateOngkir(m) { const km = m / 1000; if (km <= 2) return 3000; if (km <= 5) return 5000; return 6000 + (Math.ceil(km - 5) * 2000); }
+    function filterByTab(c, el) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderMenu(c); }
+    function filterMenu() { const k = document.getElementById('searchMenu').value.toLowerCase(); document.querySelectorAll('.menu-item').forEach(c => c.style.display = c.querySelector('h4').innerText.toLowerCase().includes(k) ? 'flex' : 'none'); }
     function initMap(lat, lng) { const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); L.marker([lat, lng]).addTo(map); }
     function initBanner() { const track = document.getElementById('banner-track'); track.innerHTML = MY_BANNERS.map(img => `<img src="${img}">`).join(''); setInterval(() => { bannerIdx = (bannerIdx + 1) % MY_BANNERS.length; track.style.transform = `translateX(-${bannerIdx * 100}%)`; }, 5000); }
-    async function syncQueue() { try { const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`); const num = await resp.text(); if (num) document.getElementById('noAntrean').innerText = "#" + num; } catch(e) {} setTimeout(syncQueue, 15000); }
+    async function syncQueue() { try { const r = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`); const n = await r.text(); if (n) document.getElementById('noAntrean').innerText = "#" + n; } catch(e) {} setTimeout(syncQueue, 15000); }
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
 </script>
