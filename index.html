@@ -399,7 +399,27 @@ mark {
     border-color: var(--accent);
     box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
 }
+/* Badge Diluar Jangkauan */
+.badge-status {
+    position: absolute;
+    top: -8px;
+    background: var(--danger);
+    color: white;
+    font-size: 8px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(214, 48, 49, 0.3);
+    z-index: 2;
+    display: none; /* Sembunyi secara default */
+    animation: fadeIn 0.3s ease;
+}
 
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
     </style>
 </head>
@@ -436,11 +456,11 @@ mark {
 </div>
 
 <!-- BARIS 1 : MODE ORDER -->
-<div class="service-mode">
-    <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
-        <div class="icon">🍽️</div>
-        <span>Dine In</span>
-    </div>
+<div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
+    <div id="badgeDine" class="badge-status">DILUAR JANGKAUAN</div>
+    <div class="icon">🍽️</div>
+    <span>Dine In</span>
+</div>
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
         <div class="icon">🛍️</div>
@@ -546,26 +566,34 @@ mark {
     // Ubah 'DINE IN' menjadi null agar tidak ada mode yang terpilih di awal
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-    async function startApp() {
+async function startApp() {
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
-        
-        // --- BAGIAN INI YANG PENTING ---
-        // Kita simpan ke "window" agar bisa dibaca oleh fungsi submitOrder()
         window.userLat = latitude;
         window.userLng = longitude;
-        // -------------------------------
 
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
+        const dineBtn = document.getElementById('mDine');
+        const dineBadge = document.getElementById('badgeDine');
+
+        // LOGIKA BADGE OTOMATIS
         if (userDist > CONFIG.RADIUS_DINE_IN) {
-            const dineBtn = document.getElementById('mDine');
+            // Jika di luar radius
             if(dineBtn) {
                 dineBtn.classList.add('disabled');
                 dineBtn.onclick = () => showOutOfRangeAlert();
             }
-            changeMode('DELIVERY', document.getElementById('mDeliv'));
+            if(dineBadge) dineBadge.style.display = 'block'; // Tampilkan badge
+        } else {
+            // Jika masuk dalam radius
+            if(dineBtn) {
+                dineBtn.classList.remove('disabled');
+                // Kembalikan fungsi klik aslinya
+                dineBtn.onclick = function() { changeMode('DINE IN', this); };
+            }
+            if(dineBadge) dineBadge.style.display = 'none'; // Sembunyikan badge
         }
         
         initMap(latitude, longitude);
@@ -573,6 +601,7 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
         document.getElementById('welcome-overlay').style.display = 'none';
         await loadMenu();
         syncQueue();
+        refreshUI(); 
     }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
 }
 
@@ -753,21 +782,21 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
         }
     }
 
-    async function submitOrder() {
+async function submitOrder() {
     // 1. CEK APAKAH SUDAH PILIH MODE?
     if (!currentMode) {
-        closeModal(); // Tutup modal jika terlanjur terbuka
-        alert("Pilih dulu layanan Anda: Dine In, Take Away, atau Delivery!");
+        closeModal();
+        alert("Silakan pilih metode layanan (Dine In / Take Away / Delivery) terlebih dahulu!");
         
-        // Gulir layar otomatis ke arah tombol mode
-        const modeArea = document.querySelector('.mode-container');
-        modeArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Scroll ke area pemilihan mode agar terlihat oleh user
+        document.querySelector('.service-mode').scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // Buat semua tombol mode berdetak (pulse) agar pelanggan sadar harus pilih salah satu
-        document.querySelectorAll('.mode-item:not(.disabled)').forEach(el => {
+        // Efek visual: Beri sinyal pada tombol yang tersedia
+        document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
             el.classList.add('pulse-attention');
+            setTimeout(() => el.classList.remove('pulse-attention'), 3000); // Hilang setelah 3 detik
         });
-        return; // Berhenti di sini, jangan lanjut kirim WA
+        return;
     }
 
     // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
