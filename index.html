@@ -549,24 +549,23 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     async function startApp() {
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
-        
-        // --- BAGIAN INI YANG PENTING ---
-        // Kita simpan ke "window" agar bisa dibaca oleh fungsi submitOrder()
         window.userLat = latitude;
         window.userLng = longitude;
-        // -------------------------------
 
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
+        // Hanya menonaktifkan tombol jika jauh, TAPI tidak otomatis pilih mode
         if (userDist > CONFIG.RADIUS_DINE_IN) {
             const dineBtn = document.getElementById('mDine');
             if(dineBtn) {
                 dineBtn.classList.add('disabled');
                 dineBtn.onclick = () => showOutOfRangeAlert();
             }
-            changeMode('DELIVERY', document.getElementById('mDeliv'));
         }
+        
+        // Mode tetap NULL agar tidak ada yang terpilih (warna tetap putih/abu)
+        currentMode = null; 
         
         initMap(latitude, longitude);
         initBanner();
