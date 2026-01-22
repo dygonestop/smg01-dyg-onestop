@@ -23,7 +23,7 @@
         /* TIMPA KODE LAMA ANDA DENGAN INI */
 .header-top { 
     background: var(--primary); 
-    padding: 8px 18px 20px; /* Padding dikurangi agar lebih tipis */
+    padding: 5px 15px 18px; /* Padding dikurangi agar lebih tipis */
     color: white; 
     border-radius: 0 0 20px 20px; 
 }
@@ -50,55 +50,47 @@
 }
         #banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
         #banner-track img { min-width: 100%; object-fit: cover; }
-.mode-item.disabled {
-    background: #F1F1F1;
-    color: #AAA;
-    border-color: #DDD;
-    pointer-events: auto;
-    position: relative;
-}
-/* TAMBAHKAN KODE INI */
-.mode-selection { /* Pastikan nama class pembungkus tombol Anda benar */
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Membagi 3 kolom sama rata */
-    gap: 8px;
-    padding: 0 18px;
-}
-
 .mode-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 45px; /* Tinggi seragam agar presisi */
-    font-size: 11px;
-    border-radius: 8px;
-    padding: 5px;
-}
-.mode-item.disabled::after {
-    content: "Di luar jangkauan";
-    position: absolute;
-    bottom: -14px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 8px;
-    color: #999;
-}
-.mode-container.secondary {
-    padding-top: 0;
-    margin-top: -6px;
+    background: transparent; /* Hilangkan kotak putih */
+    border: none;            /* Hilangkan garis pinggir */
+    padding: 10px 5px;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    -webkit-tap-highlight-color: transparent;
 }
 
-.mode-item.alt {
-    background: #F6F6F6;
-    border: 1px dashed #DDD;
-    color: var(--muted);
-    font-weight: 800;
-}
-.mode-item.alt:active {
-    transform: scale(0.97);
+/* Lingkaran di belakang ikon (Opsional, agar mirip Gojek baru) */
+.mode-item .icon-wrapper {
+    width: 55px;
+    height: 55px;
+    background-color: #f2f2f2; /* Warna abu muda halus */
+    border-radius: 18px;       /* Sudut membulat khas Gojek */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
 }
 
+/* Nama Layanan di bawah ikon */
+.mode-item span {
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Efek Animasi Bounce saat ditekan */
+.mode-item:active {
+    transform: scale(0.9); /* Mengecil saat ditekan */
+}
+
+.mode-item:active .icon-wrapper {
+    background-color: #e8e8e8; /* Sedikit lebih gelap saat ditekan */
+}
         .mode-container { display: flex; gap: 8px; overflow-x: auto; padding: 0 18px 12px; scrollbar-width: none; }
         .mode-item { white-space: nowrap; padding: 10px 16px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1.2px solid #EFEFEF; cursor: pointer; }
         .mode-item.active { background: #E8F5E9; border-color: var(--success); color: var(--primary); }
@@ -265,16 +257,33 @@ mark {
 </div>
 
 <div class="banner-container">
-    <div id="banner-track"></div>
+    <div id="banner-track">
+        <img src="gambar-banner-anda.jpg">
+    </div>
 </div>
 
-<!-- BARIS 1 : MODE ORDER -->
-<div class="mode-container" style="margin-top: -10px;">
-    <div id="mDine" class="mode-item" onclick="changeMode('DINE IN', this)">🍽️ Dine In</div>
-    <div id="mTake" class="mode-item" onclick="changeMode('TAKE AWAY', this)">🛍️ Take Away</div>
-    <div id="mDeliv" class="mode-item" onclick="changeMode('DELIVERY', this)">🛵 Delivery</div>
-</div>
+<div class="mode-selection">
+    <div class="mode-item" onclick="pilihMode('dine-in')">
+        <div class="icon-wrapper">
+            <img src="https://cdn-icons-png.flaticon.com/512/2082/2082184.png" style="width: 30px;">
+        </div>
+        <span>Dine In</span>
+    </div>
 
+    <div class="mode-item" onclick="pilihMode('take-away')">
+        <div class="icon-wrapper">
+            <img src="https://cdn-icons-png.flaticon.com/512/3081/3081913.png" style="width: 30px;">
+        </div>
+        <span>Take Away</span>
+    </div>
+
+    <div class="mode-item" onclick="pilihMode('delivery')">
+        <div class="icon-wrapper">
+            <img src="https://cdn-icons-png.flaticon.com/512/706/706164.png" style="width: 30px;">
+        </div>
+        <span>Delivery</span>
+    </div>
+</div>
 <!-- BARIS 2 : MENU TAMBAHAN -->
 <div class="mode-container secondary">
     <div class="mode-item alt" onclick="openComingSoon()">🍱 Katering</div>
