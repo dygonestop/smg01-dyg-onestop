@@ -400,29 +400,24 @@ mark {
     box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
 }
 
-.service-btn.disabled .badge-out-of-range {
-    opacity: 1 !important;          /* hilangkan efek transparan */
-    filter: none !important;        /* hilangkan grayscale */
-}
-
 
     </style>
 </head>
 <body>
 
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
-    <div style="text-align: center; width: 100%; max-width: 400px;">
+    <div style="text-align: center; width: 100%; position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center;">
         
-        <img src="welcome.png" 
-             style="width: 150px; height: 150px; border-radius: 50%; margin-bottom: 20px;" 
-             loading="eager" 
-             decoding="sync">
-        
-        <h2 style="font-weight: 900; font-size: 20px; margin: 0 0 10px 0;">Hei..Senang Bisa Ketemu</h2>
-        <p style="color: #666; font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalamanmu Berbelanja disini.</p>
-        <button onclick="startApp()" class="order-btn" style="width: 100%;">MULAI SEKARANG</button>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <img src="welcome.png" 
+                 style="width: 160px; height: 160px; border-radius: 50%; object-fit: cover; margin-bottom: 20px;">
+            
+            <h2 style="font-weight: 900; font-size: 20px;">Hei..Senang Bisa Ketemu</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalamanmu Berbelanja disini.</p>
+            <button onclick="startApp()" class="order-btn" style="width: 100%;">MULAI SEKARANG</button>
+        </div>
 
-        <div style="font-size: 10px; color: #999; letter-spacing: 1px; margin-top: 30px;">
+        <div style="font-size: 10px; color: #999; letter-spacing: 1px; margin-top: 20px;">
             powered by <b>cloudkitchen.dyg++</b>
         </div>
         
@@ -442,14 +437,10 @@ mark {
 
 <!-- BARIS 1 : MODE ORDER -->
 <div class="service-mode">
-    <div id="mDine-wrapper" style="position: relative;">
     <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
         <div class="icon">🍽️</div>
         <span>Dine In</span>
     </div>
-    <span class="badge-out-of-range" style="display:none; position:absolute; top:4px; right:4px; background:#D63031; color:white; font-size:8px; font-weight:700; padding:2px 4px; border-radius:4px;">Di luar jangkauan</span>
-</div>
-
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
         <div class="icon">🛍️</div>
@@ -555,79 +546,34 @@ mark {
     // Ubah 'DINE IN' menjadi null agar tidak ada mode yang terpilih di awal
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-// === FUNGSI CEK DAN UPDATE STATUS DINE IN ===
-function updateDineInStatus() {
-    const dineBtn = document.getElementById('mDine');
-    const dineBadge = dineBtn.querySelector('.badge-out-of-range');
-
-    if (!window.userLat || !window.userLng) return;
-
-    // Hitung jarak dari user ke warung (dalam meter)
-    const dist = L.latLng(window.userLat, window.userLng)
-                  .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-    userDist = dist * 1.45; // faktor penyesuaian
-
-    if (userDist > CONFIG.RADIUS_DINE_IN) {
-        // Di luar radius → disable tombol + tampilkan badge
-        dineBtn.classList.add('disabled');
-        dineBtn.onclick = () => showOutOfRangeAlert();
-        dineBadge.style.display = 'block';
-    } else {
-        // Di dalam radius → aktifkan tombol + sembunyikan badge
-        dineBtn.classList.remove('disabled');
-        dineBtn.onclick = () => changeMode('DINE IN', dineBtn);
-        dineBadge.style.display = 'none';
-    }
-}
-
-function updateDineInStatus() {
-    const dineBtn = document.getElementById('mDine');
-    const dineBadge = dineBtn.querySelector('.badge-out-of-range');
-
-    if (!window.userLat || !window.userLng) return;
-
-    // Hitung jarak dari user ke warung
-    const dist = L.latLng(window.userLat, window.userLng)
-                  .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-    userDist = dist * 1.45; // faktor penyesuaian
-
-    if (userDist > CONFIG.RADIUS_DINE_IN) {
-        dineBtn.classList.add('disabled');
-        dineBtn.onclick = () => showOutOfRangeAlert();
-        dineBadge.style.display = 'block'; // tampilkan badge
-    } else {
-        dineBtn.classList.remove('disabled');
-        dineBtn.onclick = () => changeMode('DINE IN', dineBtn);
-        dineBadge.style.display = 'none'; // sembunyikan badge
-    }
-}
-
-// === START APP (klik “MULAI SEKARANG”) ===
-async function startApp() {
-    const overlay = document.getElementById('welcome-overlay');
-    overlay.querySelector('button').disabled = true; // mencegah double click
-
+    async function startApp() {
     navigator.geolocation.getCurrentPosition(async (pos) => {
-        window.userLat = pos.coords.latitude;
-        window.userLng = pos.coords.longitude;
+        const { latitude, longitude } = pos.coords;
+        
+        // --- BAGIAN INI YANG PENTING ---
+        // Kita simpan ke "window" agar bisa dibaca oleh fungsi submitOrder()
+        window.userLat = latitude;
+        window.userLng = longitude;
+        // -------------------------------
 
-        // 1. Update tombol Dine In + badge
-        updateDineInStatus();
+        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+        userDist = straightLineDist * 1.45; 
 
-        // 2. Inisialisasi peta dan banner
-        initMap(window.userLat, window.userLng);
+        if (userDist > CONFIG.RADIUS_DINE_IN) {
+            const dineBtn = document.getElementById('mDine');
+            if(dineBtn) {
+                dineBtn.classList.add('disabled');
+                dineBtn.onclick = () => showOutOfRangeAlert();
+            }
+            changeMode('DELIVERY', document.getElementById('mDeliv'));
+        }
+        
+        initMap(latitude, longitude);
         initBanner();
-
-        // 3. Sembunyikan overlay welcome
-        overlay.style.display = 'none';
-
-        // 4. Load menu & sync antrean
+        document.getElementById('welcome-overlay').style.display = 'none';
         await loadMenu();
         syncQueue();
-    }, () => {
-        alert("Gagal akses lokasi. Harap aktifkan GPS.");
-        overlay.querySelector('button').disabled = false; // bisa klik lagi
-    }, { enableHighAccuracy: true });
+    }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
 }
 
     function calculateOngkir(distMeter) {
@@ -1024,38 +970,6 @@ async function startApp() {
         </button>
     </div>
 </div>
-
-<!-- Toast Alert Modern -->
-<div id="toastAlert" style="
-    position: fixed;
-    bottom: -200px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    color: #333;
-    min-width: 250px;
-    max-width: 90%;
-    padding: 18px 20px;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    text-align: center;
-    z-index: 10005;
-    font-family: 'Inter', sans-serif;
-    transition: bottom 0.4s cubic-bezier(0.16,1,0.3,1);
-">
-    <div id="toastEmoji" style="font-size:28px; margin-bottom:8px;">⚠️</div>
-    <div id="toastMessage" style="font-size:13px; font-weight:700; margin-bottom:12px;">Pesan disini</div>
-    <button id="toastBtn" style="
-        background: var(--primary);
-        color: white;
-        border:none;
-        padding:8px 18px;
-        border-radius:12px;
-        font-weight:700;
-        cursor:pointer;
-    ">Oke</button>
-</div>
-
 
 </body>
 </html>
