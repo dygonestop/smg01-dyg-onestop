@@ -933,54 +933,69 @@ async function submitOrder() {
     const noAntrean = document.getElementById('noAntrean').innerText;
     const nVal = nI.value.trim();
 
-    if (!nVal) { closeModal(); nI.closest('.input-card').classList.add('error-field', 'shake-ani'); return; }
+    if (!nVal) { 
+        closeModal(); 
+        nI.closest('.input-card').classList.add('error-field', 'shake-ani'); 
+        showToast("Nama belum diisi!", "error", "❌");
+        return; 
+    }
 
     const now = new Date();
-    const waktu = now.toLocaleDateString('id-ID') + " " + now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    const jam = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    const tgl = now.toLocaleDateString('id-ID');
     
-    // --- FORMAT STRUK UNTUK PRINTER THERMAL ---
+    // --- FORMAT STRUK OPTIMAL UNTUK PRINTER 58mm ---
     let struk = `      CLOUDKITCHEN DYG++\n`;
     struk += `================================\n`;
-    struk += `No. Antrean: ${noAntrean}\n`;
-    struk += `Waktu  : ${waktu}\n`;
-    struk += `Cust   : ${nVal.toUpperCase()}\n`;
-    struk += `Metode : ${currentMode}\n`;
-    if (currentMode === 'DINE IN') struk += `Meja   : ${tI.value}\n`;
+    struk += `ANTREAN : ${noAntrean}\n`;
+    struk += `WAKTU   : ${tgl} ${jam}\n`;
+    struk += `CUST    : ${nVal.toUpperCase()}\n`;
+    struk += `METODE  : ${currentMode}\n`;
+    if (currentMode === 'DINE IN') struk += `MEJA    : ${tI.value}\n`;
     struk += `--------------------------------\n`;
 
     const summary = {};
     cart.forEach(c => {
+        // Gabungkan varian dengan koma, hilangkan null/kosong
         let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(',');
-        let label = c.nama + (tags ? ` (${tags})` : "");
+        let label = c.nama + (tags ? `\n   (${tags})` : "");
         if (!summary[label]) summary[label] = { qty: 0 };
         summary[label].qty++;
     });
 
     Object.entries(summary).forEach(([name, data]) => {
-        struk += `${data.qty}x ${name.substring(0,25)}\n`;
+        // Format: 1x Nama Menu (Varian)
+        struk += `${data.qty}x ${name}\n`;
     });
 
     const finalPrice = document.getElementById('miniPrice').innerText;
+    const note = document.getElementById('orderNote').value || '-';
+    
     struk += `--------------------------------\n`;
+    struk += `CATATAN: ${note}\n`;
     struk += `TOTAL  : Rp ${finalPrice}\n`;
-    struk += `================================\n\n\n`;
+    struk += `================================\n`;
+    struk += `       Terima Kasih 🙏\n\n\n\n`; // Spasi kosong agar kertas keluar lebih panjang
 
-    // 1. KIRIM DATA KE DATABASE
+    // 1. KIRIM DATA KE DATABASE (GOOGLE SHEETS)
     fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nVal)}&pesanan=${encodeURIComponent(struk)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
 
     // 2. TRIGGER PRINT KE RAWBT (HP ANDROID)
-    // Ini akan memicu aplikasi RawBT di Android untuk langsung mencetak
+    // S.text adalah parameter untuk mengirim teks langsung ke aplikasi RawBT
     const rawBTUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text=" + encodeURIComponent(struk) + ";end;";
     
-    // 3. JALANKAN WHATSAPP & PRINT BERURUTAN
+    // 3. JALANKAN WHATSAPP
     const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
     const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(struk)}`;
 
-    // Eksekusi Print dulu, lalu arahkan ke WA
+    // EKSEKUSI URUTAN:
+    // Pertama, coba buka RawBT untuk print
     window.location.href = rawBTUrl;
+
+    // Kedua, setelah jeda sebentar agar printer proses, buka WhatsApp
     setTimeout(() => {
         window.location.href = waUrl;
-    }, 1500); 
+    }, 1800); // Jeda 1.8 detik
 }
 
     function toggleSummary(open) {
