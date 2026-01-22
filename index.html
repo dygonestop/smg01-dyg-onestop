@@ -437,10 +437,15 @@ mark {
 
 <!-- BARIS 1 : MODE ORDER -->
 <div class="service-mode">
-    <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
-        <div class="icon">🍽️</div>
-        <span>Dine In</span>
-    </div>
+    <div id="mDine" class="service-btn">
+    <div class="icon">🍽️</div>
+    <span>Dine In</span>
+    <span class="badge-out-of-range" style="display:none; 
+          position:absolute; top:4px; right:4px; 
+          background:#D63031; color:white; 
+          font-size:8px; font-weight:700; 
+          padding:2px 4px; border-radius:4px;">Di luar jangkauan</span>
+</div>
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
         <div class="icon">🛍️</div>
@@ -546,33 +551,79 @@ mark {
     // Ubah 'DINE IN' menjadi null agar tidak ada mode yang terpilih di awal
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-    async function startApp() {
+// === FUNGSI CEK DAN UPDATE STATUS DINE IN ===
+function updateDineInStatus() {
+    const dineBtn = document.getElementById('mDine');
+    const dineBadge = dineBtn.querySelector('.badge-out-of-range');
+
+    if (!window.userLat || !window.userLng) return;
+
+    // Hitung jarak dari user ke warung (dalam meter)
+    const dist = L.latLng(window.userLat, window.userLng)
+                  .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+    userDist = dist * 1.45; // faktor penyesuaian
+
+    if (userDist > CONFIG.RADIUS_DINE_IN) {
+        // Di luar radius → disable tombol + tampilkan badge
+        dineBtn.classList.add('disabled');
+        dineBtn.onclick = () => showOutOfRangeAlert();
+        dineBadge.style.display = 'block';
+    } else {
+        // Di dalam radius → aktifkan tombol + sembunyikan badge
+        dineBtn.classList.remove('disabled');
+        dineBtn.onclick = () => changeMode('DINE IN', dineBtn);
+        dineBadge.style.display = 'none';
+    }
+}
+
+function updateDineInStatus() {
+    const dineBtn = document.getElementById('mDine');
+    const dineBadge = dineBtn.querySelector('.badge-out-of-range');
+
+    if (!window.userLat || !window.userLng) return;
+
+    // Hitung jarak dari user ke warung
+    const dist = L.latLng(window.userLat, window.userLng)
+                  .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+    userDist = dist * 1.45; // faktor penyesuaian
+
+    if (userDist > CONFIG.RADIUS_DINE_IN) {
+        dineBtn.classList.add('disabled');
+        dineBtn.onclick = () => showOutOfRangeAlert();
+        dineBadge.style.display = 'block'; // tampilkan badge
+    } else {
+        dineBtn.classList.remove('disabled');
+        dineBtn.onclick = () => changeMode('DINE IN', dineBtn);
+        dineBadge.style.display = 'none'; // sembunyikan badge
+    }
+}
+
+// === START APP (klik “MULAI SEKARANG”) ===
+async function startApp() {
+    const overlay = document.getElementById('welcome-overlay');
+    overlay.querySelector('button').disabled = true; // mencegah double click
+
     navigator.geolocation.getCurrentPosition(async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        window.userLat = latitude;
-        window.userLng = longitude;
+        window.userLat = pos.coords.latitude;
+        window.userLng = pos.coords.longitude;
 
-        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-        userDist = straightLineDist * 1.45; 
+        // 1. Update tombol Dine In + badge
+        updateDineInStatus();
 
-        // Hanya menonaktifkan tombol jika jauh, TAPI tidak otomatis pilih mode
-        if (userDist > CONFIG.RADIUS_DINE_IN) {
-            const dineBtn = document.getElementById('mDine');
-            if(dineBtn) {
-                dineBtn.classList.add('disabled');
-                dineBtn.onclick = () => showOutOfRangeAlert();
-            }
-        }
-        
-        // Mode tetap NULL agar tidak ada yang terpilih (warna tetap putih/abu)
-        currentMode = null; 
-        
-        initMap(latitude, longitude);
+        // 2. Inisialisasi peta dan banner
+        initMap(window.userLat, window.userLng);
         initBanner();
-        document.getElementById('welcome-overlay').style.display = 'none';
+
+        // 3. Sembunyikan overlay welcome
+        overlay.style.display = 'none';
+
+        // 4. Load menu & sync antrean
         await loadMenu();
         syncQueue();
-    }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
+    }, () => {
+        alert("Gagal akses lokasi. Harap aktifkan GPS.");
+        overlay.querySelector('button').disabled = false; // bisa klik lagi
+    }, { enableHighAccuracy: true });
 }
 
     function calculateOngkir(distMeter) {
