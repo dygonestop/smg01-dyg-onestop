@@ -310,6 +310,59 @@ mark {
     0% { transform: scale(0.9); opacity: 0.8; }
     100% { transform: scale(1.2); opacity: 0; }
 }
+/* === SECONDARY GOJEK STYLE === */
+.secondary-mode {
+    margin-top: -4px;
+    opacity: 0.92;
+}
+
+.service-btn.secondary {
+    width: 70px;
+    height: 70px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    background: #F7F7F7;
+}
+
+.service-btn.secondary .icon {
+    font-size: 22px;
+    animation: floatIconSoft 3.5s ease-in-out infinite;
+}
+
+.service-btn.secondary span {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--muted);
+}
+
+/* jangan pakai ring hijau */
+.service-btn.secondary.active::after {
+    display: none;
+}
+
+/* animasi lebih lembut */
+@keyframes floatIconSoft {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+
+/* efek tap */
+.service-btn.secondary:active {
+    transform: scale(0.92);
+    background: #EFEFEF;
+}
+
+.service-btn.secondary::before {
+    content: "SOON";
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--accent);
+    color: white;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 2px 5px;
+    border-radius: 10px;
+}
 
 
     </style>
@@ -363,11 +416,21 @@ mark {
 </div>
 
 
-<!-- BARIS 2 : MENU TAMBAHAN -->
-<div class="mode-container secondary">
-    <div class="mode-item alt" onclick="openComingSoon()">🍱 Katering</div>
-    <div class="mode-item alt" onclick="openComingSoon()">🤝 Jadi Mitra</div>
-    <div class="mode-item alt" onclick="openComingSoon()">📢 NgIKLAN</div>
+<div class="service-mode secondary-mode">
+    <div class="service-btn secondary" onclick="openComingSoon()">
+        <div class="icon">🍱</div>
+        <span>Katering</span>
+    </div>
+
+    <div class="service-btn secondary" onclick="openComingSoon()">
+        <div class="icon">🤝</div>
+        <span>Jadi Mitra</span>
+    </div>
+
+    <div class="service-btn secondary" onclick="openComingSoon()">
+        <div class="icon">📢</div>
+        <span>NgIKLAN</span>
+    </div>
 </div>
 
 <div id="map"></div>
