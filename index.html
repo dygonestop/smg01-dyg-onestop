@@ -664,68 +664,80 @@ function hideToast(toast){
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
 // === FUNGSI CEK DAN UPDATE STATUS DINE IN ===
-// --- PERBAIKAN: Gunakan satu fungsi update status yang solid ---
 function updateDineInStatus() {
     const dineBtn = document.getElementById('mDine');
-    const dineBadge = dineBtn ? dineBtn.querySelector('.badge-out-of-range') : null;
+    const dineBadge = dineBtn.querySelector('.badge-out-of-range');
 
-    if (!window.userLat || !window.userLng || !dineBtn) return;
+    if (!window.userLat || !window.userLng) return;
 
     // Hitung jarak dari user ke warung (dalam meter)
     const dist = L.latLng(window.userLat, window.userLng)
                   .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-    
-    userDist = dist; // Simpan jarak asli
+    userDist = dist * 1.45; // faktor penyesuaian
 
     if (userDist > CONFIG.RADIUS_DINE_IN) {
+        // Di luar radius → disable tombol + tampilkan badge
         dineBtn.classList.add('disabled');
-        // Gunakan event listener agar tidak bentrok
-        dineBtn.onclick = function(e) { 
-            e.stopPropagation();
-            alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In."); rendermenu
-        };
-        if(dineBadge) dineBadge.style.display = 'block';
+        dineBtn.onclick = () => showOutOfRangeAlert();
+        dineBadge.style.display = 'block';
     } else {
+        // Di dalam radius → aktifkan tombol + sembunyikan badge
         dineBtn.classList.remove('disabled');
-        dineBtn.onclick = function() { changeMode('DINE IN', dineBtn); };
-        if(dineBadge) dineBadge.style.display = 'none';
+        dineBtn.onclick = () => changeMode('DINE IN', dineBtn);
+        dineBadge.style.display = 'none';
     }
 }
 
-// --- PERBAIKAN: Fungsi Start App agar tidak macet ---
+function updateDineInStatus() {
+    const dineBtn = document.getElementById('mDine');
+    const dineBadge = dineBtn.querySelector('.badge-out-of-range');
+
+    if (!window.userLat || !window.userLng) return;
+
+    // Hitung jarak dari user ke warung
+    const dist = L.latLng(window.userLat, window.userLng)
+                  .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+    userDist = dist * 1.45; // faktor penyesuaian
+
+    if (userDist > CONFIG.RADIUS_DINE_IN) {
+        dineBtn.classList.add('disabled');
+        dineBtn.onclick = () => showOutOfRangeAlert();
+        dineBadge.style.display = 'block'; // tampilkan badge
+    } else {
+        dineBtn.classList.remove('disabled');
+        dineBtn.onclick = () => changeMode('DINE IN', dineBtn);
+        dineBadge.style.display = 'none'; // sembunyikan badge
+    }
+}
+
+// === START APP (klik “MULAI SEKARANG”) ===
 async function startApp() {
     const overlay = document.getElementById('welcome-overlay');
-    const startBtn = overlay.querySelector('button');
-    
-    startBtn.disabled = true;
-    startBtn.innerText = "Mencari Lokasi...";
+    overlay.querySelector('button').disabled = true; // mencegah double click
 
     navigator.geolocation.getCurrentPosition(async (pos) => {
         window.userLat = pos.coords.latitude;
         window.userLng = pos.coords.longitude;
 
-        // Inisialisasi peta & banner duluan agar data siap
-        initMap(window.userLat, window.userLng);
-        initBanner();
-        
-        // Load menu & antrean
-        await loadMenu();
-        syncQueue();
-
-        // Cek status radius
+        // 1. Update tombol Dine In + badge
         updateDineInStatus();
 
-        // Tutup overlay
+        // 2. Inisialisasi peta dan banner
+        initMap(window.userLat, window.userLng);
+        initBanner();
+
+        // 3. Sembunyikan overlay welcome
         overlay.style.display = 'none';
-    }, (error) => {
-        startBtn.disabled = false;
-        startBtn.innerText = "MULAI SEKARANG";
-        alert("Gagal akses lokasi: " + error.message + ". Harap izinkan akses GPS untuk memesan.");
-    }, { 
-        enableHighAccuracy: true,
-        timeout: 10000 
-    });
+
+        // 4. Load menu & sync antrean
+        await loadMenu();
+        syncQueue();
+    }, () => {
+        showToast("Gagal akses lokasi. Harap aktifkan GPS 📍", "error", "📍");
+        overlay.querySelector('button').disabled = false; // bisa klik lagi
+    }, { enableHighAccuracy: true });
 }
+
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
         if (km <= 1.5) return 3000;
@@ -968,8 +980,7 @@ async function startApp() {
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    // Cari baris ini dan ganti:
-const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
+    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
 
     // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
@@ -1126,7 +1137,7 @@ const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${windo
 <div id="toast-container" style="
     position: fixed;
     bottom: 20px;
-    left: 50%;
+    left: 50%;Updat
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
