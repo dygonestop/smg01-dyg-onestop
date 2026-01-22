@@ -405,6 +405,52 @@ mark {
     filter: none !important;        /* hilangkan grayscale */
 }
 
+.toast {
+    min-width: 250px;
+    max-width: 300px;
+    padding: 15px 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(50px);
+    pointer-events: auto;
+    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.4s;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast .emoji {
+    font-size: 24px;
+}
+
+.toast .msg {
+    flex: 1;
+    font-size: 14px;
+}
+
+.toast button {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    padding: 6px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    color: #fff;
+    font-weight: 700;
+}
+.toast.success { background: #00B894; }
+.toast.error   { background: #D63031; }
+.toast.info    { background: #0984E3; }
+.toast.warning { background: #F39C12; }
+
 
     </style>
 </head>
@@ -537,6 +583,68 @@ mark {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+
+function showToast(message, type = "info", emoji = "ℹ️", duration = 3000) {
+    const container = document.getElementById('toast-container');
+    if(!container) return;
+
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        min-width: 250px;
+        max-width: 90%;
+        background: white;
+        color: #333;
+        padding: 16px 20px;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        text-align: center;
+        font-family: 'Inter', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        pointer-events: auto;
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+    `;
+
+    let color = "#333";
+    if(type === "success") color = "#00B894";
+    else if(type === "error") color = "#D63031";
+    else if(type === "warning") color = "#F39C12";
+
+    toast.innerHTML = `<span style="font-size:24px;">${emoji}</span><span style="flex:1; font-weight:600;">${message}</span>`;
+
+    toast.addEventListener('click', () => {
+        toast.style.opacity = 0;
+        toast.style.transform = 'translateY(50px)';
+        setTimeout(() => toast.remove(), 400);
+    });
+
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.style.opacity = 1;
+        toast.style.transform = 'translateY(0)';
+        toast.style.borderLeft = `6px solid ${color}`;
+    });
+
+    setTimeout(() => {
+        toast.style.opacity = 0;
+        toast.style.transform = 'translateY(50px)';
+        setTimeout(() => toast.remove(), 400);
+    }, duration);
+}
+
+function hideToast(toast){
+    toast.classList.remove('show');
+    setTimeout(() => {
+        if(toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 400); // sama dengan durasi animasi
+}
+
+
+
     const CONFIG = {
         WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyPKJ8Q9u-upqGFQDFxSC7kHGpPe4EECUKDBlU704DyLMfyXUwUJhHSVeYa1FbNockFyA/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
@@ -556,80 +664,68 @@ mark {
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
 // === FUNGSI CEK DAN UPDATE STATUS DINE IN ===
+// --- PERBAIKAN: Gunakan satu fungsi update status yang solid ---
 function updateDineInStatus() {
     const dineBtn = document.getElementById('mDine');
-    const dineBadge = dineBtn.querySelector('.badge-out-of-range');
+    const dineBadge = dineBtn ? dineBtn.querySelector('.badge-out-of-range') : null;
 
-    if (!window.userLat || !window.userLng) return;
+    if (!window.userLat || !window.userLng || !dineBtn) return;
 
     // Hitung jarak dari user ke warung (dalam meter)
     const dist = L.latLng(window.userLat, window.userLng)
                   .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-    userDist = dist * 1.45; // faktor penyesuaian
-
-    if (userDist > CONFIG.RADIUS_DINE_IN) {
-        // Di luar radius → disable tombol + tampilkan badge
-        dineBtn.classList.add('disabled');
-        dineBtn.onclick = () => showOutOfRangeAlert();
-        dineBadge.style.display = 'block';
-    } else {
-        // Di dalam radius → aktifkan tombol + sembunyikan badge
-        dineBtn.classList.remove('disabled');
-        dineBtn.onclick = () => changeMode('DINE IN', dineBtn);
-        dineBadge.style.display = 'none';
-    }
-}
-
-function updateDineInStatus() {
-    const dineBtn = document.getElementById('mDine');
-    const dineBadge = dineBtn.querySelector('.badge-out-of-range');
-
-    if (!window.userLat || !window.userLng) return;
-
-    // Hitung jarak dari user ke warung
-    const dist = L.latLng(window.userLat, window.userLng)
-                  .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-    userDist = dist * 1.45; // faktor penyesuaian
+    
+    userDist = dist; // Simpan jarak asli
 
     if (userDist > CONFIG.RADIUS_DINE_IN) {
         dineBtn.classList.add('disabled');
-        dineBtn.onclick = () => showOutOfRangeAlert();
-        dineBadge.style.display = 'block'; // tampilkan badge
+        // Gunakan event listener agar tidak bentrok
+        dineBtn.onclick = function(e) { 
+            e.stopPropagation();
+            alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In."); 
+        };
+        if(dineBadge) dineBadge.style.display = 'block';
     } else {
         dineBtn.classList.remove('disabled');
-        dineBtn.onclick = () => changeMode('DINE IN', dineBtn);
-        dineBadge.style.display = 'none'; // sembunyikan badge
+        dineBtn.onclick = function() { changeMode('DINE IN', dineBtn); };
+        if(dineBadge) dineBadge.style.display = 'none';
     }
 }
 
-// === START APP (klik “MULAI SEKARANG”) ===
+// --- PERBAIKAN: Fungsi Start App agar tidak macet ---
 async function startApp() {
     const overlay = document.getElementById('welcome-overlay');
-    overlay.querySelector('button').disabled = true; // mencegah double click
+    const startBtn = overlay.querySelector('button');
+    
+    startBtn.disabled = true;
+    startBtn.innerText = "Mencari Lokasi...";
 
     navigator.geolocation.getCurrentPosition(async (pos) => {
         window.userLat = pos.coords.latitude;
         window.userLng = pos.coords.longitude;
 
-        // 1. Update tombol Dine In + badge
-        updateDineInStatus();
-
-        // 2. Inisialisasi peta dan banner
+        // Inisialisasi peta & banner duluan agar data siap
         initMap(window.userLat, window.userLng);
         initBanner();
-
-        // 3. Sembunyikan overlay welcome
-        overlay.style.display = 'none';
-
-        // 4. Load menu & sync antrean
+        
+        // Load menu & antrean
         await loadMenu();
         syncQueue();
-    }, () => {
-        alert("Gagal akses lokasi. Harap aktifkan GPS.");
-        overlay.querySelector('button').disabled = false; // bisa klik lagi
-    }, { enableHighAccuracy: true });
-}
 
+        // Cek status radius
+        updateDineInStatus();
+
+        // Tutup overlay
+        overlay.style.display = 'none';
+    }, (error) => {
+        startBtn.disabled = false;
+        startBtn.innerText = "MULAI SEKARANG";
+        alert("Gagal akses lokasi: " + error.message + ". Harap izinkan akses GPS untuk memesan.");
+    }, { 
+        enableHighAccuracy: true,
+        timeout: 10000 
+    });
+}
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
         if (km <= 1.5) return 3000;
@@ -811,7 +907,7 @@ async function startApp() {
     // 1. CEK APAKAH SUDAH PILIH MODE?
     if (!currentMode) {
         closeModal(); // Tutup modal jika terlanjur terbuka
-        alert("Pilih dulu layanan Anda: Dine In, Take Away, atau Delivery!");
+        showToast("Lengkapi kolom ini dulu! ✍️", "warning", "✍️");
         
         // Gulir layar otomatis ke arah tombol mode
         const modeArea = document.querySelector('.mode-container');
@@ -872,7 +968,8 @@ async function startApp() {
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
+    // Cari baris ini dan ganti:
+const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
     // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
@@ -1024,6 +1121,20 @@ async function startApp() {
         </button>
     </div>
 </div>
+
+<!-- Toast Container Modern -->
+<div id="toast-container" style="
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 11000;
+    pointer-events: none;
+"></div>
+
 
 </body>
 </html>
