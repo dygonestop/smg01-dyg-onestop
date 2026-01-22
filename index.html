@@ -665,25 +665,24 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
 // === FUNGSI CEK DAN UPDATE STATUS DINE IN ===
 // --- PERBAIKAN: Gunakan satu fungsi update status yang solid ---
+
 function updateDineInStatus() {
     const dineBtn = document.getElementById('mDine');
     const dineBadge = dineBtn ? dineBtn.querySelector('.badge-out-of-range') : null;
 
     if (!window.userLat || !window.userLng || !dineBtn) return;
 
-    // Hitung jarak dari user ke warung (dalam meter)
     const dist = L.latLng(window.userLat, window.userLng)
                   .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
     
-    userDist = dist; // Simpan jarak asli
+    userDist = dist; 
 
     if (userDist > CONFIG.RADIUS_DINE_IN) {
         dineBtn.classList.add('disabled');
-        // Gunakan event listener agar tidak bentrok
         dineBtn.onclick = function(e) { 
             e.stopPropagation();
-           alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In.");
-
+            alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In.");
+        }; // Tutup fungsi onclick
         if(dineBadge) dineBadge.style.display = 'block';
     } else {
         dineBtn.classList.remove('disabled');
@@ -692,7 +691,7 @@ function updateDineInStatus() {
     }
 }
 
-// --- PERBAIKAN: Fungsi Start App agar tidak macet ---
+// --- PERBAIKAN: Fungsi Start App ---
 async function startApp() {
     const overlay = document.getElementById('welcome-overlay');
     const startBtn = overlay.querySelector('button');
@@ -704,19 +703,14 @@ async function startApp() {
         window.userLat = pos.coords.latitude;
         window.userLng = pos.coords.longitude;
 
-        // Inisialisasi peta & banner duluan agar data siap
         initMap(window.userLat, window.userLng);
         initBanner();
         
-        // Load menu & antrean
         await loadMenu();
         syncQueue();
-
-        // Cek status radius
         updateDineInStatus();
 
-        // Tutup overlay
-        overlay.style.display = 'none';
+        overlay.style.display = 'none'; // Menutup welcome screen
     }, (error) => {
         startBtn.disabled = false;
         startBtn.innerText = "MULAI SEKARANG";
@@ -726,6 +720,7 @@ async function startApp() {
         timeout: 10000 
     });
 }
+
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
         if (km <= 1.5) return 3000;
