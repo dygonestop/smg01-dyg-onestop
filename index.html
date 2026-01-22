@@ -682,8 +682,8 @@ function updateDineInStatus() {
         // Gunakan event listener agar tidak bentrok
         dineBtn.onclick = function(e) { 
             e.stopPropagation();
-            alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In."); rendermen
-        };
+           alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In.");
+
         if(dineBadge) dineBadge.style.display = 'block';
     } else {
         dineBtn.classList.remove('disabled');
@@ -1097,7 +1097,10 @@ const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${windo
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("Warung").openPopup();
+        L.marker(CONFIG.WARUNG_LOCATION)
+  .addTo(map)
+  .bindPopup("Warung cloudkitchen.dyg++");
+
         L.marker([lat, lng]).addTo(map).bindPopup("Lokasi Kamu");
     }
 
@@ -1183,6 +1186,10 @@ const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${windo
     z-index: 11000;
     pointer-events: none;
 "></div>
+<div id="toast-container"
+     style="position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+            z-index:20000; display:flex; flex-direction:column; gap:10px;">
+</div>
 
 
 </body>
