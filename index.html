@@ -921,82 +921,123 @@ async function startApp() {
         }
     }
 
-async function submitOrder() {
+    async function submitOrder() {
+    // 1. CEK APAKAH SUDAH PILIH MODE?
     if (!currentMode) {
-        closeModal();
-        showToast("Pilih metode (Dine In/Delivery) dulu! ✍️", "warning", "✍️");
-        return;
+        closeModal(); // Tutup modal jika terlanjur terbuka
+        showToast("Lengkapi kolom ini dulu! ✍️", "warning", "✍️");
+        
+        // Gulir layar otomatis ke arah tombol mode
+        const modeArea = document.querySelector('.mode-container');
+        modeArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Buat semua tombol mode berdetak (pulse) agar pelanggan sadar harus pilih salah satu
+        document.querySelectorAll('.mode-item:not(.disabled)').forEach(el => {
+            el.classList.add('pulse-attention');
+        });
+        return; // Berhenti di sini, jangan lanjut kirim WA
     }
 
+    // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
+    if (navigator.vibrate) navigator.vibrate(50);
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
+    const aI = document.getElementById('addressDetail');
     const noAntrean = document.getElementById('noAntrean').innerText;
-    const nVal = nI.value.trim();
 
-    if (!nVal) { 
-        closeModal(); 
-        nI.closest('.input-card').classList.add('error-field', 'shake-ani'); 
-        showToast("Nama belum diisi!", "error", "❌");
+    // Validasi input kosong (Nama, Meja, atau Alamat)
+    const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
+    cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
+
+    let targetEl = null;
+    if (!nI.value.trim()) targetEl = nI;
+    else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
+    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+
+    if (targetEl) {
+        const targetCard = targetEl.closest('.input-card');
+        closeModal();
+        targetCard.classList.add('error-field', 'shake-ani');
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.focus();
         return; 
     }
 
-    const now = new Date();
-    const jam = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-    const tgl = now.toLocaleDateString('id-ID');
-    
-    // --- FORMAT STRUK OPTIMAL UNTUK PRINTER 58mm ---
-    let struk = `      CLOUDKITCHEN DYG++\n`;
-    struk += `================================\n`;
-    struk += `ANTREAN : ${noAntrean}\n`;
-    struk += `WAKTU   : ${tgl} ${jam}\n`;
-    struk += `CUST    : ${nVal.toUpperCase()}\n`;
-    struk += `METODE  : ${currentMode}\n`;
-    if (currentMode === 'DINE IN') struk += `MEJA    : ${tI.value}\n`;
-    struk += `--------------------------------\n`;
-
+    // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
     const summary = {};
     cart.forEach(c => {
-        // Gabungkan varian dengan koma, hilangkan null/kosong
-        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(',');
-        let label = c.nama + (tags ? `\n   (${tags})` : "");
-        if (!summary[label]) summary[label] = { qty: 0 };
-        summary[label].qty++;
+        let label = c.nama;
+        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+        if(tags) label += ` [${tags}]`;
+        const itemKey = label;
+        const itemPrice = c.harga + (c.ex || 0);
+        
+        if (!summary[itemKey]) {
+            summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
+        }
+        summary[itemKey].qty++;
     });
 
-    Object.entries(summary).forEach(([name, data]) => {
-        // Format: 1x Nama Menu (Varian)
-        struk += `${data.qty}x ${name}\n`;
-    });
+    const pRowsWA = Object.entries(summary).map(([name, data]) => 
+        `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
+    );
 
+    // --- 3. Hitung Data & Link Lokasi ---
+    const distKM = (userDist/1000).toFixed(1);
+    const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const note = document.getElementById('orderNote').value || '-';
+    // Cari baris ini dan ganti:
+const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
+
+    // --- 4. Susun Format Pesan WhatsApp ---
+    let msg = `Halo cloudkitchen.dyg++!\n\n`;
+    msg += `🛵 *${currentMode}*\n`;
+    msg += `👤 *Nama:* ${nI.value}\n`;
+    msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
+    msg += `━━━━━━━━━━━━━━\n`;
+
+    if (currentMode === 'DINE IN') {
+        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
+    } else {
+        msg += `🏠 *Alamat:* ${aI.value}\n`;
+        msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
+        msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
+    }
+
+    msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
     
-    struk += `--------------------------------\n`;
-    struk += `CATATAN: ${note}\n`;
-    struk += `TOTAL  : Rp ${finalPrice}\n`;
-    struk += `================================\n`;
-    struk += `       Terima Kasih 🙏\n\n\n\n`; // Spasi kosong agar kertas keluar lebih panjang
-
-    // 1. KIRIM DATA KE DATABASE (GOOGLE SHEETS)
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nVal)}&pesanan=${encodeURIComponent(struk)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
-
-    // 2. TRIGGER PRINT KE RAWBT (HP ANDROID)
-    // S.text adalah parameter untuk mengirim teks langsung ke aplikasi RawBT
-    const rawBTUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text=" + encodeURIComponent(struk) + ";end;";
+    const catatan = document.getElementById('orderNote').value || '-';
+    msg += `\n*CATATAN:* ${catatan}\n`;
+    msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
     
-    // 3. JALANKAN WHATSAPP
-    const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-    const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(struk)}`;
+    msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
+    msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
+    msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
+    msg += `Terimakasih!`;
 
-    // EKSEKUSI URUTAN:
-    // Pertama, coba buka RawBT untuk print
-    window.location.href = rawBTUrl;
+    // --- 5. Animasi Feedback Tombol & Pengiriman ---
+    // Memicu getar halus saat klik
+    if (navigator.vibrate) navigator.vibrate(50);
 
-    // Kedua, setelah jeda sebentar agar printer proses, buka WhatsApp
+    // Mengubah tombol menjadi loading
+    const btnKirim = document.querySelector('#modalConfirm button:last-child');
+    if (btnKirim) {
+        btnKirim.innerHTML = "⌛ Menghubungkan...";
+        btnKirim.style.opacity = "0.7";
+        btnKirim.style.pointerEvents = "none";
+    }
+
+    // Kirim data ke database di latar belakang
+    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
+
+    // Tunggu animasi sebentar baru pindah ke WA
     setTimeout(() => {
-        window.location.href = waUrl;
-    }, 1800); // Jeda 1.8 detik
+        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+    }, 600); 
 }
+
 
     function toggleSummary(open) {
         if (cart.length === 0 && open) return;
