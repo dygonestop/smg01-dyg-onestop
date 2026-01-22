@@ -458,12 +458,14 @@ mark {
     <div id="banner-track"></div>
 </div>
 
-<!-- BARIS 1 : MODE ORDER -->
-<div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)" style="position: relative;">
-    <div id="badgeDine" class="badge-status">DI LUAR JANGKAUAN</div>
-    <div class="icon">🍽️</div>
-    <span>Dine In</span>
-</div>
+<!-- BARIS 1 : MODE ORDER (UTAMA) -->
+<div class="service-mode">
+
+    <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
+        <div id="badgeDine" class="badge-status">DI LUAR JANGKAUAN</div>
+        <div class="icon">🍽️</div>
+        <span>Dine In</span>
+    </div>
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
         <div class="icon">🛍️</div>
@@ -474,10 +476,12 @@ mark {
         <div class="icon">🛵</div>
         <span>Delivery</span>
     </div>
+
 </div>
 
-
+<!-- BARIS 2 : MODE SECONDARY -->
 <div class="service-mode secondary-mode">
+
     <div class="service-btn secondary" onclick="openComingSoon()">
         <div class="icon">🍱</div>
         <span>Katering</span>
@@ -492,6 +496,7 @@ mark {
         <div class="icon">📢</div>
         <span>NgIKLAN</span>
     </div>
+
 </div>
 
 <div id="map"></div>
