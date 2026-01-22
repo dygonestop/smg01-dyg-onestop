@@ -921,49 +921,80 @@ async function startApp() {
         }
     }
 
-    async function submitOrder() {
-    // 1. CEK APAKAH SUDAH PILIH MODE?
+async function submitOrder() {
+    // 1. CEK PILIHAN MODE (Dine In / Delivery)
     if (!currentMode) {
-        closeModal(); // Tutup modal jika terlanjur terbuka
-        showToast("Lengkapi kolom ini dulu! ✍️", "warning", "✍️");
-        
-        // Gulir layar otomatis ke arah tombol mode
-        const modeArea = document.querySelector('.mode-container');
+        closeModal();
+        showToast("Pilih metode pesanan dulu! 🍽️", "warning", "🍽️");
+        const modeArea = document.querySelector('.service-mode');
         modeArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Buat semua tombol mode berdetak (pulse) agar pelanggan sadar harus pilih salah satu
-        document.querySelectorAll('.mode-item:not(.disabled)').forEach(el => {
+        document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
             el.classList.add('pulse-attention');
         });
-        return; // Berhenti di sini, jangan lanjut kirim WA
+        return;
     }
 
-    // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
-    if (navigator.vibrate) navigator.vibrate(50);
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
     const noAntrean = document.getElementById('noAntrean').innerText;
 
-    // Validasi input kosong (Nama, Meja, atau Alamat)
-    const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
-    cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
+    // Bersihkan semua efek error sebelumnya
+    const allInputCards = document.querySelectorAll('.input-card');
+    allInputCards.forEach(card => card.classList.remove('error-field', 'shake-ani'));
 
+    // 2. VALIDASI KOLOM KOSONG
     let targetEl = null;
-    if (!nI.value.trim()) targetEl = nI;
-    else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
-    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+
+    if (!nI.value.trim()) {
+        targetEl = nI;
+    } else if (currentMode === 'DINE IN' && !tI.value.trim()) {
+        targetEl = tI;
+    } else if (currentMode === 'DELIVERY' && !aI.value.trim()) {
+        targetEl = aI;
+    }
 
     if (targetEl) {
+        closeModal(); // Tutup modal konfirmasi agar input terlihat
         const targetCard = targetEl.closest('.input-card');
-        closeModal();
+        
+        // Efek Visual: Merah & Getar di Layar
         targetCard.classList.add('error-field', 'shake-ani');
+        
+        // Efek Fisik: Getar pada HP (Vibrate)
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
+
+        // Efek Gerak: Gulir otomatis ke kolom yang salah
         targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        targetEl.focus();
+        
+        // Fokuskan kursor ke input tersebut
+        setTimeout(() => targetEl.focus(), 500);
+        
+        showToast("Harap lengkapi kolom yang berwarna merah!", "error", "⚠️");
         return; 
     }
 
-    // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
+    // 3. JIKA VALIDASI LOLOS, LANJUTKAN PROSES PRINT & WA
+    // (Gunakan logika RawBT + WA yang sudah kita bahas sebelumnya di sini)
+    
+    // Contoh Ringkas:
+    if (navigator.vibrate) navigator.vibrate(50); // Getar halus tanda sukses klik
+    
+    const btnKirim = document.querySelector('#modalConfirm button:last-child');
+    if (btnKirim) {
+        btnKirim.innerHTML = "⌛ Menghubungkan...";
+        btnKirim.style.pointerEvents = "none";
+    }
+
+    // Susun pesan dan kirim ke database/WA...
+    // (Lanjutkan dengan kode penyusunan 'msg' dan window.location.href Anda)
+    console.log("Validasi sukses, mengirim pesanan...");
+    
+    // Sesuai permintaan sebelumnya, panggil fungsi cetak/WA di sini
+    executeFinalSubmit(nI, tI, aI, noAntrean); 
+}
+
+    //4. Rangkai Rincian Pesanan (Item + Harga)
     const summary = {};
     cart.forEach(c => {
         let label = c.nama;
@@ -982,14 +1013,14 @@ async function startApp() {
         `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
     );
 
-    // --- 3. Hitung Data & Link Lokasi ---
+    //5. Hitung Data & Link Lokasi
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
     // Cari baris ini dan ganti:
 const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
-    // --- 4. Susun Format Pesan WhatsApp ---
+    //6. Susun Format Pesan WhatsApp
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
@@ -1015,7 +1046,7 @@ const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${windo
     msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
     msg += `Terimakasih!`;
 
-    // --- 5. Animasi Feedback Tombol & Pengiriman ---
+    //7. Animasi Feedback Tombol & Pengiriman
     // Memicu getar halus saat klik
     if (navigator.vibrate) navigator.vibrate(50);
 
