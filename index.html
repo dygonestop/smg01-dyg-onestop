@@ -682,8 +682,12 @@ function updateDineInStatus() {
         // Gunakan event listener agar tidak bentrok
         dineBtn.onclick = function(e) { 
             e.stopPropagation();
-            alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In."); rendermen
-        };
+           showToast(
+  `Lokasi kamu terlalu jauh (${Math.round(userDist)}m) 😢`,
+  "error",
+  "📍"
+);
+
         if(dineBadge) dineBadge.style.display = 'block';
     } else {
         dineBtn.classList.remove('disabled');
@@ -923,18 +927,30 @@ async function startApp() {
 
     async function submitOrder() {
     // 1. CEK APAKAH SUDAH PILIH MODE?
-    if (!currentMode) {
-        closeModal(); // Tutup modal jika terlanjur terbuka
-        showToast("Pilih Dulu Mau Layanan Apa Nih! ✍️", "warning", "✍️");
-        
-        // Gulir layar otomatis ke arah tombol mode
-        const modeArea = document.querySelector('.mode-container');
+  // 1. CEK APAKAH SUDAH PILIH MODE?
+if (!currentMode) {
+
+    // Tutup modal konfirmasi
+    closeModal();
+
+    // Scroll ke area pilihan layanan (Dine In / Take Away / Delivery)
+    const modeArea = document.querySelector('.service-mode');
+    if (modeArea) {
         modeArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Buat semua tombol mode berdetak (pulse) agar pelanggan sadar harus pilih salah satu
-        document.querySelectorAll('.mode-item:not(.disabled)').forEach(el => {
-            el.classList.add('pulse-attention');
-        });
+    }
+
+    // Efek perhatian ke tombol layanan
+    document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
+        el.classList.add('pulse-attention');
+    });
+
+    // Toast peringatan
+    showToast("Pilih dulu jenis layanan ya 😊", "warning", "⚠️");
+
+    return; // ⛔ STOP — jangan lanjut kirim WA
+}
+
+
         return; // Berhenti di sini, jangan lanjut kirim WA
     }
 
@@ -954,14 +970,18 @@ async function startApp() {
     else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
     else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
 
-    if (targetEl) {
-        const targetCard = targetEl.closest('.input-card');
-        closeModal();
-        targetCard.classList.add('error-field', 'shake-ani');
-        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        targetEl.focus();
-        return; 
-    }
+  if (targetEl) {
+    const targetCard = targetEl.closest('.input-card');
+    closeModal();
+
+    targetCard.classList.add('error-field', 'shake-ani');
+    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    targetEl.focus();
+
+    showToast("Lengkapi kolom ini dulu ya ✍️", "warning", "✍️");
+    return;
+}
+
 
     // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
     const summary = {};
