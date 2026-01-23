@@ -266,9 +266,14 @@ mark {
 }
 
 /* ICON */
+/* Pastikan kontainer icon memiliki ukuran tetap */
 .service-btn .icon {
-    font-size: 26px;
-    animation: floatIcon 2.8s ease-in-out infinite;
+    width: 40px; 
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
 }
 
 /* AKTIF */
@@ -323,9 +328,10 @@ mark {
     background: #F7F7F7;
 }
 
+/* Penyesuaian khusus untuk tombol sekunder agar lebih kecil */
 .service-btn.secondary .icon {
-    font-size: 22px;
-    animation: floatIconSoft 3.5s ease-in-out infinite;
+    width: 30px;
+    height: 30px;
 }
 
 .service-btn.secondary span {
@@ -400,7 +406,28 @@ mark {
     box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
 }
 
+/* Atur gambar agar pas di dalam kontainer tanpa merusak layout */
+.service-icon-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Gambar akan mengecil secara proporsional */
 
+/* Tambahan agar gambar tidak berubah warna jadi putih saat aktif (jika menggunakan PNG transparan) */
+.service-btn.active .service-icon-img {
+    /* Jika gambar Anda berwarna hitam dan ingin jadi putih saat aktif, gunakan filter: */
+    /* filter: brightness(0) invert(1); */
+}
+
+/* Membuat gambar menjadi putih saat tombol aktif */
+.service-btn.active .service-icon-img {
+    filter: brightness(0) invert(1);
+}
+
+/* Membuat gambar menjadi abu-abu saat tombol mati (disabled) */
+.service-btn.disabled .service-icon-img {
+    filter: grayscale(1);
+    opacity: 0.5;
+}
     </style>
 </head>
 <body>
