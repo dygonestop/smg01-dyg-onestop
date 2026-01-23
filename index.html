@@ -244,61 +244,44 @@ mark {
 }
 
 .service-btn {
-    width: 82px;
-    height: 82px;
-    background: transparent; /* ✅ */
-    border-radius: 50%;
+    background: transparent;
     box-shadow: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+    position: relative; /* penting */
 }
 
 .service-btn span {
-    position: absolute; /* Letakkan teks di atas ikon */
+    position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%); /* Geser ke tengah sempurna */
+    transform: translate(-50%, -50%);
     font-size: 11px;
     font-weight: 900;
     color: var(--text);
     text-align: center;
     line-height: 1;
-    width: 90%; /* Supaya teks panjang bisa membungkus/wrap */
-    pointer-events: none; /* Klik tembus ke tombol */
+    width: 90%;
+    pointer-events: none;
     z-index: 2;
-opacity: 0.3;
+    opacity: 0.35;
 }
 
 /* ICON */
-/* Pastikan kontainer icon memiliki ukuran tetap */
 .service-btn .icon {
-    width: 90px; 
-    height: 90px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 4px;
-background: transparent !important;
-animation: floatIcon 2.8s ease-in-out infinite;
+    background: transparent !important;
+position: relative;
+    z-index: 2;
 }
 
 /* AKTIF */
 .service-btn.active {
-    background: linear-gradient(145deg, #1B4332, #2D6A4F);
-    color: white;
     transform: scale(1.08);
-    box-shadow: none;
 }
 
 .service-btn.active span {
-    color: white;
+    color: var(--primary);
+    opacity: 1;
 }
+
 
 /* RING */
 .service-btn.active::after {
@@ -334,10 +317,7 @@ animation: floatIcon 2.8s ease-in-out infinite;
 }
 
 .service-btn.secondary {
-    width: 70px;
-    height: 70px;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-    background: transparent; /* ✅ */
+   background: transparent; /* ✅ */
 }
 
 /* Penyesuaian khusus untuk tombol sekunder agar lebih kecil */
@@ -366,7 +346,7 @@ animation: floatIcon 2.8s ease-in-out infinite;
 /* efek tap */
 .service-btn.secondary:active {
     transform: scale(0.92);
-    background: #EFEFEF;
+    filter: brightness(0.95);
 }
 
 .service-btn.secondary::before {
@@ -380,6 +360,11 @@ animation: floatIcon 2.8s ease-in-out infinite;
     font-weight: 900;
     padding: 2px 5px;
     border-radius: 10px;
+}
+
+.service-btn::after {
+    pointer-events: none;
+    z-index: 1;
 }
 
 /* === FORM EXTRA RINGKAS === */
@@ -420,16 +405,13 @@ animation: floatIcon 2.8s ease-in-out infinite;
 
 /* Atur gambar agar pas di dalam kontainer tanpa merusak layout */
 .service-icon-img {
-    width: 130%;
-    height: 130%;
 background: transparent !important;
     display: block;
    }
 
 /* Tambahan agar gambar tidak berubah warna jadi putih saat aktif (jika menggunakan PNG transparan) */
 .service-btn.active .service-icon-img {
-    /* Jika gambar Anda berwarna hitam dan ingin jadi putih saat aktif, gunakan filter: */
-    /* filter: none; */
+    filter: none;
 }
 
 /* Membuat gambar menjadi putih saat tombol aktif */
