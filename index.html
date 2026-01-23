@@ -246,9 +246,9 @@ mark {
 .service-btn {
     width: 82px;
     height: 82px;
-    background: white;
+    background: transparent; /* ✅ */
     border-radius: 50%;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -284,6 +284,7 @@ opacity: 0.3;
     align-items: center;
     justify-content: center;
     margin-bottom: 4px;
+background: transparent !important;
 animation: floatIcon 2.8s ease-in-out infinite;
 }
 
@@ -291,8 +292,8 @@ animation: floatIcon 2.8s ease-in-out infinite;
 .service-btn.active {
     background: linear-gradient(145deg, #1B4332, #2D6A4F);
     color: white;
-    transform: translateY(-6px) scale(1.05);
-    box-shadow: 0 14px 30px rgba(27,67,50,0.45);
+    transform: scale(1.08);
+    box-shadow: none;
 }
 
 .service-btn.active span {
@@ -336,7 +337,7 @@ animation: floatIcon 2.8s ease-in-out infinite;
     width: 70px;
     height: 70px;
     box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-    background: #F7F7F7;
+    background: transparent; /* ✅ */
 }
 
 /* Penyesuaian khusus untuk tombol sekunder agar lebih kecil */
@@ -421,12 +422,14 @@ animation: floatIcon 2.8s ease-in-out infinite;
 .service-icon-img {
     width: 130%;
     height: 130%;
-    object-fit: contain; /* Gambar akan mengecil secara proporsional */
+background: transparent !important;
+    display: block;
+   }
 
 /* Tambahan agar gambar tidak berubah warna jadi putih saat aktif (jika menggunakan PNG transparan) */
 .service-btn.active .service-icon-img {
     /* Jika gambar Anda berwarna hitam dan ingin jadi putih saat aktif, gunakan filter: */
-    /* filter: brightness(0) invert(1); */
+    /* filter: none; */
 }
 
 /* Membuat gambar menjadi putih saat tombol aktif */
