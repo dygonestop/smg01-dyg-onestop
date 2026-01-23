@@ -239,146 +239,94 @@ mark {
 /* === GOJEK STYLE SERVICE BUTTON (FIX BESAR & TRANSPARAN) === */
 .service-mode {
     display: flex;
-    justify-content: space-between;
-    padding: 10px 18px 16px;
+    justify-content: space-around; /* Lebih rapi untuk 3 tombol */
+    padding: 15px 10px 25px;
 }
 
-/* tombol */
 .service-btn {
-    width: 96px;
-    height: 96px;
+    width: 90px;
+    height: 90px;
     position: relative;
     background: transparent;
-    box-shadow: none;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-/* ICON CONTAINER */
-.service-btn .icon {
-    width: 100%;
-    height: 100%;
-    background: transparent !important;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-/* GAMBAR PNG */
-.service-icon-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: transparent !important;
-    opacity: 0.45;                /* 🔥 transparan ala GOJEK */
-    transition: all 0.25s ease;
+/* ICON MASKING (Kuncinya di sini untuk buang background kotak) */
+.icon-mask {
+    width: 55px;  /* Ukuran icon gambar */
+    height: 55px;
+    background-color: #CCCCCC; /* Warna icon saat tidak aktif */
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    opacity: 0.5;
+    transition: all 0.3s ease;
 }
 
-/* TEKS DI TENGAH */
+/* Hubungkan ID tombol ke file gambar kamu */
+#mDine .icon-mask { -webkit-mask-image: url('dine-in2.png'); mask-image: url('dine-in2.png'); }
+#mTake .icon-mask { -webkit-mask-image: url('take-away2.png'); mask-image: url('take-away2.png'); }
+#mDeliv .icon-mask { -webkit-mask-image: url('delivery2.png'); mask-image: url('delivery2.png'); }
+
+/* Ikon baris kedua */
+.icon-kat { -webkit-mask-image: url('katering2.png'); mask-image: url('katering2.png'); }
+.icon-mit { -webkit-mask-image: url('jadi-mitra2.png'); mask-image: url('jadi-mitra2.png'); }
+.icon-ikl { -webkit-mask-image: url('ngiklan2.png'); mask-image: url('ngiklan2.png'); }
+
+/* TEKS */
 .service-btn span {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
+    margin-top: 8px;
     font-size: 11px;
     font-weight: 900;
-    color: var(--text);
+    color: var(--muted);
     text-align: center;
-    line-height: 1.1;
-    width: 100%;
-    pointer-events: none;
-    z-index: 3;
 }
 
-/* AKTIF */
-.service-btn.active .service-icon-img {
+/* KONDISI AKTIF */
+.service-btn.active .icon-mask {
+    background-color: var(--primary); /* Icon berubah jadi hijau solid */
     opacity: 1;
-    transform: scale(1.08);
+    transform: scale(1.15);
 }
 
 .service-btn.active span {
     color: var(--primary);
 }
 
-/* RING GOJEK */
+/* RING PULSE GOJEK */
 .service-btn.active::after {
     content: "";
     position: absolute;
-    inset: -6px;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 60px; height: 60px;
     border-radius: 50%;
-    border: 2px solid rgba(27,67,50,0.5);
+    border: 2px solid var(--primary);
     animation: pulseRing 1.4s infinite;
+    z-index: -1;
 }
 
-/* DISABLED */
-.service-btn.disabled {
-    opacity: 0.35;
-    filter: grayscale(1);
-}
-
-/* SECONDARY MODE */
-.secondary-mode {
-    margin-top: -4px;
-    opacity: 0.85;
-}
-
-.service-btn.secondary {
-    width: 78px;
-    height: 78px;
-}
-
-.service-btn.secondary .service-icon-img {
-    opacity: 0.35;
-}
-
-.service-btn.secondary span {
-    font-size: 9px;
-    font-weight: 800;
-    color: var(--muted);
-}
-
-/* label SOON */
+/* SECONDARY MODE (KATERING, MITRA, DLL) */
+.secondary-mode { margin-top: -20px; }
+.service-btn.secondary { width: 75px; height: 75px; }
+.service-btn.secondary .icon-mask { width: 40px; height: 40px; opacity: 0.4; }
 .service-btn.secondary::before {
     content: "SOON";
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: var(--accent);
-    color: white;
-    font-size: 7px;
-    font-weight: 900;
-    padding: 2px 5px;
-    border-radius: 10px;
+    position: absolute; top: 0; right: 5px;
+    background: var(--accent); color: white;
+    font-size: 7px; font-weight: 900; padding: 2px 5px; border-radius: 10px;
 }
 
-/* animasi ring */
 @keyframes pulseRing {
-    0% { transform: scale(0.9); opacity: 0.8; }
-    100% { transform: scale(1.25); opacity: 0; }
-}
-
-/* efek tap */
-.service-btn.secondary:active {
-    transform: scale(0.92);
-    filter: brightness(0.95);
-}
-
-.service-btn.secondary::before {
-    content: "SOON";
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: var(--accent);
-    color: white;
-    font-size: 7px;
-    font-weight: 900;
-    padding: 2px 5px;
-    border-radius: 10px;
-}
-
-.service-btn::after {
-    pointer-events: none;
-    z-index: 1;
+    0% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
+    100% { transform: translateX(-50%) scale(1.3); opacity: 0; }
 }
 
 /* === FORM EXTRA RINGKAS === */
@@ -473,38 +421,36 @@ mark {
     <div id="banner-track"></div>
 </div>
 
-<!-- BARIS 1 : MODE ORDER -->
 <div class="service-mode">
     <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
-        <div class="icon"><img src="dine-in2.png" class="service-icon-img"></div>
+        <div class="icon-mask"></div>
         <span>Dine In</span>
     </div>
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
-        <div class="icon"><img src="take-away2.png" class="service-icon-img"></div>
+        <div class="icon-mask"></div>
         <span>Take Away</span>
     </div>
 
     <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
-        <div class="icon"><img src="delivery2.png" class="service-icon-img"></div>
+        <div class="icon-mask"></div>
         <span>Delivery</span>
     </div>
 </div>
 
-
 <div class="service-mode secondary-mode">
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="katering2.png" class="service-icon-img"></div>
+        <div class="icon-mask icon-kat"></div>
         <span>Katering</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="jadi-mitra2.png" class="service-icon-img"></div>
+        <div class="icon-mask icon-mit"></div>
         <span>Jadi Mitra</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="ngiklan2.png" class="service-icon-img"></div>
+        <div class="icon-mask icon-ikl"></div>
         <span>NgIKLAN</span>
     </div>
 </div>
