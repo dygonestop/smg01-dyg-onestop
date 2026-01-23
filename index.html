@@ -399,30 +399,7 @@ mark {
     border-color: var(--accent);
     box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
 }
-/* Badge Diluar Jangkauan */
-/* Badge rapi & presisi */
-.badge-status {
-    position: absolute;
-    top: -5px; /* Sedikit di atas lingkaran tombol */
-    left: 50%;
-    transform: translateX(-50%); /* Teknik agar tepat di tengah */
-    background: var(--danger);
-    color: white;
-    font-size: 7px; /* Ukuran font diperkecil agar pas */
-    font-weight: 800;
-    padding: 2px 8px;
-    border-radius: 20px; /* Lebih lonjong agar rapi */
-    white-space: nowrap;
-    box-shadow: 0 2px 5px rgba(214, 48, 49, 0.4);
-    z-index: 5;
-    display: none;
-    pointer-events: none; /* Supaya tidak mengganggu klik tombol */
-}
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
 
     </style>
 </head>
@@ -431,12 +408,10 @@ mark {
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
     <div style="text-align: center; width: 100%; position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center;">
         
-        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <img src="welcome.png" 
-                 style="width: 160px; height: 160px; border-radius: 50%; object-fit: cover; margin-bottom: 20px;">
-            
-            <h2 style="font-weight: 900; font-size: 20px;">Hei..Senang Bisa Ketemu</h2>
-            <p style="color: #666; font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalamanmu Berbelanja disini.</p>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+            <div style="font-size: 60px; margin-bottom: 15px;">📍</div>
+            <h2 style="font-weight: 900; font-size: 20px;">Hei..Senang bisa mengenalmu</h2>
+            <p style="color: var(--muted); font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalamanmu Berbelanja disini.</p>
             <button onclick="startApp()" class="order-btn" style="width: 100%;">MULAI SEKARANG</button>
         </div>
 
@@ -458,45 +433,40 @@ mark {
     <div id="banner-track"></div>
 </div>
 
-<!-- BARIS 1 : MODE ORDER (UTAMA) -->
+<!-- BARIS 1 : MODE ORDER -->
 <div class="service-mode">
-
     <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
-        <div id="badgeDine" class="badge-status">DI LUAR JANGKAUAN</div>
-        <div class="icon"><img src="dine-in.png" class="service-icon-img"></div>
+        <div class="icon">🍽️</div>
         <span>Dine In</span>
     </div>
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
-        <div class="icon"><img src="take-away.png" class="service-icon-img"></div>
+        <div class="icon">🛍️</div>
         <span>Take Away</span>
     </div>
 
     <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
-        <div class="icon"><img src="delivery.png" class="service-icon-img"></div>
+        <div class="icon">🛵</div>
         <span>Delivery</span>
     </div>
-
 </div>
 
-<!-- BARIS 2 : MODE SECONDARY -->
-<div class="service-mode secondary-mode">
 
+<div class="service-mode secondary-mode">
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="katering.png" class="service-icon-img"></div>
+        <div class="icon">🍱</div>
         <span>Katering</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="jadi-mitra.png" class="service-icon-img"></div>
+        <div class="icon">🤝</div>
         <span>Jadi Mitra</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="ngiklan.png" class="service-icon-img"></div>
+        <div class="icon">📢</div>
         <span>NgIKLAN</span>
     </div>
-
 </div>
 
 <div id="map"></div>
@@ -557,7 +527,7 @@ mark {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyHXKH97V_JUlyWcl0y51q3B9t7gKTUXqZo1RZbhClE9xhwmQN7AaIxTAR27tmFw9b2LA/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyPKJ8Q9u-upqGFQDFxSC7kHGpPe4EECUKDBlU704DyLMfyXUwUJhHSVeYa1FbNockFyA/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -574,48 +544,33 @@ mark {
     // Ubah 'DINE IN' menjadi null agar tidak ada mode yang terpilih di awal
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-async function startApp() {
+    async function startApp() {
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
+        
+        // --- BAGIAN INI YANG PENTING ---
+        // Kita simpan ke "window" agar bisa dibaca oleh fungsi submitOrder()
         window.userLat = latitude;
         window.userLng = longitude;
+        // -------------------------------
 
-        // Hitung jarak
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
-        const dineBtn = document.getElementById('mDine');
-        const dineBadge = document.getElementById('badgeDine');
-
-        // LOGIKA BADGE & JARAK (Update Otomatis)
         if (userDist > CONFIG.RADIUS_DINE_IN) {
-            // JIKA DI LUAR JANGKAUAN
+            const dineBtn = document.getElementById('mDine');
             if(dineBtn) {
                 dineBtn.classList.add('disabled');
                 dineBtn.onclick = () => showOutOfRangeAlert();
             }
-            if(dineBadge) dineBadge.style.display = 'block'; 
-        } else {
-            // JIKA MASUK JANGKAUAN
-            if(dineBtn) {
-                dineBtn.classList.remove('disabled');
-                dineBtn.onclick = function() { changeMode('DINE IN', this); };
-            }
-            if(dineBadge) dineBadge.style.display = 'none'; 
+            changeMode('DELIVERY', document.getElementById('mDeliv'));
         }
-
-        // AGAR TIDAK ADA TOMBOL AKTIF DI AWAL
-        currentMode = null; 
-        document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
-
-        // Jalankan fungsi inisialisasi lainnya
+        
         initMap(latitude, longitude);
         initBanner();
         document.getElementById('welcome-overlay').style.display = 'none';
         await loadMenu();
         syncQueue();
-        refreshUI(); // Pastikan UI diupdate berdasarkan cart kosong dan mode null
-        
     }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
 }
 
@@ -796,21 +751,21 @@ async function startApp() {
         }
     }
 
-async function submitOrder() {
+    async function submitOrder() {
     // 1. CEK APAKAH SUDAH PILIH MODE?
     if (!currentMode) {
-        closeModal();
-        alert("Silakan pilih metode layanan (Dine In / Take Away / Delivery) terlebih dahulu!");
+        closeModal(); // Tutup modal jika terlanjur terbuka
+        alert("Pilih dulu layanan Anda: Dine In, Take Away, atau Delivery!");
         
-        // Scroll ke area pemilihan mode agar terlihat oleh user
-        document.querySelector('.service-mode').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Gulir layar otomatis ke arah tombol mode
+        const modeArea = document.querySelector('.mode-container');
+        modeArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // Efek visual: Beri sinyal pada tombol yang tersedia
-        document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
+        // Buat semua tombol mode berdetak (pulse) agar pelanggan sadar harus pilih salah satu
+        document.querySelectorAll('.mode-item:not(.disabled)').forEach(el => {
             el.classList.add('pulse-attention');
-            setTimeout(() => el.classList.remove('pulse-attention'), 3000); // Hilang setelah 3 detik
         });
-        return;
+        return; // Berhenti di sini, jangan lanjut kirim WA
     }
 
     // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
