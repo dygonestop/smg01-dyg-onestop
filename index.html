@@ -424,23 +424,22 @@ mark {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Tambahkan ini di dalam bagian <style> */
-.service-icon-img {
-    width: 40px;          /* Ukuran lebar gambar */
-    height: 40px;         /* Ukuran tinggi gambar */
-    object-fit: cover;    /* Memastikan gambar tidak gepeng */
-    border-radius: 50%;   /* Membuat gambar bulat agar rapi di dalam lingkaran */
-    margin-bottom: 2px;
-    animation: floatIcon 2.8s ease-in-out infinite; /* Mengikuti animasi melayang bawaan */
-}
-
-/* Pastikan class .service-btn .icon tetap ada untuk tombol lain, 
-   tapi kita sesuaikan sedikit agar konsisten */
+/* ICON WRAPPER */
 .service-btn .icon {
-    font-size: 26px;
-    height: 40px; /* Samakan tinggi dengan gambar agar teks "Dine In" sejajar */
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    overflow: hidden;          /* KUNCI */
     display: flex;
     align-items: center;
+    justify-content: center;
+}
+
+/* IMAGE */
+.service-icon-img {
+    width: 110%;
+    height: 110%;
+    object-fit: cover;
 }
 
     </style>
@@ -483,7 +482,7 @@ mark {
     <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
     <div id="badgeDine" class="badge-status">DI LUAR JANGKAUAN</div>
     <div class="icon">
-        <img src="dine in.png" class="service-icon-img">
+        <img src="dine-in.png" class="service-icon-img">
     </div>
     <span>Dine In</span>
 </div>
