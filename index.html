@@ -905,24 +905,12 @@ async function submitOrder() {
     const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
     fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
 
-    // --- 5. Animasi Feedback Tombol & Pengiriman ---
-    // ... kode yang sudah ada ...
-
-    // Tandai bahwa pesanan dikirim sebelum pindah ke WA
-    sessionStorage.setItem('orderSubmitted', 'true');
-
-    // Tunggu animasi sebentar baru pindah ke WA
-   // --- 5. Animasi Feedback Tombol & Pengiriman ---
-    // ... kode yang sudah ada ...
-
-    // Tandai bahwa pesanan dikirim sebelum pindah ke WA
-    sessionStorage.setItem('orderSubmitted', 'true');
-
     // Tunggu animasi sebentar baru pindah ke WA
     setTimeout(() => {
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    }, 600);
+    }, 600); 
+}
 
 
     function toggleSummary(open) {
@@ -1018,24 +1006,6 @@ async function submitOrder() {
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
 
-// Fungsi untuk mereset tampilan kembali ke awal
-function resetToInitialState() {
-    // 1. Reload halaman secara total agar semua state (cart, mode, dll) kembali ke default
-    window.location.reload();
-}
-
-// Deteksi saat pengguna kembali ke browser
-document.addEventListener('visibilitychange', function() {
-    // Jika statusnya 'visible' artinya pengguna baru saja kembali membuka browser
-    if (document.visibilityState === 'visible') {
-        // Cek apakah sebelumnya pengguna baru saja menekan tombol submit
-        // Kita gunakan sessionStorage sebagai penanda
-        if (sessionStorage.getItem('orderSubmitted') === 'true') {
-            sessionStorage.removeItem('orderSubmitted');
-            resetToInitialState();
-        }
-    }
-});
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
