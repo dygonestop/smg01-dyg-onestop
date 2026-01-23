@@ -236,21 +236,17 @@ mark {
     background: #FFFDE7 !important;
 }
 
-/* === GOJEK STYLE SERVICE BUTTON === */
-/* =========================================
-   SERVICE BUTTONS - GOJEK STYLE
-   Ukuran ikon lebih besar, fungsi & efek tetap
-   ========================================= */
-
-/* CONTAINER */
+/* === SERVICE BUTTON LENGKAP UNTUK SERVICE-MODE === */
 .service-mode {
     display: flex;
-    justify-content: space-around;
-    padding: 8px 18px 14px;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    padding: 12px;
 }
 
-/* PRIMARY BUTTON */
-.service-btn {
+/* TOMBOL UTAMA / SERVICE BUTTON */
+.service-mode .service-btn {
     width: 92px;
     height: 92px;
     background: white;
@@ -266,47 +262,46 @@ mark {
     transition: all 0.25s cubic-bezier(.4,0,.2,1);
 }
 
-/* TEXT LABEL */
-.service-btn span {
+.service-mode .service-btn span {
     font-size: 10px;
     font-weight: 800;
     color: var(--text);
     text-align: center;
 }
 
-/* ICON WRAPPER */
-.service-btn .icon {
-    width: 80px;
-    height: 80px;
+/* ICON / GAMBAR */
+.service-mode .service-btn .icon {
+    font-size: 26px;
+    width: 72px;
+    height: 72px;
     border-radius: 50%;
-    overflow: hidden;
+    overflow: hidden;  /* menjaga gambar tidak keluar */
     display: flex;
     align-items: center;
     justify-content: center;
+    animation: floatIcon 2s infinite ease-in-out;
 }
 
-/* IMAGE DI DALAM ICON */
-.service-btn .icon img {
-    width: 140%;
-    height: 140%;
+.service-mode .service-btn .icon img {
+    width: 130%;   /* Maksimalkan gambar */
+    height: 130%;
     object-fit: cover;
-    transition: all 0.25s ease-in-out;
 }
 
-/* MODE AKTIF */
-.service-btn.active {
+/* ACTIVE MODE */
+.service-mode .service-btn.active {
     background: linear-gradient(145deg, #1B4332, #2D6A4F);
     color: white;
     transform: translateY(-6px) scale(1.08);
     box-shadow: 0 14px 30px rgba(27,67,50,0.45);
 }
 
-.service-btn.active span {
+.service-mode .service-btn.active span {
     color: white;
 }
 
 /* RING AKTIF */
-.service-btn.active::after {
+.service-mode .service-btn.active::after {
     content: "";
     position: absolute;
     inset: -6px;
@@ -315,88 +310,44 @@ mark {
     animation: pulseRing 1.4s infinite;
 }
 
-/* DISABLED BUTTON */
-.service-btn.disabled img {
+/* DISABLED / NONAKTIF */
+.service-mode .service-btn.disabled img {
     opacity: 0.4;
     filter: grayscale(100%);
     transform: scale(1);
 }
 
-/* FLOAT ANIMATION ICON */
+/* ANIMASI IKON FLOAT */
 @keyframes floatIcon {
     0%,100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
 }
 
-/* PULSE RING */
+/* ANIMASI RING PULSE */
 @keyframes pulseRing {
     0% { transform: scale(0.9); opacity: 0.8; }
     100% { transform: scale(1.2); opacity: 0; }
 }
 
-/* =========================================
-   SECONDARY BUTTON (Kecil / Lainnya)
-   ========================================= */
-.secondary-mode {
-    margin-top: -4px;
-    opacity: 0.92;
+/* TOMBOL SECONDARY (OPTIONAL) */
+.service-mode .service-btn.secondary {
+    width: 76px;
+    height: 76px;
+    background: #f0f0f0;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
 }
 
-.service-btn.secondary {
-    width: 70px;
-    height: 70px;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-    background: #F7F7F7;
+.service-mode .service-btn.secondary .icon img {
+    width: 120%;
+    height: 120%;
 }
 
-.service-btn.secondary .icon {
-    width: 60px;
-    height: 60px;
-    animation: floatIconSoft 3.5s ease-in-out infinite;
+/* RESPONSIVE SMALL SCREEN */
+@media screen and (max-width: 400px) {
+    .service-mode .service-btn { width: 78px; height: 78px; }
+    .service-mode .service-btn .icon { width: 60px; height: 60px; }
 }
 
-.service-btn.secondary .icon img {
-    width: 130%;
-    height: 130%;
-    object-fit: cover;
-}
-
-.service-btn.secondary span {
-    font-size: 9px;
-    font-weight: 800;
-    color: var(--muted);
-}
-
-/* NON RING AKTIF UNTUK SECONDARY */
-.service-btn.secondary.active::after {
-    display: none;
-}
-
-/* FLOAT ICON SOFT */
-@keyframes floatIconSoft {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-2px); }
-}
-
-/* EFEK TAP SECONDARY */
-.service-btn.secondary:active {
-    transform: scale(0.92);
-    background: #EFEFEF;
-}
-
-/* LABEL SOON SECONDARY */
-.service-btn.secondary::before {
-    content: "SOON";
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: var(--accent);
-    color: white;
-    font-size: 7px;
-    font-weight: 900;
-    padding: 2px 5px;
-    border-radius: 10px;
-}
 
 /* === FORM EXTRA RINGKAS === */
 .form-group {
