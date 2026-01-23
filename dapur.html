@@ -34,7 +34,6 @@
             transition: transform 0.3s ease;
         }
 
-        /* Overlay Konfirmasi Hapus */
         .confirm-overlay {
             position: absolute; top:0; left:0; width:100%; height:100%;
             background: rgba(214, 48, 49, 0.96); color:white;
@@ -91,10 +90,18 @@
 <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
 <script>
+// --- FITUR PIN DAPUR ---
+const PIN_DAPUR = "1212";
+if(prompt("Masukkan PIN Dapur:") !== PIN_DAPUR){
+    alert("Akses ditolak!");
+    document.body.innerHTML="<h1 style='text-align:center;margin-top:50px;'>Akses Dilarang</h1>"; 
+    throw new Error("Invalid PIN");
+}
+
 const CONFIG = {
     API_URL: "https://script.google.com/macros/s/AKfycbyHXKH97V_JUlyWcl0y51q3B9t7gKTUXqZo1RZbhClE9xhwmQN7AaIxTAR27tmFw9b2LA/exec",
     TOKEN: "dyg-access-v2",
-    REFRESH_RATE: 10000 
+    REFRESH_RATE: 10000
 };
 
 let lastOrderCount = 0;
@@ -121,7 +128,6 @@ async function fetchOrders(){
 
 function renderOrders(orders){
     const container = document.getElementById('orderList');
-    // Filter pesanan yang sedang dalam proses penghapusan
     const filtered = orders.filter(ord => !isRemoving.includes(ord.row_index.toString()));
 
     if(filtered.length === 0){
@@ -130,10 +136,11 @@ function renderOrders(orders){
     }
 
     container.innerHTML = filtered.map(ord => {
-        // DISESUAIKAN DENGAN SCREENSHOT: kolom bernama 'antrean'
-        const no = ord.antrean || "!!"; 
+        // PERBAIKAN: Membaca kolom 'antrean' sesuai screenshot Anda
+        const no = ord.antrean || ord.no_antrean || "!!";
         const row = ord.row_index;
         const pesanan = ord.pesanan || "";
+        const mode = ord.mode_pesanan || ord["mode pesanan"] || "DINE IN";
 
         return `
         <div class="order-card" id="card-${row}" data-row="${row}">
@@ -152,14 +159,14 @@ function renderOrders(orders){
             
             <div class="customer-info">
                 <span class="customer-name">${ord.nama || 'Pelanggan'}</span>
-                <span class="order-mode">${ord.mode_pesanan || 'DINE IN'}</span>
+                <span class="order-mode">${mode}</span>
             </div>
 
             <div class="item-list">
                 ${pesanan.split(',').map(item => `• ${item.trim()}`).join('<br>')}
             </div>
 
-            <button class="btn-print" onclick="printRawBT('${no}', '${ord.nama}', '${pesanan}', '${ord.mode_pesanan}', '${ord.total_bayar}')">
+            <button class="btn-print" onclick="printRawBT('${no}', '${ord.nama}', '${pesanan}', '${mode}', '${ord.total_bayar}')">
                 🖨️ CETAK STRUK
             </button>
             <div class="swipe-hint">← Geser ke kiri untuk menyelesaikan</div>
@@ -167,7 +174,7 @@ function renderOrders(orders){
         `;
     }).join('');
 
-    // Inisialisasi Hammer.js untuk deteksi Swipe
+    // --- INISIALISASI SWIPE (Hammer.js) ---
     document.querySelectorAll('.order-card').forEach(card => {
         const mc = new Hammer(card);
         mc.on("swipeleft", () => {
@@ -187,14 +194,10 @@ async function confirmDelete(row) {
     isRemoving.push(row.toString());
     
     try {
-        // Memanggil GAS untuk merubah status menjadi SELESAI di Spreadsheet
         await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}`);
         setTimeout(() => {
             card.remove();
-            // Cek jika sudah kosong
-            if(document.querySelectorAll('.order-card').length === 0) {
-                fetchOrders();
-            }
+            if(document.querySelectorAll('.order-card').length === 0) fetchOrders();
         }, 300);
     } catch(e) {
         alert("Gagal koneksi ke server.");
@@ -218,10 +221,10 @@ ${menu.split(',').map(m => `[ ] ${m.trim()}`).join('\n')}
 {center}--- ${new Date().toLocaleTimeString('id-ID')} ---
 {cut}`;
 
+    // Menggunakan skema Intent untuk RawBT Android
     window.location.href = `intent:${encodeURIComponent(struk)}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
 }
 
-// Jalankan auto-refresh
 setInterval(fetchOrders, CONFIG.REFRESH_RATE);
 fetchOrders();
 </script>
