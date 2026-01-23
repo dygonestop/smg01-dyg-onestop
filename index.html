@@ -569,29 +569,25 @@ animation: floatIcon 2.8s ease-in-out infinite;
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    // Ubah 'DINE IN' menjadi null agar tidak ada mode yang terpilih di awal
+    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
     async function startApp() {
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
-        
-        // --- BAGIAN INI YANG PENTING ---
-        // Kita simpan ke "window" agar bisa dibaca oleh fungsi submitOrder()
         window.userLat = latitude;
         window.userLng = longitude;
-        // -------------------------------
 
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
+        // Cek jangkauan Dine In saja, tapi jangan otomatis klik Delivery
         if (userDist > CONFIG.RADIUS_DINE_IN) {
             const dineBtn = document.getElementById('mDine');
             if(dineBtn) {
                 dineBtn.classList.add('disabled');
                 dineBtn.onclick = () => showOutOfRangeAlert();
             }
-            changeMode('DELIVERY', document.getElementById('mDeliv'));
         }
         
         initMap(latitude, longitude);
@@ -780,20 +776,24 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     }
 
     async function submitOrder() {
-    // 1. CEK APAKAH SUDAH PILIH MODE?
+    // VALIDASI: Cek apakah sudah pilih mode?
     if (!currentMode) {
-        closeModal(); // Tutup modal jika terlanjur terbuka
-        alert("Pilih dulu layanan Anda: Dine In, Take Away, atau Delivery!");
+        closeModal();
+        alert("Mohon pilih layanan terlebih dahulu (Dine In, Take Away, atau Delivery)");
         
-        // Gulir layar otomatis ke arah tombol mode
-        const modeArea = document.querySelector('.mode-container');
-        modeArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Scroll ke atas agar tombol layanan terlihat
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         
-        // Buat semua tombol mode berdetak (pulse) agar pelanggan sadar harus pilih salah satu
-        document.querySelectorAll('.mode-item:not(.disabled)').forEach(el => {
-            el.classList.add('pulse-attention');
+        // Beri efek getar/pulse pada tombol layanan yang aktif/tersedia
+        document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
+            el.classList.add('shake-ani');
+            el.style.border = "2px solid var(--accent)";
+            setTimeout(() => {
+                el.classList.remove('shake-ani');
+                el.style.border = "none";
+            }, 2000);
         });
-        return; // Berhenti di sini, jangan lanjut kirim WA
+        return; 
     }
 
     // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
