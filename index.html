@@ -260,9 +260,19 @@ mark {
 }
 
 .service-btn span {
-    font-size: 10px;
-    font-weight: 800;
+    position: absolute; /* Letakkan teks di atas ikon */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Geser ke tengah sempurna */
+    font-size: 11px;
+    font-weight: 900;
     color: var(--text);
+    text-align: center;
+    line-height: 1;
+    width: 90%; /* Supaya teks panjang bisa membungkus/wrap */
+    pointer-events: none; /* Klik tembus ke tombol */
+    z-index: 2;
+opacity: 0.3;
 }
 
 /* ICON */
