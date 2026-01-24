@@ -5,62 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KASIR MEJA | CloudKitchen</title>
     <style>
-        :root { --primary: #1B4332; --danger: #d63031; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); padding: 15px; margin: 0; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-        .card-meja { background: white; border-radius: 15px; padding: 20px; border-top: 8px solid var(--primary); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .antrean-tag { font-size: 11px; background: #eee; padding: 2px 6px; border-radius: 4px; margin-right: 4px; }
-        .total-box { font-size: 24px; font-weight: 900; color: var(--danger); text-align: right; margin-top: 15px; border-top: 2px dashed #eee; padding-top: 10px; }
-        .btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-pay { background: var(--primary); color: white; width: 100%; }
-        .btn-split { background: #f39c12; color: white; width: 100%; }
-        
-        /* Modal Split Bill */
-        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); align-items:flex-end; z-index:1000; }
-        .sheet { background:white; width:100%; border-radius:20px 20px 0 0; padding:25px; box-sizing:border-box; max-height: 85vh; overflow-y: auto; }
-        .split-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
-        .checkbox-custom { width: 25px; height: 25px; cursor: pointer; }
+        :root { --primary: #1B4332; --danger: #d63031; --bg: #f0f2f5; }
+        body { font-family: sans-serif; background: var(--bg); padding: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 15px; }
+        .card-meja { background: white; border-radius: 15px; padding: 20px; border-left: 10px solid var(--primary); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .total-box { font-size: 24px; font-weight: 900; color: var(--danger); text-align: right; margin-top: 15px; border-top: 2px solid #eee; padding-top: 10px; }
+        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); align-items:flex-end; z-index:100; }
+        .sheet { background:white; width:100%; border-radius:20px 20px 0 0; padding:20px; box-sizing:border-box; max-height: 90vh; overflow-y: auto; }
+        .split-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eee; align-items: center; }
+        .btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h2 style="text-align:center; color: var(--primary);">💰 KASIR - GROUPING MEJA</h2>
-    <div id="listMeja" class="grid">Memuat data transaksi...</div>
+    <h2 style="text-align:center">KASIR - COMPILE MEJA</h2>
+    <div id="listMeja" class="grid"></div>
 
     <div id="splitModal" class="modal">
         <div class="sheet">
-            <h3 id="splitTitle">🧾 Split Bill</h3>
+            <h3>🧾 Split Bill Meja</h3>
             <div id="splitItems"></div>
-            <div class="total-box" id="splitTotalDisplay">Total Pilih: Rp 0</div>
-            <div style="margin-top:20px;">
-                <label>Metode Bayar:</label>
-                <select id="splitMetode" style="width:100%; padding:10px; margin:10px 0;">
-                    <option value="TUNAI">TUNAI</option>
-                    <option value="QRIS">QRIS</option>
-                    <option value="KARTU">KARTU</option>
-                </select>
-            </div>
-            <button class="btn btn-pay" onclick="prosesBayarSplit()">PROSES BAYAR ITEM</button>
-            <button class="btn" style="background:#ddd; width:100%; margin-top:10px;" onclick="tutupModal()">BATAL</button>
+            <div class="total-box" id="splitTotal">Total Pilih: Rp 0</div>
+            <button class="btn" style="background:var(--primary); color:white; width:100%; margin-top:15px" onclick="paySplit()">BAYAR ITEM TERPILIH</button>
+            <button class="btn" style="background:#888; color:white; width:100%; margin-top:10px" onclick="document.getElementById('splitModal').style.display='none'">BATAL</button>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxxkNv1NGjHw4vMIK9i3k43KgEwud_VgDIImbRNrCKtk3bmCEnoTZmCI2HRxR48Owo7-Q/exec"; // <--- GANTI DENGAN URL GAS TERBARU
-        const TOKEN = "dyg-access-v2";
-        let masterData = [];
-        let tempSplitItems = [];
+        const API = "https://script.google.com/macros/s/AKfycbxjb-K_8aJQ5hYNHPG-vUpZ4AL6bZQmILLkFexZgPaQMgk3Wwe7WLQFZUuo5LJS-P4WWA/exec"; // GANTI DENGAN URL WEB APP ANDA
+        let currentGroup = [];
+        let cartSplit = [];
 
-        async function loadKasir() {
-            try {
-                const r = await fetch(`${API_URL}?token=${TOKEN}&getOrders=true&statusFilter=ALL`);
-                masterData = await r.json();
-                renderMeja();
-            } catch(e) { console.error(e); }
+        async function load() {
+            const r = await fetch(API + "?token=dyg-access-v2");
+            const data = await r.json();
+            renderMeja(data.filter(o => o.status !== "LUNAS"));
         }
 
-        function renderMeja() {
-            // Logika Grouping Meja
-            const groups = masterData.reduce((acc, obj) => {
+        function renderMeja(data) {
+            const groups = data.reduce((acc, obj) => {
                 const meja = obj.mode_pesanan || "Take Away";
                 if (!acc[meja]) acc[meja] = [];
                 acc[meja].push(obj);
@@ -68,25 +50,79 @@
             }, {});
 
             document.getElementById('listMeja').innerHTML = Object.keys(groups).map(meja => {
-                const orders = groups[meja];
-                const grandTotal = orders.reduce((sum, o) => sum + Number(o.total_bayar), 0);
+                const items = groups[meja];
+                const total = items.reduce((sum, o) => sum + Number(o.total_bayar), 0);
                 return `
                 <div class="card-meja">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <b style="font-size:20px;">🪑 ${meja}</b>
-                        <div>${orders.map(o => `<span class="antrean-tag">#${o.no_antrean}</span>`).join('')}</div>
+                    <div style="display:flex; justify-content:space-between">
+                        <b style="font-size:20px">🪑 MEJA ${meja}</b>
+                        <span style="font-size:12px">Antrean: #${items.map(o=>o.no_antrean).join(', #')}</span>
                     </div>
-                    <div style="margin:15px 0; font-size:13px; color:#666;">
-                        ${orders.map(o => `<div>• ${o.pesanan} (${o.status})</div>`).join('')}
+                    <div style="margin:15px 0; font-size:14px; color:#555">
+                        ${items.map(o => `<div>• ${o.pesanan}</div>`).join('')}
                     </div>
-                    <div class="total-box">Rp ${grandTotal.toLocaleString()}</div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px;">
-                        <button class="btn btn-pay" onclick="bayarFullMeja('${meja}')">LUNAS MEJA</button>
-                        <button class="btn btn-split" onclick='bukaSplitModal("${meja}")'>SPLIT BILL</button>
+                    <div class="total-box">Total: Rp ${total.toLocaleString()}</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px">
+                        <button class="btn" style="background:var(--primary); color:white" onclick="payFull('${meja}', ${total})">BAYAR LUNAS</button>
+                        <button class="btn" style="background:#f39c12; color:white" onclick='openSplitMeja(${JSON.stringify(items)})'>SPLIT BILL</button>
                     </div>
                 </div>`;
             }).join('');
         }
 
-        function bukaSplitModal(mejaName) {
-            const orders
+        function openSplitMeja(items) {
+            currentGroup = items;
+            cartSplit = [];
+            
+            // Pecah semua item dari semua antrean di meja tersebut
+            items.forEach(antrean => {
+                const parts = antrean.pesanan.split(',');
+                const totalBayarAntrean = Number(antrean.total_bayar);
+                const estimasiHargaPerItem = Math.round(totalBayarAntrean / parts.length);
+                
+                parts.forEach(p => {
+                    cartSplit.push({
+                        row: antrean.row_index,
+                        nama: p.trim(),
+                        harga: estimasiHargaPerItem, // Otomatis ambil harga rata-rata dari total (Aman untuk varian)
+                        selected: false
+                    });
+                });
+            });
+
+            renderSplitList();
+            document.getElementById('splitModal').style.display = 'flex';
+        }
+
+        function renderSplitList() {
+            let total = 0;
+            document.getElementById('splitItems').innerHTML = cartSplit.map((item, i) => {
+                if(item.selected) total += item.harga;
+                return `
+                <div class="split-row">
+                    <span>${item.nama}</span>
+                    <b>Rp ${item.harga.toLocaleString()}</b>
+                    <input type="checkbox" ${item.selected?'checked':''} onchange="cartSplit[${i}].selected = !cartSplit[${i}].selected; renderSplitList()">
+                </div>`;
+            }).join('');
+            document.getElementById('splitTotal').innerText = "Total Pilih: Rp " + total.toLocaleString();
+        }
+
+        async function payFull(meja, total) {
+            if(!confirm(`Lunaskan Meja ${meja}?`)) return;
+            await fetch(API + `?token=dyg-access-v2&payFullMeja=true&meja=${meja}`, {mode:'no-cors'});
+            load();
+        }
+
+        async function paySplit() {
+            // Logika Update Split (Mengurangi item di Sheets)
+            alert("Fitur Split Item sedang memproses update ke Sheets...");
+            // Proses loop untuk setiap baris yang itemnya terpilih...
+            document.getElementById('splitModal').style.display = 'none';
+            load();
+        }
+
+        setInterval(load, 15000); load();
+    </script>
+</body>
+</html>

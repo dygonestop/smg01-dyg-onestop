@@ -5,71 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DAPUR | CloudKitchen</title>
     <style>
-        :root { --primary: #1B4332; --bg: #121212; --card: #1e1e1e; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .card { background: var(--card); border-radius: 12px; padding: 15px; border-left: 8px solid #f39c12; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; }
-        .antrean-no { font-size: 28px; font-weight: 900; color: #f39c12; }
-        .meja-label { background: #e74c3c; padding: 4px 10px; border-radius: 4px; font-size: 14px; font-weight: bold; }
-        .item-list { margin: 15px 0; font-size: 18px; line-height: 1.6; border-top: 1px solid #333; padding-top: 10px; color: #ecf0f1; }
-        .btn-done { width: 100%; background: #27ae60; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        .btn-done:hover { background: #219150; }
-        .loading { text-align: center; margin-top: 50px; font-style: italic; color: #777; }
+        :root { --primary: #1B4332; --bg: #f0f2f5; }
+        body { font-family: sans-serif; background: var(--bg); padding: 20px; margin: 0; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
+        .card { background: white; border-radius: 12px; padding: 20px; border-top: 10px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .meja { background: #ff7675; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; }
+        .item-list { font-size: 20px; font-weight: bold; line-height: 1.5; color: #2d3436; margin: 15px 0; }
+        .btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
-    <h2 style="text-align: center; color: #f39c12;">👨‍🍳 MONITOR PESANAN DAPUR</h2>
-    <div id="listPesanan" class="grid">
-        <div class="loading">Menghubungkan ke server...</div>
-    </div>
+    <h1 style="text-align:center; color: var(--primary)">DAPUR MONITOR</h1>
+    <div id="list" class="grid">Memuat pesanan...</div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxxkNv1NGjHw4vMIK9i3k43KgEwud_VgDIImbRNrCKtk3bmCEnoTZmCI2HRxR48Owo7-Q/exec"; // <--- GANTI DENGAN URL GAS TERBARU
-        const TOKEN = "dyg-access-v2";
-
-        async function loadDapur() {
-            try {
-                // Memanggil statusFilter=BARU agar dapur hanya fokus pesanan yang belum dimasak
-                const response = await fetch(`${API_URL}?token=${TOKEN}&getOrders=true&statusFilter=BARU`);
-                const data = await response.json();
-                const container = document.getElementById('listPesanan');
-
-                if (data.length === 0) {
-                    container.innerHTML = '<div class="loading">Belum ada pesanan baru...</div>';
-                    return;
-                }
-
-                container.innerHTML = data.map(o => `
-                    <div class="card">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span class="antrean-no">#${o.no_antrean}</span>
-                            <span class="meja-label">${o.mode_pesanan}</span>
-                        </div>
-                        <div style="font-size: 14px; color: #aaa; margin-top: 5px;">Atas Nama: <b>${o.nama}</b></div>
-                        <div class="item-list">
-                            ${o.pesanan.split(',').join('<br>')}
-                        </div>
-                        <button class="btn-done" onclick="selesaiMasak(${o.row_index})">SELESAI MASAK</button>
+        const API = "https://script.google.com/macros/s/AKfycbxjb-K_8aJQ5hYNHPG-vUpZ4AL6bZQmILLkFexZgPaQMgk3Wwe7WLQFZUuo5LJS-P4WWA/exec"; // GANTI DENGAN URL WEB APP ANDA
+        async function load() {
+            const r = await fetch(API + "?token=dyg-access-v2");
+            const data = await r.json();
+            const filter = data.filter(o => o.status === "BARU" || o.status === "DIPROSES");
+            document.getElementById('list').innerHTML = filter.map(o => `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between">
+                        <span style="font-size:24px; font-weight:bold">#${o.no_antrean}</span>
+                        <span class="meja">MEJA: ${o.mode_pesanan}</span>
                     </div>
-                `).join('');
-            } catch (err) {
-                console.error("Gagal load data dapur:", err);
-            }
+                    <div class="item-list">${o.pesanan.split(',').join('<br>')}</div>
+                    <button class="btn" onclick="done(${o.row_index})">MASAK SELESAI</button>
+                </div>
+            `).join('');
         }
-
-        async function selesaiMasak(row) {
-            if (!confirm("Tandai pesanan ini selesai masak?")) return;
-            
-            // Mengubah status menjadi DAPUR_SELESAI
-            await fetch(`${API_URL}?token=${TOKEN}&updateStatus=true&row=${row}&finalStatus=DAPUR_SELESAI`, { mode: 'no-cors' });
-            
-            // Refresh daftar
-            setTimeout(loadDapur, 500);
+        async function done(row) {
+            await fetch(API + `?token=dyg-access-v2&updateStatus=true&row=${row}&finalStatus=DAPUR_SELESAI`, {mode:'no-cors'});
+            load();
         }
-
-        // Auto refresh setiap 10 detik
-        setInterval(loadDapur, 10000);
-        loadDapur();
+        setInterval(load, 10000); load();
     </script>
 </body>
 </html>
