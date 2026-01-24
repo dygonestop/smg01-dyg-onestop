@@ -84,7 +84,15 @@ function renderOrders(orders){
         return;
     }
 
-    container.innerHTML = filtered.map(ord => `
+    container.innerHTML = filtered.map(ord => {
+        // PERBAIKAN: Gunakan ord.antrean (sesuai judul kolom di spreadsheet Anda)
+        // Jika ord.antrean tidak ada, dia akan coba cari ord.no_antrean
+        const no = ord.antrean || ord.no_antrean || "!!";
+        const nama = ord.nama || "Tanpa Nama";
+        const pesananRaw = ord.pesanan || "";
+        const mode = ord.mode_pesanan || "DINE IN";
+
+        return `
         <div class="order-card" id="card-${ord.row_index}" data-row="${ord.row_index}">
             <div class="confirm-overlay" id="overlay-${ord.row_index}">
                 <b style="font-size:20px;">HAPUS PESANAN?</b>
@@ -94,20 +102,23 @@ function renderOrders(orders){
                 </div>
             </div>
             <div class="order-header">
-                <span class="order-no">#${ord.no_antrean}</span>
-                <div style="font-size:14px;color:#666;font-weight:bold;">${new Date(ord.timestamp).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</div>
+                <span class="order-no">#${no}</span>
+                <div style="font-size:14px;color:#666;font-weight:bold;">
+                    ${ord.timestamp ? new Date(ord.timestamp).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : '--:--'}
+                </div>
             </div>
             <div class="customer-info">
-                <span class="customer-name">${ord.nama}</span>
-                <span class="order-mode">${ord.mode_pesanan}</span>
+                <span class="customer-name">${nama}</span>
+                <span class="order-mode">${mode}</span>
             </div>
             <div class="item-list">
-                ${ord.pesanan.split(',').map(item => `• ${item.trim()}`).join('<br>')}
+                ${pesananRaw ? pesananRaw.split(',').map(item => `• ${item.trim()}`).join('<br>') : 'Menu Kosong'}
             </div>
-            <button class="btn-print" onclick="printAndClose('${ord.row_index}', '${ord.no_antrean}', '${ord.nama}', '${ord.pesanan.replace(/'/g, "\\'")}', '${ord.mode_pesanan}')">
+            <button class="btn-print" onclick="printAndClose('${ord.row_index}', '${no}', '${nama.replace(/'/g, "\\'")}', '${pesananRaw.replace(/'/g, "\\'")}', '${mode}')">
                 🖨️ CETAK & SELESAI
             </button>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 
     document.querySelectorAll('.order-card').forEach(card => {
         const mc = new Hammer(card);
