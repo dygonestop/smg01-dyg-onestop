@@ -29,9 +29,9 @@
         .change.err{color:var(--danger)}
         
         /* SPLIT STYLES */
-        .split-row { display: grid; grid-template-columns: 2fr 100px 100px; gap: 10px; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
-        .qty-ctrl { display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-q { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ddd; background: #fff; font-weight: bold; }
+        .split-row { display: grid; grid-template-columns: 2fr 1fr 1.2fr; gap: 10px; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .qty-ctrl { display: flex; align-items: center; justify-content: center; gap: 10px; background: #f1f2f6; padding: 5px; border-radius: 10px; }
+        .btn-q { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; }
         .subtotal-row { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-top: 15px; }
     </style>
 </head>
@@ -71,11 +71,11 @@
 <div id="splitModal" class="modal">
     <div class="sheet">
         <h3>🧾 Keranjang Split Bill</h3>
-        <p style="font-size: 12px; color: #666;">Tentukan item yang akan dibayar sekarang:</p>
+        <p style="font-size: 12px; color: #666;">Pilih menu yang akan dibayar pelanggan ini:</p>
         <div id="splitList"></div>
         <div class="subtotal-row">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:bold;">Total Bayar:</span>
+                <span style="font-weight:bold;">Subtotal:</span>
                 <span id="splitTotalDisplay" style="font-size:24px; font-weight:900; color:var(--danger);">Rp 0</span>
             </div>
             <select id="splitMethod" class="input">
@@ -92,6 +92,16 @@
 <div id="rekapModal" class="modal"><div class="sheet" id="rekapContent"></div></div>
 
 <script>
+/* ================= KONFIGURASI HARGA ================= */
+// WAJIB: Samakan Nama Menu dengan yang ada di Menu Pelanggan
+const DAFTAR_HARGA = {
+    "Nasi Goreng": 15000,
+    "Mie Goreng": 15000,
+    "Es Teh": 5000,
+    "Ayam Bakar": 25000,
+    "Kopi Hitam": 10000
+};
+
 const CONFIG={
     API:"https://script.google.com/macros/s/AKfycbwTMnQ2lTxuguB7o1zmi9TecIns60xMY3Q02au40g4XUxNpkc5lNAQhNudvLwBC2Vt2/exec",
     TOKEN:"dyg-access-v2"
@@ -111,7 +121,6 @@ window.onload=refresh;
 function render(data){
     list.innerHTML=data.map(o=>{
         const mode=(o.mode_pesanan||"").toUpperCase();
-        const allowSplit=mode.includes("DINE")||mode.includes("TAKE");
         return`
         <div class="card">
             <div style="display:flex;justify-content:space-between">
@@ -121,8 +130,8 @@ function render(data){
             <div class="pesanan" style="margin-top:10px; color:#555;">${o.pesanan.split(',').join('<br>')}</div>
             <div class="total">Rp ${(+o.total_bayar).toLocaleString('id-ID')}</div>
             <div class="btn-group">
-                <button class="btn btn-bayar" onclick="openPay(${o.row_index},${o.total_bayar},'${o.antrean}')">LUNAS SEMUA</button>
-                ${allowSplit?`<button class="btn btn-split" onclick='openSplit(${JSON.stringify(o)})'>SPLIT BILL</button>`:''}
+                <button class="btn btn-bayar" onclick="openPay(${o.row_index},${o.total_bayar},'${o.antrean}')">BAYAR LUNAS</button>
+                <button class="btn btn-split" onclick='openSplit(${JSON.stringify(o)})'>SPLIT BILL</button>
             </div>
         </div>`;
     }).join('');
@@ -146,29 +155,24 @@ function calc(){
     confirmBtn.disabled=(method.value==="TUNAI" && c<0);
     confirmBtn.style.opacity=confirmBtn.disabled?.5:1;
 }
-async function pay(){
-    if(confirmBtn.disabled) return;
-    confirmBtn.innerText = "Memproses...";
-    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&updateStatus=true&row=${activeOrder.row}&finalStatus=LUNAS&metode=${method.value}`);
-    printStruk(activeOrder.total, method.value, (cashIn.value || activeOrder.total), activeOrder.antrean);
-    closeModal(); refresh();
-}
 
-/* --- LOGIKA SPLIT BILL PERBAIKAN --- */
+/* --- LOGIKA SPLIT BILL (OTOMATIS HARGA) --- */
 function openSplit(o){
     activeOrder = o;
-    // Parsing pesanan teks "2x Nasi Goreng, 1x Es Teh"
     cartSplit = o.pesanan.split(',').map(p => {
         const itemStr = p.trim();
         const qtyMatch = itemStr.match(/^(\d+)x/);
         const qtyAsli = qtyMatch ? parseInt(qtyMatch[1]) : 1;
-        const namaMenu = itemStr.replace(/^\d+x\s*/, '');
+        const namaMenu = itemStr.replace(/^\d+x\s*/, '').trim();
+        
+        // AMBIL HARGA DARI DAFTAR_HARGA
+        const hargaMenu = DAFTAR_HARGA[namaMenu] || 0;
         
         return {
             nama: namaMenu,
             qty_maks: qtyAsli,
             qty_pilih: 0,
-            harga_satuan: 0 // Kasir input manual harga per item
+            harga_satuan: hargaMenu
         };
     });
     renderSplit();
@@ -183,16 +187,17 @@ function renderSplit(){
         return `
         <div class="split-row">
             <div>
-                <div style="font-weight:bold">${item.nama}</div>
-                <div style="font-size:11px; color:#888">Tersedia: ${item.qty_maks}</div>
+                <div style="font-weight:bold; font-size:14px;">${item.nama}</div>
+                <div style="font-size:11px; color:#888">@Rp ${item.harga_satuan.toLocaleString()}</div>
             </div>
             <div class="qty-ctrl">
                 <button class="btn-q" onclick="updateQtySplit(${idx},-1)">-</button>
-                <b>${item.qty_pilih}</b>
+                <b style="min-width:20px; text-align:center;">${item.qty_pilih}</b>
                 <button class="btn-q" onclick="updateQtySplit(${idx},1)">+</button>
             </div>
-            <input type="number" class="input" style="height:35px; font-size:14px; margin:0" 
-                placeholder="Harga" oninput="updateHargaSplit(${idx}, this.value)" value="${item.harga_satuan || ''}">
+            <div style="text-align:right; font-weight:bold; color:var(--primary); font-size:14px;">
+                Rp ${sub.toLocaleString()}
+            </div>
         </div>`;
     }).join('');
     splitTotalDisplay.innerText = "Rp " + grandTotal.toLocaleString('id-ID');
@@ -207,11 +212,6 @@ function updateQtySplit(idx, val){
     }
 }
 
-function updateHargaSplit(idx, val){
-    cartSplit[idx].harga_satuan = parseInt(val) || 0;
-    renderSplit();
-}
-
 async function paySplit(){
     let grandTotal = 0;
     let rincian = "";
@@ -219,11 +219,11 @@ async function paySplit(){
         if(i.qty_pilih > 0){
             const sub = i.qty_pilih * i.harga_satuan;
             grandTotal += sub;
-            rincian += `${i.qty_pilih}x ${i.nama} @${i.harga_satuan.toLocaleString()}\n`;
+            rincian += `${i.qty_pilih}x ${i.nama} @${i.harga_satuan.toLocaleString()}\n   Sub: Rp ${sub.toLocaleString()}\n`;
         }
     });
 
-    if(grandTotal === 0) return alert("Pilih item & isi harga!");
+    if(grandTotal === 0) return alert("Pilih minimal 1 item!");
 
     const metode = document.getElementById('splitMethod').value;
     let s=`{center}{h}STRUK SPLIT BILL{/h}
@@ -241,16 +241,24 @@ Metode: ${metode}
     closeModal();
 }
 
+async function pay(){
+    if(confirmBtn.disabled) return;
+    confirmBtn.innerText = "MEMPROSES...";
+    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&updateStatus=true&row=${activeOrder.row}&finalStatus=LUNAS&metode=${method.value}`);
+    printStruk(activeOrder.total, method.value, (cashIn.value || activeOrder.total), activeOrder.antrean);
+    closeModal(); refresh();
+}
+
 function printStruk(total,metode,bayar,antrean){
-    let kembalian = bayar - total;
+    let c = bayar - total;
     let s=`{center}{h}STRUK PEMBAYARAN{/h}
 cloudkitchen.dyg++
 -------------------------
 Antrean: #${antrean}
-Total : Rp ${total.toLocaleString()}
-Bayar : Rp ${parseInt(bayar).toLocaleString()}
-Kembali: Rp ${kembalian.toLocaleString()}
-Metode: ${metode}
+Total  : Rp ${total.toLocaleString()}
+Bayar  : Rp ${parseInt(bayar).toLocaleString()}
+Kembali: Rp ${c.toLocaleString()}
+Metode : ${metode}
 -------------------------
 {center}TERIMA KASIH
 {cut}`;
@@ -262,13 +270,16 @@ async function showRekap(){
     const d=await r.json();
     rekapContent.innerHTML=`
     <h3>📊 Rekap Hari Ini</h3>
-    <div style="background:#f8f9fa; padding:15px; border-radius:12px;">
-        <b>Total Omzet:</b><br><span style="font-size:24px; font-weight:900; color:var(--success)">Rp ${(+d.total).toLocaleString()}</span><br><br>
-        Tunai: Rp ${(+d.tunai).toLocaleString()}<br>
-        QRIS: Rp ${(+d.qris).toLocaleString()}<br>
-        Kartu: Rp ${(+d.kartu).toLocaleString()}
+    <div style="background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:15px;">
+        <p>Total Omzet:</p>
+        <h2 style="color:var(--success); margin:0;">Rp ${(+d.total).toLocaleString()}</h2>
     </div>
-    <button class="btn btn-bayar" style="width:100%; margin-top:15px" onclick="closeModal()">TUTUP</button>`;
+    <div style="text-align:left; font-size:14px; margin-bottom:20px;">
+        💵 Tunai: Rp ${(+d.tunai).toLocaleString()}<br>
+        📱 QRIS: Rp ${(+d.qris).toLocaleString()}<br>
+        💳 Kartu: Rp ${(+d.kartu).toLocaleString()}
+    </div>
+    <button class="btn btn-bayar" style="width:100%" onclick="closeModal()">TUTUP</button>`;
     rekapModal.style.display="flex";
 }
 
