@@ -62,17 +62,26 @@
 
     // Fungsi Ambil Data dari GAS
     async function refreshData() {
-        try {
-            // Kita minta data yang statusFilter-nya = DAPUR_SELESAI
-            const response = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&statusFilter=DAPUR_SELESAI`);
-            const orders = await response.json();
-            renderOrders(orders);
-            document.getElementById('status-indicator').innerText = "● SERVER TERHUBUNG (AUTO-REFRESH)";
-        } catch (e) {
-            document.getElementById('status-indicator').innerText = "○ SERVER ERROR / OFFLINE";
-            console.error(e);
-        }
+    try {
+        const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&statusFilter=DAPUR_SELESAI`;
+        const response = await fetch(url);
+        
+        if (!response.ok) throw new Error("Network response was not ok");
+        
+        const orders = await response.json();
+        renderOrders(orders);
+        
+        // JIKA BERHASIL, UBAH TEKS JADI ONLINE
+        const indicator = document.getElementById('status-indicator');
+        indicator.innerText = "● SERVER ONLINE";
+        indicator.style.color = "var(--success)"; 
+    } catch (e) {
+        console.error("Fetch Error:", e);
+        const indicator = document.getElementById('status-indicator');
+        indicator.innerText = "○ SERVER ERROR / OFFLINE";
+        indicator.style.color = "red";
     }
+}
 
     function renderOrders(orders) {
         const container = document.getElementById('listTagihan');

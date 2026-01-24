@@ -201,7 +201,8 @@ function printAndClose(row, no, nama, menu, mode, total) {
 
     // 4. Update server di background (Tanpa menunggu)
     // Tambahkan &finalStatus=DAPUR_SELESAI
-fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}&finalStatus=DAPUR_SELESAI`)
+// Di dapur.html
+await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}&finalStatus=DAPUR_SELESAI`);
     .catch(e => console.log("Server update pending..."));
 }
 
