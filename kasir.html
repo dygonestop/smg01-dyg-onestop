@@ -86,7 +86,68 @@ body{ font-family:'Segoe UI',sans-serif; background:var(--bg); margin:0; padding
 
 <script>
 const DAFTAR_HARGA = {
-"nasi ayam saus padang teh": 15000, "nasi rica ayam teh": 15000, "nasi ayam bakar madu teh": 15000, "nasi orak arik ayam bali teh": 15000, "nasi telor balado teh": 12000, "mie lik goreng nyemek teh": 13000, "nasi ayam saus padang": 15000, "nasi ayam saus margarin": 15000, "nasi rica ayam": 15000, "nasi ayam bakar madu": 15000, "nasi ayam bakar saus kacang": 15000, "nasi ayam bakar dabu": 15000, "nasi orak arik ayam bali": 15000, "nasi telor balado": 12000, "nasi telor bakar madu": 13000, "nasi telor bakar saus kacang": 13000, "nasi telor": 12000, "nasi orak arik telor": 12000, "nasi telor gobal gabul": 12000, "mie tek tek": 13000, "mie dogh dogh": 13000, "mie goreng": 9000, "mie rebus": 9000, "mie goreng telur": 11000, "mie rebus telur": 11000, "mie goreng double": 11000, "mie rebus double": 11000, "mie goreng double telur": 14000, "mie rebus double telur": 14000, "nasi ommelet": 15000, "kopi klothok": 9000, "kopi lelet": 9000, "kopi coklat": 10000, "kopi jahe": 10000, "es kopi item": 9000, "es kopiko": 12000, "kopi susu": 10000, "kopi ka amel": 10000, "kopi susu beri": 12000, "susu teman": 8000, "es susu mantan": 12000, "es jossu": 10000, "es bissu": 10000, "es jeruk susu": 15000, "coklat": 10000, "es choco oren": 12000, "es jeruk yakult": 9000, "es milksex beri": 10000, "es matcha": 15000, "es squash oren": 15000, "jus mangga": 8000, "jus stoberi": 10000, "smoothies mary": 15000, "float mangga": 13000, "float stoberi": 15000, "nescafe blue": 5000, "kopi kapal api": 5000, "goodday capucino": 7000, "goodday frez": 7000, "coffemix": 5000, "beng beng": 7000, "milo": 5000, "dancow putih": 8000, "susu putih": 5000, "susu coklat": 5000, "extra joss": 5000, "kukubima": 5000, "jahe": 5000, "jahe jeruk": 8000, "teh jahe": 5000, "susu jahe": 10000, "jeruk": 5000, "teh": 3000, "nasgor biasa": 12000, "nasgor ayam": 18000, "nasgor ayam kremesan": 18000, "nasgor bakso": 14000, "nasgor sosis": 14000, "nasgor bakso sosis": 17000, "nasgor telor cabe ijo": 14000, "nasgor ayam cabe ijo": 20000, "nasgor ruwed": 14000, "nasgor ruwed bumbu rendang": 14000, "nasgor ruwed bumbu padang": 14000, "nasgor margarin": 12000, "nasgor gila": 20000, "nasi gila": 20000, "telor penyet": 7000, "telor bakso sosis penyet": 12000, "ayam penyet": 14000, "pangsit goreng penyet": 7000, "tahu bakso penyet": 8000, "gelantin penyet": 5000, "nasi putih": 4000, "nasi uduk": 4000, "nasi cabe ijo": 6000, "nasi kecombrang": 6000, "nasi rumput laut": 6000, "nasi margarin": 6000, "corndog coklat": 14000, "corndog matcha": 14000, "ropang susu mangga": 14000, "ropang susu oreo": 14000, "risol kentang ayam": 11000, "tahu bakso goreng": 7000, "kentang goreng": 12000, "mie lik prabu goreng nyemek": 13000, "mie lik prabu kuah": 13000, "mie lik yamin goreng": 13000, "mie lik yamin kuah": 13000, "mie lik kuah asam manis": 13000, "mie lik kuah pedas manis": 13000, "mie lik goreng pecel": 13000, "mie lik goreng margarin": 13000
+    // --- PAKET HEMAT & UTAMA ---
+    "nasi ayam saus padang teh": 15000, 
+    "nasi rica ayam teh": 15000, 
+    "nasi ayam bakar madu teh": 15000, 
+    "nasi orak arik ayam bali teh": 15000, 
+    "nasi telor balado teh": 12000, 
+    "mie lik goreng nyemek teh": 13000, 
+    "nasi ayam saus padang": 15000, 
+    "nasi ayam saus margarin": 15000, 
+    "nasi rica ayam": 15000, 
+    "nasi ayam bakar madu": 15000, 
+    "nasi ayam bakar saus kacang": 15000, 
+    "nasi ayam bakar dabu": 15000, 
+    "nasi orak arik ayam bali": 15000, 
+    "nasi telor balado": 12000, 
+    "nasi telor bakar madu": 13000, 
+    "nasi telor bakar saus kacang": 13000, 
+    "nasi telor": 12000, 
+    "nasi orak arik telor": 12000, 
+    "nasi telor gobal gabul": 12000, 
+    "nasi ommelet": 15000,
+
+    // --- MIE & NASGOR ---
+    "mie tek tek": 13000, "mie dogh dogh": 13000, "mie goreng": 9000, "mie rebus": 9000, 
+    "mie goreng telur": 11000, "mie rebus telur": 11000, "mie goreng double": 11000, 
+    "mie rebus double": 11000, "mie goreng double telur": 14000, "mie rebus double telur": 14000,
+    "nasgor biasa": 12000, "nasgor ayam": 18000, "nasgor ayam kremesan": 18000, 
+    "nasgor bakso": 14000, "nasgor sosis": 14000, "nasgor bakso sosis": 17000, 
+    "nasgor telor cabe ijo": 14000, "nasgor ayam cabe ijo": 20000, "nasgor ruwed": 14000, 
+    "nasgor ruwed bumbu rendang": 14000, "nasgor ruwed bumbu padang": 14000, 
+    "nasgor margarin": 12000, "nasgor gila": 20000, "nasi gila": 20000,
+
+    // --- DRINK / MINUMAN ---
+    "kopi klothok": 9000, "kopi lelet": 9000, "kopi coklat": 10000, "kopi jahe": 10000, 
+    "es kopi item": 9000, "es kopiko": 12000, "kopi susu": 10000, "kopi ka amel": 10000, 
+    "kopi susu beri": 12000, "susu teman": 8000, "es susu mantan": 12000, "es jossu": 10000, 
+    "es bissu": 10000, "es jeruk susu": 15000, "coklat": 10000, "es choco oren": 12000, 
+    "es jeruk yakult": 9000, "es milksex beri": 10000, "es matcha": 15000, "es squash oren": 15000, 
+    "jus mangga": 8000, "jus stoberi": 10000, "smoothies mary": 15000, "float mangga": 13000, 
+    "float stoberi": 15000, "nescafe blue": 5000, "kopi kapal api": 5000, "goodday capucino": 7000, 
+    "goodday frez": 7000, "coffemix": 5000, "beng beng": 7000, "milo": 5000, "dancow putih": 8000, 
+    "susu putih": 5000, "susu coklat": 5000, "extra joss": 5000, "kukubima": 5000, "jahe": 5000, 
+    "jahe jeruk": 8000, "teh jahe": 5000, "susu jahe": 10000, "jeruk": 5000, "teh": 3000,
+
+    // --- PENYET & SNACK ---
+    "telor penyet": 7000, "telor bakso sosis penyet": 12000, "ayam penyet": 14000, 
+    "pangsit goreng penyet": 7000, "tahu bakso penyet": 8000, "gelantin penyet": 5000,
+    "corndog coklat": 14000, "corndog matcha": 14000, "ropang susu mangga": 14000, 
+    "ropang susu oreo": 14000, "risol kentang ayam": 11000, "tahu bakso goreng": 7000, "kentang goreng": 12000,
+
+    // --- MIE LIK SERIES ---
+    "mie lik prabu goreng nyemek": 13000, "mie lik prabu kuah": 13000, "mie lik yamin goreng": 13000, 
+    "mie lik yamin kuah": 13000, "mie lik kuah asam manis": 13000, "mie lik kuah pedas manis": 13000, 
+    "mie lik goreng pecel": 13000, "mie lik goreng margarin": 13000,
+
+    // --- NASI SATUAN & VARIAN (REFERENSI) ---
+    "nasi putih": 4000, 
+    "nasi uduk": 4000, 
+    "nasi cabe ijo": 6000, 
+    "nasi kecombrang": 6000, 
+    "nasi rumput laut": 6000, 
+    "nasi margarin": 6000
 };
 
 const CONFIG={
@@ -144,27 +205,62 @@ confirmBtn.style.opacity=confirmBtn.disabled?.5:1;
 
 function openSplit(o){
     activeOrder = o;
-    document.getElementById('cashInSplit').value = "";
-    document.getElementById('changeSplit').innerText = "Kembalian: Rp 0";
-    
+    cashInSplit.value = "";
+    changeSplit.innerText = "Rp 0";
+
+    // Pecah string pesanan dari database (Contoh: "1x Nasi Ayam (Nasi Kecombrang)")
     cartSplit = o.pesanan.split(',').map(p => {
         const itemStr = p.trim();
         const qtyMatch = itemStr.match(/^(\d+)x/);
         const qtyAsli = qtyMatch ? parseInt(qtyMatch[1]) : 1;
         let namaAsli = itemStr.replace(/^\d+x\s*/, '').trim();
         
-        // Membersihkan karakter khusus untuk pencocokan harga
-        let namaClean = namaAsli.toLowerCase().replace(/[^\w\s]/gi, ' ').replace(/\s+/g, ' ').trim();
+        // Bersihkan nama untuk mencari di DAFTAR_HARGA
+        let namaClean = namaAsli.toLowerCase()
+                        .replace(/[^\w\s]/gi, ' ') // hapus karakter khusus (+, //, [])
+                        .replace(/\s+/g, ' ')      // hapus spasi ganda
+                        .trim();
         
         let harga = 0;
+
+        // 1. CARI HARGA DASAR (Misal: Nasi Ayam Saus Padang = 15000)
         for (let key in DAFTAR_HARGA) {
             if (namaClean.includes(key)) {
                 harga = DAFTAR_HARGA[key];
                 break;
             }
         }
-        return { nama: namaAsli, qty_maks: qtyAsli, qty_pilih: 0, harga_satuan: harga };
+
+        // 2. LOGIKA VARIAN NASI (TAMBAH 2000)
+        // Jika nama menu mengandung varian nasi spesial, tambahkan selisihnya
+        if (namaClean.includes("kecombrang") || 
+            namaClean.includes("margarin") || 
+            namaClean.includes("rumput laut") || 
+            namaClean.includes("cabe ijo")) {
+            
+            // Hanya tambah 2000 jika harga dasar ditemukan dan ini menu paket (harga >= 10rb)
+            if (harga >= 10000) {
+                harga += 2000;
+            } else if (harga === 0) {
+                // Jika menu tidak terdaftar tapi ada kata Kecombrang, asumsikan harga varian saja
+                harga = 6000;
+            }
+        }
+
+        // 3. PINTU DARURAT (Fallback)
+        // Jika harga masih 0 (tidak ketemu), gunakan rata-rata total bayar dari database
+        if (harga === 0) {
+            harga = Math.round(o.total_bayar / qtyAsli);
+        }
+
+        return { 
+            nama: namaAsli, 
+            qty_maks: qtyAsli, 
+            qty_pilih: 0, 
+            harga_satuan: harga 
+        };
     });
+
     renderSplit();
     splitModal.style.display="flex";
     toggleCashSplit();

@@ -697,30 +697,54 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     }
 
     function updateCart(id, change, forceVariant = null) {
-        const item = menuData.find(m => m.id === id);
-        if (!item) return;
+    const item = menuData.find(m => m.id === id);
+    if (!item) return;
 
-        if (change > 0) {
-            let vData = forceVariant ? {...forceVariant} : {
-                vN: document.getElementById(`n-${id}`)?.value || null,
-                vM: document.getElementById(`m-${id}`)?.value || null,
-                vR: document.getElementById(`r-${id}`)?.value || null,
-                vS: document.getElementById(`s-${id}`)?.value || null,
-                ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
-            };
-            cart.push({ ...item, ...vData });
-        } else {
-            let idx = cart.findLastIndex(c => 
-                c.id === id && 
-                c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
-                c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
-                c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
-                c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
-            );
-            if (idx !== -1) cart.splice(idx, 1);
+    if (change > 0) {
+        // 1. Ambil data varian langsung dari elemen select saat tombol + diklik
+        const nEl = document.getElementById(`n-${id}`);
+        const mEl = document.getElementById(`m-${id}`);
+        const rEl = document.getElementById(`r-${id}`);
+        const sEl = document.getElementById(`s-${id}`);
+
+        const vNasi = nEl ? nEl.value : null;
+        
+        // 2. LOGIKA TAMBAH 2000: Cek apakah varian nasi yang dipilih harganya +2000
+        let extraPrice = 0;
+        if (vNasi) {
+            const varianSpek = VARIAN_NASI.find(x => x.n === vNasi);
+            if (varianSpek) extraPrice = varianSpek.e; // Mengambil nilai 2000 dari konstanta VARIAN_NASI
         }
-        refreshUI();
+
+        let vData = forceVariant ? {...forceVariant} : {
+            vN: vNasi,
+            vM: mEl ? mEl.value : null,
+            vR: rEl ? rEl.value : null,
+            vS: sEl ? sEl.value : null,
+            ex: extraPrice // Menyimpan biaya tambahan ke dalam item keranjang
+        };
+        
+        // 3. Masukkan ke keranjang. Kita tambahkan properti 'price' yang sudah ditambah extraPrice
+        // agar kolom 'total_bayar' di Google Sheets nanti hasilnya benar (misal: 17000)
+        cart.push({ 
+            ...item, 
+            ...vData,
+            name: vData.vN ? `${item.nama} (${vData.vN})` : item.nama, // Penamaan agar jelas di Dapur/Kasir
+            price: item.harga + extraPrice // HARGA FINAL: 15000 + 2000
+        });
+    } else {
+        // Logika hapus item (tetap sama)
+        let idx = cart.findLastIndex(c => 
+            c.id === id && 
+            c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
+            c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
+            c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
+            c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
+        );
+        if (idx !== -1) cart.splice(idx, 1);
     }
+    refreshUI();
+}
 
     function refreshUI() {
         let subtotal = 0; 
