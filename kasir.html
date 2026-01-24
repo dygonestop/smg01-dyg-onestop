@@ -17,7 +17,7 @@
         .antrean-num { font-size: 24px; font-weight: 900; color: var(--primary); }
         .total-box { font-size: 18px; font-weight: 800; color: var(--danger); margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
         
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .btn-group { display: grid; gap: 8px; margin-top: 10px; }
         .btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; font-size: 13px; }
         .btn-lunas { background: var(--success); }
         .btn-split { background: var(--warning); }
@@ -25,7 +25,7 @@
 
         /* Modal Split & Rekap */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 95%; max-width: 450px; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 95%; max-width: 450px; max-height: 90vh; overflow-y: auto; }
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
         .qty-ctrl { display: flex; align-items: center; gap: 10px; }
         .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ddd; background: white; font-weight: bold; cursor: pointer; }
@@ -53,9 +53,9 @@
         <div id="itemList"></div>
         <div style="margin-top:20px; border-top:2px solid #eee; padding-top:15px;">
             <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:bold; margin-bottom:10px;">
-                <span>Total:</span><span id="cartTotalDisplay">Rp 0</span>
+                <span>Total:</span><span id="cartTotalDisplay">0 Item</span>
             </div>
-            <select id="splitMethod" style="width:100%; padding:10px; margin-bottom:10px;">
+            <select id="splitMethod" style="width:100%; padding:10px; margin-bottom:10px; border-radius: 8px;">
                 <option value="TUNAI">TUNAI</option>
                 <option value="QRIS">QRIS</option>
                 <option value="KARTU">KARTU</option>
@@ -67,8 +67,7 @@
 </div>
 
 <div id="rekapModal" class="modal">
-    <div class="modal-content" id="rekapContent" style="text-align:left;">
-        </div>
+    <div class="modal-content" id="rekapContent" style="text-align:left;"></div>
 </div>
 
 <script>
@@ -85,25 +84,66 @@
             const response = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&statusFilter=DAPUR_SELESAI`);
             const orders = await response.json();
             renderOrders(orders);
-        } catch (e) { console.log("Offline"); }
+            document.getElementById('status-indicator').innerText = "● ONLINE";
+        } catch (e) { 
+            console.log("Offline"); 
+            document.getElementById('status-indicator').innerText = "○ OFFLINE";
+        }
     }
 
     function renderOrders(orders) {
         const container = document.getElementById('listTagihan');
-        container.innerHTML = orders.map(ord => `
-            <div class="card">
-                <div style="display:flex; justify-content:space-between;">
-                    <span class="antrean-num">#${ord.antrean}</span>
-                    <span style="font-size:12px; color:#666;">${ord.nama}</span>
+        container.innerHTML = orders.map(ord => {
+            // Deteksi Mode Pesanan (Case Insensitive)
+            const mode = (ord.mode_pesanan || "").toUpperCase();
+            const isDelivery = mode.includes("DELIVERY");
+            
+            // Atur tombol split: Hanya muncul jika DINE IN atau TAKE AWAY
+            const btnSplitHtml = isDelivery ? '' : `<button class="btn btn-split" onclick='openSplit(${JSON.stringify(ord)})'>SPLIT BILL</button>`;
+            const gridStyle = isDelivery ? 'grid-template-columns: 1fr;' : 'grid-template-columns: 1fr 1fr;';
+
+            return `
+                <div class="card" id="card-${ord.row_index}">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span class="antrean-num">#${ord.antrean || ord.no_antrean}</span>
+                        <span style="font-size:12px; color:#666;"><b>${mode}</b> | ${ord.nama}</span>
+                    </div>
+                    <div style="margin:10px 0; font-size:14px; color:#444;">${ord.pesanan.split(',').join('<br>')}</div>
+                    <div class="total-box">Rp ${parseInt(ord.total_bayar).toLocaleString('id-ID')}</div>
+                    <div class="btn-group" style="${gridStyle}">
+                        <button class="btn btn-lunas" onclick="bayarLunasFull(${ord.row_index}, '${ord.antrean || ord.no_antrean}', ${ord.total_bayar})">LUNAS SEMUA</button>
+                        ${btnSplitHtml}
+                    </div>
                 </div>
-                <div style="margin:10px 0; font-size:14px; color:#444;">${ord.pesanan.split(',').join('<br>')}</div>
-                <div class="total-box">Rp ${parseInt(ord.total_bayar).toLocaleString('id-ID')}</div>
-                <div class="btn-group">
-                    <button class="btn btn-lunas" onclick="bayarLunasFull(${JSON.stringify(ord).replace(/"/g, '&quot;')})">LUNAS SEMUA</button>
-                    <button class="btn btn-split" onclick="openSplit(${JSON.stringify(ord).replace(/"/g, '&quot;')})">SPLIT BILL</button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    }
+
+    // FUNGSI LUNAS FULL
+    async function bayarLunasFull(row, antrean, total) {
+        if(!confirm(`Konfirmasi Lunas Antrean #${antrean}?\nTotal: Rp ${total.toLocaleString()}`)) return;
+        
+        const metode = prompt("Metode Pembayaran (TUNAI/QRIS/KARTU):", "TUNAI") || "TUNAI";
+        const trxId = "FULL-" + Date.now();
+        
+        try {
+            const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}&finalStatus=LUNAS&metode=${metode.toUpperCase()}&trxId=${trxId}`;
+            const resp = await fetch(url);
+            const result = await resp.text();
+            
+            if (result === "Success") {
+                // Cetak Struk
+                let struk = `{center}{h}STRUK LUNAS{/h}\n{center}cloudkitchen.dyg++\n--------------------------------\nID: ${trxId}\nAntrean: #${antrean}\nTotal: Rp ${total.toLocaleString()}\nMetode: ${metode}\n--------------------------------\n{center}TERIMA KASIH\n{cut}`;
+                window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(struk)));
+                
+                alert("Pembayaran Berhasil!");
+                refreshData();
+            } else {
+                alert("Gagal update status.");
+            }
+        } catch (e) {
+            alert("Koneksi gagal.");
+        }
     }
 
     // LOGIKA SPLIT BILL (+/-)
@@ -121,6 +161,7 @@
                 </div>
             </div>
         `).join('');
+        document.getElementById('cartTotalDisplay').innerText = "0 Item";
         document.getElementById('splitModal').style.display = 'flex';
     }
 
@@ -133,17 +174,16 @@
     }
 
     async function prosesSplit() {
-        const nominal = prompt("Masukkan total rupiah untuk item terpilih:");
+        const nominal = prompt("Masukkan total rupiah yang dibayarkan untuk item terpilih:");
         if(!nominal || nominal == "0") return;
         
         const trxId = "SPLIT-" + Date.now();
         const metode = document.getElementById('splitMethod').value;
         
-        // Struk Split
         let rincian = "";
         for (let k in cart) { if(cart[k] > 0) rincian += `${cart[k]}x ${k}\n`; }
         
-        let struk = `{center}{h}STRUK SPLIT BILL{/h}\n{center}cloudkitchen.dyg++\n--------------------------------\nID: ${trxId}\nAntrean: #${activeOrder.antrean}\n--------------------------------\n${rincian}--------------------------------\n{right}TOTAL: Rp ${parseInt(nominal).toLocaleString()}\nMETODE: ${metode}\n--------------------------------\n{cut}`;
+        let struk = `{center}{h}STRUK SPLIT BILL{/h}\n{center}cloudkitchen.dyg++\n--------------------------------\nID: ${trxId}\nAntrean: #${activeOrder.antrean}\n--------------------------------\n${rincian}--------------------------------\n{right}DIBAYAR: Rp ${parseInt(nominal).toLocaleString()}\nMETODE: ${metode}\n--------------------------------\n{center}DIBAYAR SEBAGIAN\n{cut}`;
         
         window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(struk)));
         closeModal();
@@ -151,26 +191,28 @@
 
     // FITUR REKAP HARIAN
     async function showRekap() {
-        const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getRekap=true`);
-        const data = await res.json();
-        
-        document.getElementById('rekapContent').innerHTML = `
-            <h3 style="text-align:center;">📊 REKAP PENDAPATAN HARI INI</h3>
-            <hr>
-            <p>Total Transaksi: <b>${data.trxCount}</b></p>
-            <p>💵 Tunai: <b>Rp ${data.tunai.toLocaleString()}</b></p>
-            <p>📱 QRIS: <b>Rp ${data.qris.toLocaleString()}</b></p>
-            <p>💳 Kartu: <b>Rp ${data.kartu.toLocaleString()}</b></p>
-            <hr>
-            <h2 style="text-align:center; color:var(--success);">TOTAL: Rp ${data.total.toLocaleString()}</h2>
-            <button class="btn btn-lunas" style="width:100%;" onclick="cetakRekap(${JSON.stringify(data)})">CETAK LAPORAN</button>
-            <button class="btn" style="width:100%; background:#7f8c8d; margin-top:5px;" onclick="closeModal()">TUTUP</button>
-        `;
-        document.getElementById('rekapModal').style.display = 'flex';
+        try {
+            const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getRekap=true`);
+            const data = await res.json();
+            
+            document.getElementById('rekapContent').innerHTML = `
+                <h3 style="text-align:center;">📊 REKAP PENDAPATAN HARI INI</h3>
+                <hr>
+                <p>Total Transaksi: <b>${data.trxCount}</b></p>
+                <p>💵 Tunai: <b>Rp ${data.tunai.toLocaleString('id-ID')}</b></p>
+                <p>📱 QRIS: <b>Rp ${data.qris.toLocaleString('id-ID')}</b></p>
+                <p>💳 Kartu: <b>Rp ${data.kartu.toLocaleString('id-ID')}</b></p>
+                <hr>
+                <h2 style="text-align:center; color:var(--success);">TOTAL: Rp ${data.total.toLocaleString('id-ID')}</h2>
+                <button class="btn btn-lunas" style="width:100%;" onclick='cetakRekap(${JSON.stringify(data)})'>CETAK LAPORAN</button>
+                <button class="btn" style="width:100%; background:#7f8c8d; margin-top:8px;" onclick="closeModal()">TUTUP</button>
+            `;
+            document.getElementById('rekapModal').style.display = 'flex';
+        } catch (e) { alert("Gagal mengambil data rekap."); }
     }
 
     function cetakRekap(d) {
-        let s = `{center}{h}LAPORAN HARIAN{/h}\n{center}${new Date().toLocaleDateString()}\n--------------------------------\n`;
+        let s = `{center}{h}LAPORAN HARIAN{/h}\n{center}${new Date().toLocaleDateString('id-ID')}\n--------------------------------\n`;
         s += `Tunai    : Rp ${d.tunai.toLocaleString()}\nQRIS     : Rp ${d.qris.toLocaleString()}\nKartu    : Rp ${d.kartu.toLocaleString()}\n`;
         s += `--------------------------------\n{right}{h}TOTAL: Rp ${d.total.toLocaleString()}{/h}\n--------------------------------\n{cut}`;
         window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(s)));
@@ -183,6 +225,7 @@
 
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'); }, 1000);
     window.onload = refreshData;
+    setInterval(refreshData, 15000); // Auto refresh setiap 15 detik
 </script>
 </body>
 </html>
