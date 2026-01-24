@@ -954,10 +954,8 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     setTimeout(() => {
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-        
-        // Langsung tampilkan overlay kembali agar saat user balik, sudah dalam kondisi awal
-        document.getElementById('welcome-overlay').style.display = 'flex';
-    }, 600);
+    }, 600); 
+}
 
 
     function toggleSummary(open) {
