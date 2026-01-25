@@ -292,8 +292,7 @@ mark {
     border-radius: 50%;
     position: relative;
     overflow: visible;              /* KUNCI ICON 140% */
-    transition:
-        box-shadow 0.35s ease;
+    transition: all 0.35s ease;
 }
 
 /* ===============================
@@ -1120,23 +1119,26 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
         }
     }
 
-    function changeMode(m, el) {
-    if (el.classList.contains('disabled')) return showOutOfRangeAlert();
+function changeMode(mode, el) {
+    if (el.classList.contains('disabled')) {
+        showOutOfRangeAlert();
+        return;
+    }
 
-    currentMode = m;
-
-    document.querySelectorAll('.service-btn').forEach(o => {
-        o.classList.remove('active', 'pulse-attention');
+    // HAPUS EFEK DENYUT SEGERA SETELAH DIPILIH
+    document.querySelectorAll('.icon-box').forEach(icon => {
+        icon.classList.remove('pulse-active');
     });
 
+    // LOGIKA MODE LAYANAN ANDA YANG SUDAH ADA...
+    currentMode = mode;
+    document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
-
-    document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
-    document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
-
-    refreshUI();
+    
+    // Tampilkan box input meja/alamat sesuai mode
+    document.getElementById('boxMeja').style.display = mode === 'DINE IN' ? 'block' : 'none';
+    document.getElementById('boxAlamat').style.display = mode === 'DELIVERY' ? 'block' : 'none';
 }
-
 
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
@@ -1177,7 +1179,35 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     });
 }
 
-   function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
+   function openModal() 
+function openModal() {
+    // 1. CEK APAKAH LAYANAN SUDAH DIPILIH
+    if (!currentMode) {
+        // Scroll ke atas ke bagian mode layanan
+        const serviceArea = document.querySelector('.service-mode');
+        window.scrollTo({ top: serviceArea.offsetTop - 100, behavior: 'smooth' });
+
+        // 2. CARI LAYANAN YANG TIDAK DISABLED
+        // Hanya yang tidak punya class 'disabled' yang akan berdenyut
+        const availableIcons = document.querySelectorAll('.service-btn:not(.disabled) .icon-box');
+
+        availableIcons.forEach(icon => {
+            icon.classList.add('pulse-active');
+        });
+
+        // 3. HAPUS EFEK SETELAH 4 DETIK
+        setTimeout(() => {
+            availableIcons.forEach(icon => {
+                icon.classList.remove('pulse-active');
+            });
+        }, 4000);
+
+        return; // Berhenti di sini, jangan buka modal konfirmasi dulu
+    }
+
+    // Jika sudah pilih layanan, buka modal konfirmasi kirim WA seperti biasa
+    document.getElementById('modalConfirm').style.display = 'flex';
+}
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
     function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
