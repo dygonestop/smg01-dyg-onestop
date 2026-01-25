@@ -1026,12 +1026,21 @@ const dI = document.getElementById('eventDate');
     const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
     cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
 
-    let targetEl = null;
-    if (!nI.value.trim()) targetEl = nI;
-    else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
-    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
-else if (currentMode === 'KATERING' && !dI.value.trim()) targetEl = dI; // Cek tanggal jika mode katering
+   let targetEl = null;
+    if (!nI.value.trim()) {
+        targetEl = nI;
+    } else if (currentMode === 'DINE IN' && !tI.value.trim()) {
+        targetEl = tI;
+    } else if (currentMode === 'DELIVERY' && !aI.value.trim()) {
+        targetEl = aI;
+    } 
+    // TEMPEL DI SINI:
+    else if (currentMode === 'KATERING' && !dI.value.trim()) {
+        targetEl = dI;
+        alert("Pemesanan Katering minimal dilakukan H-1. Silakan pilih tanggal mulai besok.");
+    }
 
+    // Jika ada yang belum diisi (targetEl ketemu), maka jalankan efek error
     if (targetEl) {
         const targetCard = targetEl.closest('.input-card');
         closeModal();
@@ -1265,6 +1274,16 @@ document.querySelectorAll('.service-btn').forEach(btn => {
     });
 });
 
+// Mengatur agar kalender katering hanya bisa diklik mulai besok
+const dateInput = document.getElementById('eventDate');
+const besok = new Date();
+besok.setDate(besok.getDate() + 1); // Tambah 1 hari dari hari ini
+
+// Format ke YYYY-MM-DD agar dibaca oleh sistem kalender
+const besokFormat = besok.toISOString().split('T')[0];
+
+// Set atribut 'min' agar tanggal sebelumnya terkunci (abu-abu)
+dateInput.setAttribute('min', besokFormat);
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
