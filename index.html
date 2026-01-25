@@ -575,8 +575,6 @@ mark {
 
 <div class="service-mode">
 
-    <div class="service-mode">
-
     <!-- DINE IN -->
     <div class="service-btn dinein" id="mDine">
         <div class="icon-box">
@@ -697,48 +695,51 @@ RADIUS_DELIVERY: 50
     // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-    async function startApp() {
-navigator.geolocation.getCurrentPosition((pos) => {
-    const { latitude, longitude } = pos.coords;
-    window.userLat = latitude;
-    window.userLng = longitude;
+// GANTI FUNGSI startApp ANDA DENGAN INI
+async function startApp() {
+    const overlay = document.getElementById('welcome-overlay');
+    
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        window.userLat = latitude;
+        window.userLng = longitude;
 
-    const distMeter = L.latLng(latitude, longitude)
-                       .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45; // koreksi
-    window.userDist = distMeter;
+        // Koreksi jarak
+        const distMeter = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
+        window.userDist = distMeter;
 
-    const dineBtn = document.getElementById('mDine');
-    const deliveryBtn = document.getElementById('mDelivery');
-    const dineBadge = document.getElementById('dineInBadge');
-    const deliveryBadge = document.getElementById('deliveryBadge');
+        // Update Badge Jangkauan
+        const dineBadge = document.getElementById('dineInBadge');
+        const deliveryBadge = document.getElementById('deliveryBadge');
 
-    // DINE IN
-    if (distMeter > CONFIG.RADIUS_DINE_IN) {
-        dineBtn.classList.add('disabled');
-        dineBadge.innerText = "Jangkauan Delivery";
-        dineBadge.style.opacity = 1;
-    } else {
-        dineBtn.classList.remove('disabled');
-        dineBadge.style.opacity = 0;
-    }
+        if (distMeter > CONFIG.RADIUS_DINE_IN) {
+            document.getElementById('mDine').classList.add('disabled');
+            dineBadge.innerText = "Jangkauan Delivery";
+            dineBadge.style.opacity = 1;
+        }
 
-    // DELIVERY
-    if (distMeter < CONFIG.RADIUS_DELIVERY) {
-        deliveryBtn.classList.add('disabled');
-        deliveryBadge.innerText = "Jangkauan Dine In";
-        deliveryBadge.style.opacity = 1;
-    } else {
-        deliveryBtn.classList.remove('disabled');
-        deliveryBadge.style.opacity = 0;
-    }
-});
+        if (distMeter < CONFIG.RADIUS_DELIVERY) {
+            document.getElementById('mDelivery').classList.add('disabled');
+            deliveryBadge.innerText = "Jangkauan Dine In";
+            deliveryBadge.style.opacity = 1;
+        }
 
+        // Jalankan inisialisasi
         initMap(latitude, longitude);
         initBanner();
-        document.getElementById('welcome-overlay').style.display = 'none';
+        
+        // SEMBUNYIKAN OVERLAY
+        overlay.style.display = 'none';
+        
         await loadMenu();
         syncQueue();
-    }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
+        
+    }, () => {
+        alert("Gagal akses lokasi. Harap aktifkan GPS.");
+        // Tetap izinkan masuk jika GPS gagal (opsional)
+        overlay.style.display = 'none';
+        loadMenu();
+    }, { enableHighAccuracy: true });
 }
 
     function calculateOngkir(distMeter) {
@@ -963,18 +964,15 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
         });
 
         container.innerHTML = Object.values(groups).map(item => `
-            <div class="summary-item">
+            <div class="summary-item" id="sum-${item.key}">
                 <div class="item-detail-name">
-                    <b>${item.nama}</b>
-                    <span>${[item.vN, item.vM, item.vR, item.vS].filter(Boolean).join(', ') || 'Original'}</span>
-                    <div style="font-size:11px;font-weight:800;color:var(--primary);margin-top:3px;">
-                        Rp ${(item.qty * (item.harga + (item.ex || 0))).toLocaleString('id-ID')}
-                    </div>
+                    <b>${item.name}</b>
+                    <span>Rp ${(item.price).toLocaleString('id-ID')} x ${item.qty}</span>
                 </div>
                 <div class="mini-qty-box">
-                    <button class="mini-qty-btn" onclick="changeQtyFromSummary('${item.key}', -1)">−</button>
-                    <span style="font-weight:800; min-width:20px; text-align:center;">${item.qty}</span>
-                    <button class="mini-qty-btn" onclick="changeQtyFromSummary('${item.key}', 1)">+</button>
+                    <button class="mini-qty-btn" onclick="updateCart('${item.id}', -1, ${JSON.stringify({vN:item.vN,vM:item.vM,vR:item.vR,vS:item.vS})})">−</button>
+                    <span>${item.qty}</span>
+                    <button class="mini-qty-btn" onclick="updateCart('${item.id}', 1, ${JSON.stringify({vN:item.vN,vM:item.vM,vR:item.vR,vS:item.vS})})">+</button>
                 </div>
             </div>
         `).join('');
@@ -1068,7 +1066,7 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     msg += `━━━━━━━━━━━━━━\n`;
 
     if (currentMode === 'DINE IN') {
-        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;<
+        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
     } else {
         msg += `🏠 *Alamat:* ${aI.value}\n`;
         msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
@@ -1110,10 +1108,16 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
 }
 
 
-    function toggleSummary(open) {
-        if (cart.length === 0 && open) return;
-        document.getElementById('orderSummaryPanel').classList.toggle('active', open);
-        document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
+        function toggleSummary(show) {
+        const panel = document.getElementById('orderSummaryPanel');
+        const overlay = document.getElementById('summaryOverlay');
+        if (show) {
+            panel.classList.add('active');
+            overlay.style.display = 'block';
+        } else {
+            panel.classList.remove('active');
+            overlay.style.display = 'none';
+        }
     }
 
     function changeMode(m, el) {
@@ -1173,6 +1177,17 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     });
 }
 
+   function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
+    function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
+    function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
+    function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
+// Fungsi untuk mereset tampilan kembali ke awal
+function resetToInitialState() {
+    // 1. Reload halaman secara total agar semua state (cart, mode, dll) kembali ke default
+    window.location.reload();
+}
+
     function filterByTab(cat, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
@@ -1187,17 +1202,6 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
         } catch(e) {}
         setTimeout(syncQueue, 20000);
     }
-
-    function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
-    function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-    function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
-    function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
-    function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
-// Fungsi untuk mereset tampilan kembali ke awal
-function resetToInitialState() {
-    // 1. Reload halaman secara total agar semua state (cart, mode, dll) kembali ke default
-    window.location.reload();
-}
 
 // Deteksi saat pengguna kembali ke browser
 document.addEventListener('visibilitychange', function() {
@@ -1223,7 +1227,7 @@ document.querySelectorAll('.service-btn').forEach(btn => {
         btn.classList.add('active');
 
         // 3. AUTO SCROLL KE INPUT NAMA
-        const nameField = document.getElementById('customerName');
+        const nameField = document.getElementById('custName');
         if (!nameField) return;
 
         // delay kecil agar animasi tombol sempat render
