@@ -599,18 +599,16 @@ mark {
         </div>
         <span>Delivery</span>
         <div id="deliveryBadge" class="badge"></div>
-
-<!-- KATERING -->
-<div class="service-btn katering" id="mKatering">
-        <div class="icon-box"><img src="katering3.png" class="service-icon-img" alt="Katering"></div>
-        <span>Katering</span>
-    </div>
     </div>
 
 </div>
 
 
 <div class="service-mode secondary-mode">
+    <div class="service-btn secondary" id="mKatering" onclick="changeMode('KATERING', this)">
+    <div class="icon-box"><img src="katering3.png" class="service-icon-img"></div>
+    <span>Katering</span>
+</div>
     <div class="service-btn secondary" onclick="openComingSoon()">
         <div class="icon-box"><img src="jadi-mitra3.png" class="service-icon-img"></div>
         <span>Jadi Mitra</span>
@@ -631,6 +629,12 @@ mark {
     
     <div id="boxMeja"><div id="wrapMeja" class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="Contoh: 08"></div></div>
     <div id="boxAlamat" style="display:none;"><div id="wrapAddr" class="input-card"><label>Alamat Pengiriman</label><textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea></div></div>
+<div id="boxTanggal" style="display:none;">
+    <div id="wrapTanggal" class="input-card">
+        <label>Tanggal Acara / Pengiriman</label>
+        <input type="date" id="eventDate">
+    </div>
+</div>
 
     <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Pilih Menu</div>
     
@@ -991,6 +995,7 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
 
     async function submitOrder() {
     // VALIDASI: Cek apakah sudah pilih mode?
+const dI = document.getElementById('eventDate');
     if (!currentMode) {
         closeModal();
         alert("Mohon pilih layanan terlebih dahulu (Dine In, Take Away, atau Delivery)");
@@ -1025,6 +1030,7 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     if (!nI.value.trim()) targetEl = nI;
     else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
     else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+else if (currentMode === 'KATERING' && !dI.value.trim()) targetEl = dI; // Cek tanggal jika mode katering
 
     if (targetEl) {
         const targetCard = targetEl.closest('.input-card');
@@ -1060,7 +1066,7 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     const finalPrice = document.getElementById('miniPrice').innerText;
     const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
 
-    // --- 4. Susun Format Pesan WhatsApp ---
+// --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
@@ -1069,7 +1075,14 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
 
     if (currentMode === 'DINE IN') {
         msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
-    } else {
+    } 
+    // TAMBAHKAN DI SINI:
+    else if (currentMode === 'KATERING') {
+        const tglFormat = dI.value.split('-').reverse().join('-'); // Mengubah 2025-12-31 jadi 31-12-2025
+        msg += `📅 *Tanggal Acara:* ${tglFormat}\n`;
+    } 
+    // BATAS TAMBAHAN
+    else if (currentMode === 'DELIVERY') {
         msg += `🏠 *Alamat:* ${aI.value}\n`;
         msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
         msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
@@ -1122,7 +1135,7 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
         }
     }
 
-    function changeMode(m, el) {
+function changeMode(m, el) {
     if (el.classList.contains('disabled')) return showOutOfRangeAlert();
 
     currentMode = m;
@@ -1133,8 +1146,10 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
 
     el.classList.add('active');
 
+    // Mengatur kolom mana yang tampil secara otomatis
     document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
     document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
+    document.getElementById('boxTanggal').style.display = m === 'KATERING' ? 'block' : 'none';
 
     refreshUI();
 }
