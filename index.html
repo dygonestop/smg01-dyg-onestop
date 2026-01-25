@@ -484,6 +484,12 @@ mark {
     animation: pulse-active-border 1.5s infinite;
     border-radius: 50%;
 }
+
+.gps-status.error {
+    color: #d63031;
+    font-weight: 600;
+}
+
     </style>
 </head>
 <body>
@@ -502,6 +508,7 @@ mark {
 
         <div style="font-size: 10px; color: #BBB; letter-spacing: 2px; margin-top: 40px; text-transform: uppercase;">
             powered by <b>cloudkitchen.dyg++</b>
+ <div id="gps-status" class="gps-status"></div>
         </div>
     </div>
 </div>
@@ -660,27 +667,39 @@ Berikut adalah kode utuh bagian `<script>` yang sudah saya rapikan dan lengkapi:
 
     const NO_SUHU_MENUS = new Set(["kopi klothok","kopi lelet","kopi coklat","kopi jahe","es kopi item","es kopiko","kopi ka'amel","kopi susu beri","es susu mantan","es jossu","es bissu","es jeruk susu","es choco oren","es jeruk yakult","es milksex beri","es matcha","es squash oren","jus mangga","jus stoberi","smoothies mary","float mangga","float stoberi","nescafe blue","kopi kapal api"]);
 
-    async function startApp() {
-        const overlay = document.getElementById('welcome-overlay');
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            window.userLat = latitude; window.userLng = longitude;
-            userDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
-            window.userDist = userDist;
+    function startApp() {
+    const overlay = document.getElementById('welcome-overlay');
+    const status = document.getElementById('gps-status');
 
-            if (userDist > CONFIG.RADIUS_DINE_IN) document.getElementById('mDine').classList.add('disabled');
-            if (userDist < CONFIG.RADIUS_DELIVERY) document.getElementById('mDelivery').classList.add('disabled');
+    status.innerText = '📍 Mengakses lokasi...';
+
+    navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+            status.innerText = '📍 Lokasi terdeteksi';
+
+            const { latitude, longitude } = pos.coords;
+            window.userLat = latitude;
+            window.userLng = longitude;
+
+            userDist = L.latLng(latitude, longitude)
+                .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
 
             initMap(latitude, longitude);
             initBanner();
             overlay.style.display = 'none';
             await loadMenu();
-            syncQueue();
-        }, () => {
-            overlay.style.display = 'none';
-            loadMenu();
-        }, { enableHighAccuracy: true });
-    }
+        },
+        (err) => {
+            status.innerText = '❌ Lokasi wajib diaktifkan';
+            alert('Aktifkan GPS untuk melanjutkan pemesanan');
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 15000
+        }
+    );
+}
+
 
     function changeMode(mode, el) {
         if (el.classList.contains('disabled')) return;
