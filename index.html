@@ -468,6 +468,22 @@ mark {
     filter: grayscale(1);
     opacity: 0.5;
 }
+/* Update atau tambahkan di dalam <style> */
+#boxTanggal {
+    transition: all 0.3s ease;
+}
+
+/* Animasi khusus untuk menarik perhatian ke tombol layanan jika belum dipilih */
+@keyframes pulse-active-border {
+    0% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
+}
+
+.pulse-active {
+    animation: pulse-active-border 1.5s infinite;
+    border-radius: 50%;
+}
     </style>
 </head>
 <body>
@@ -505,7 +521,7 @@ mark {
     <div class="service-btn" id="mDine" onclick="changeMode('DINE IN', this)">
         <div class="icon-box"><img src="dine-in3.png" class="service-icon-img" alt="Dine In"></div>
         <span>Dine In</span>
-        <div id="dineInBadge" class="badge">Out of Range</div>
+        <div id="dineInBadge" class="badge" style="display:none;">Out of Range</div>
     </div>
     <div class="service-btn" id="mTake" onclick="changeMode('TAKE AWAY', this)">
         <div class="icon-box"><img src="take-away3.png" class="service-icon-img" alt="Take Away"></div>
@@ -515,34 +531,11 @@ mark {
         <div class="icon-box"><img src="delivery3.png" class="service-icon-img" alt="Delivery"></div>
         <span>Delivery</span>
     </div>
-    <div class="service-btn">
+    <div class="service-btn" id="mKatering" onclick="changeMode('KATERING', this)">
         <div class="icon-box"><img src="katering3.png" class="service-icon-img" alt="Katering"></div>
         <span>Katering</span>
     </div>
 </div>
-
-<hr style="border: 0; border-top: 1px solid #eee; margin: 10px 18px; opacity: 0.5;">
-
-<div class="service-mode secondary-menu" style="padding-top: 0;">
-    <div class="service-btn" onclick="openMemberModal()">
-        <div class="icon-box" style="background: #E3F2FD; border-radius: 15px;"><img src="member3.png" class="service-icon-img" style="filter:none; opacity:1;" alt="Member"></div>
-        <span style="color: #1976D2;">Member</span>
-    </div>
-    <div class="service-btn" onclick="openComingSoon()">
-        <div class="icon-box" style="background: #F3E5F5; border-radius: 15px;"><img src="jadi-mitra3.png" class="service-icon-img" style="filter:none; opacity:1;" alt="Jadi Mitra"></div>
-        <span style="color: #7B1FA2;">Mitra</span>
-    </div>
-    <div class="service-btn" onclick="openComingSoon()">
-        <div class="icon-box" style="background: #E8F5E9; border-radius: 15px;"><img src="ngiklan3.png" class="service-icon-img" style="filter:none; opacity:1;" alt="Ngiklan"></div>
-        <span style="color: #388E3C;">ngIklan</span>
-    </div>
-    <div class="service-btn" onclick="openGame()">
-        <div class="icon-box" style="background: #FFFDE7; border-radius: 15px; border: 1.5px solid var(--accent);"><img src="games3.png" class="service-icon-img" style="filter:none; opacity:1;" alt="Games"></div>
-        <span style="color: var(--accent);">Games</span>
-    </div>
-</div>
-
-<div id="map"></div>
 
 <div class="main-content">
     <div id="wrapName" class="input-card">
@@ -567,9 +560,32 @@ mark {
     <div id="boxTanggal" style="display:none;">
         <div class="input-card">
             <label>Tanggal Pengiriman Katering</label>
-            <input type="date" id="kt-tanggal-baru" onclick="this.showPicker()">
+            <input type="date" id="kt-tanggal-input" onclick="this.showPicker()">
         </div>
     </div>
+
+<hr style="border: 0; border-top: 1px solid #eee; margin: 10px 18px; opacity: 0.5;">
+
+<div class="service-mode secondary-menu" style="padding-top: 0;">
+    <div class="service-btn" onclick="openMemberModal()">
+        <div class="icon-box" style="background: #E3F2FD; border-radius: 15px;"><img src="member3.png" class="service-icon-img" style="filter:none; opacity:1;" alt="Member"></div>
+        <span style="color: #1976D2;">Member</span>
+    </div>
+    <div class="service-btn" onclick="openComingSoon()">
+        <div class="icon-box" style="background: #F3E5F5; border-radius: 15px;"><img src="jadi-mitra3.png" class="service-icon-img" style="filter:none; opacity:1;" alt="Jadi Mitra"></div>
+        <span style="color: #7B1FA2;">Mitra</span>
+    </div>
+    <div class="service-btn" onclick="openComingSoon()">
+        <div class="icon-box" style="background: #E8F5E9; border-radius: 15px;"><img src="ngiklan3.png" class="service-icon-img" style="filter:none; opacity:1;" alt="Ngiklan"></div>
+        <span style="color: #388E3C;">ngIklan</span>
+    </div>
+    <div class="service-btn" onclick="openGame()">
+        <div class="icon-box" style="background: #FFFDE7; border-radius: 15px; border: 1.5px solid var(--accent);"><img src="games3.png" class="service-icon-img" style="filter:none; opacity:1;" alt="Games"></div>
+        <span style="color: var(--accent);">Games</span>
+    </div>
+</div>
+
+<div id="map"></div>
     <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Pilih Menu</div>
     
     <div class="search-wrapper">
@@ -1066,50 +1082,41 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     }
 
 function changeMode(mode, el) {
+    // Cegah klik jika disabled
     if (el.classList.contains('disabled')) {
-        showOutOfRangeAlert();
+        showOutOfRangeAlert?.();
         return;
     }
 
-    // Hapus efek denyut pada icon
-    document.querySelectorAll('.icon-box').forEach(icon => {
-        icon.classList.remove('pulse-active');
-    });
-
     currentMode = mode;
-    
-    // Atur status aktif pada tombol
+
+    // Reset active state semua tombol
     document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
-    
-    // Reset semua tampilan kolom tambahan
+
+    // Reset box tambahan
     document.getElementById('boxMeja').style.display = 'none';
     document.getElementById('boxAlamat').style.display = 'none';
     document.getElementById('boxTanggal').style.display = 'none';
 
-    // Tampilkan kolom sesuai mode yang dipilih
+    // Atur tampilan sesuai mode
     if (mode === 'DINE IN') {
         document.getElementById('boxMeja').style.display = 'block';
-    } else if (mode === 'DELIVERY') {
-        document.getElementById('boxAlamat').style.display = 'block';
-    } else if (mode === 'KATERING') {
-        document.getElementById('boxTanggal').style.display = 'block';
-        
-        // Atur minimal tanggal katering = Besok
-        const tglInput = document.getElementById('kt-tanggal-input');
-        const besok = new Date();
-        besok.setDate(besok.getDate() + 1);
-        tglInput.min = besok.toISOString().split('T')[0];
     }
 
-    // Fokus otomatis ke input nama
-    const nameField = document.getElementById('custName');
-    if (nameField) {
-        setTimeout(() => {
-            nameField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            nameField.focus();
-        }, 300);
+    if (mode === 'DELIVERY') {
+        document.getElementById('boxAlamat').style.display = 'block';
     }
+
+    if (mode === 'KATERING') {
+        document.getElementById('boxTanggal').style.display = 'block';
+    }
+
+    // Refresh UI harga & ongkir
+    refreshUI();
+
+    // Feedback ringan
+    if (navigator.vibrate) navigator.vibrate(30);
 }
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
@@ -1324,7 +1331,5 @@ function openGame() { alert("Game segera hadir!"); }
     </div>
 </div>
 
-</body>
-</html>
 </body>
 </html>
