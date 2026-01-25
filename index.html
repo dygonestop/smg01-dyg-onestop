@@ -189,7 +189,7 @@
         await loadMenu();
     }
 
-    function changeMode(mode, el) {
+function changeMode(mode, el) {
         currentMode = mode;
         document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
@@ -251,10 +251,11 @@
     function refreshUI() {
         let total = cart.reduce((sum, c) => sum + c.harga, 0);
         
-        // Reset qty display
+        // Update qty display
         menuData.forEach(m => {
             const q = cart.filter(c => c.id === m.id).length;
-            if (document.getElementById(`qty-${m.id}`)) document.getElementById(`qty-${m.id}`).innerText = q;
+            const el = document.getElementById(`qty-${m.id}`);
+            if (el) el.innerText = q;
         });
 
         const btn = document.getElementById('btnOrder');
@@ -271,7 +272,7 @@
 
     function openModal() {
         if (!currentMode) {
-            alert("Pilih layanan (Dine In/Delivery/Katering) terlebih dahulu!");
+            alert("Pilih layanan terlebih dahulu!");
             return;
         }
         document.getElementById('modalConfirm').style.display = 'flex';
@@ -284,13 +285,15 @@
         const tgl = document.getElementById('kt-tanggal-input').value;
         const meja = document.getElementById('tableNo').value;
         const alamat = document.getElementById('addressDetail').value;
+        const note = document.getElementById('orderNote').value;
 
         if (!nama) { alert("Nama wajib diisi!"); return; }
         if (currentMode === 'KATERING' && !tgl) { alert("Pilih tanggal katering!"); return; }
 
-        let msg = `Halo cloudkitchen.dyg++!\n\n*MODE: ${currentMode}*\nNama: ${nama}\n`;
+        let msg = `Halo cloudkitchen.dyg++!\n\n*LAYANAN: ${currentMode}*\nNama: ${nama}\n`;
+        
         if (currentMode === 'DINE IN') msg += `Meja: ${meja}\n`;
-        if (currentMode === 'KATERING') msg += `Tanggal: ${tgl}\n`;
+        if (currentMode === 'KATERING') msg += `Tanggal Acara: ${tgl}\n`;
         if (currentMode === 'DELIVERY') msg += `Alamat: ${alamat}\n`;
 
         msg += `\n*PESANAN:*\n`;
@@ -303,6 +306,7 @@
             msg += `- ${name} (x${qty})\n`;
         }
         
+        if(note) msg += `\nCatatan: ${note}\n`;
         msg += `\nTotal: Rp ${document.getElementById('miniPrice').innerText}`;
         
         const wa = (currentMode === 'DELIVERY' || currentMode === 'KATERING') ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
