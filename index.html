@@ -464,6 +464,17 @@ mark {
     touch-action: manipulation;
 }
 
+.service-btn .badge {
+    display: inline-block;
+    background: #FFB100;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 5px;
+    margin-left: 5px;
+}
+
+
 /* === FORM EXTRA RINGKAS === */
 .form-group {
     margin-bottom: 8px;
@@ -524,6 +535,9 @@ mark {
     filter: grayscale(1);
     opacity: 0.5;
 }
+
+
+
     </style>
 </head>
 <body>
@@ -662,6 +676,42 @@ mark {
 
     // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
+
+function updateServiceBadges(userLat, userLng) {
+    const delivBtn = document.getElementById('mDeliv');
+    const dineBtn = document.getElementById('mDine');
+    
+    if (!delivBtn || !dineBtn) return;
+
+    const dist = L.latLng(userLat, userLng).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
+
+    // DELIVERY → Nonaktif jika ≤ 50m
+    if(dist <= 50) {
+        delivBtn.classList.add('disabled');
+        delivBtn.querySelector('.badge')?.remove();
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.innerText = "Jangkauan Dine In";
+        delivBtn.appendChild(badge);
+    } else {
+        delivBtn.classList.remove('disabled');
+        delivBtn.querySelector('.badge')?.remove();
+    }
+
+    // DINE IN → Nonaktif jika > 200m
+    if(dist > 200) {
+        dineBtn.classList.add('disabled');
+        dineBtn.querySelector('.badge')?.remove();
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.innerText = "Jangkauan Deliv";
+        dineBtn.appendChild(badge);
+    } else {
+        dineBtn.classList.remove('disabled');
+        dineBtn.querySelector('.badge')?.remove();
+    }
+}
+
 
     async function startApp() {
     navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -1016,7 +1066,7 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     msg += `━━━━━━━━━━━━━━\n`;
 
     if (currentMode === 'DINE IN') {
-        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
+        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;<
     } else {
         msg += `🏠 *Alamat:* ${aI.value}\n`;
         msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
@@ -1158,6 +1208,38 @@ document.addEventListener('visibilitychange', function() {
             resetToInitialState();
         }
     }
+});
+
+document.querySelectorAll('.service-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+
+        // 1. MATIKAN ACTIVE LAIN
+        document.querySelectorAll('.service-btn')
+            .forEach(b => b.classList.remove('active'));
+
+        // 2. AKTIFKAN YANG DIKLIK
+        btn.classList.add('active');
+
+        // 3. AUTO SCROLL KE INPUT NAMA
+        const nameField = document.getElementById('customerName');
+        if (!nameField) return;
+
+        // delay kecil agar animasi tombol sempat render
+        setTimeout(() => {
+            const rect = nameField.getBoundingClientRect();
+
+            // scroll hanya jika input belum terlihat/terlalu atas
+            if (rect.top > 150 || rect.bottom < 0) {
+                nameField.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+
+            // fokus otomatis (UX PRO)
+            nameField.focus();
+        }, 250);
+    });
 });
 
 </script>
