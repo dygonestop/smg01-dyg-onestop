@@ -556,7 +556,7 @@ mark {
         <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
             <div style="font-size: 60px; margin-bottom: 15px;">📍</div>
             <h2 style="font-weight: 900; font-size: 20px;">Hei..Senang bisa mengenalmu</h2>
-            <p style="color: var(--muted); font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalamanmu Berbelanja disini.</p>
+            <p style="color: var(--muted); font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalaman Berbelanjamu disini.</p>
             <button onclick="startApp()" class="order-btn" style="width: 100%;">MULAI SEKARANG</button>
         </div>
 
@@ -603,10 +603,11 @@ mark {
     </div>
 </div>
 
-<div class="service-btn katering" id="mKatering" onclick="changeMode('KATERING', this)">
-    <div class="icon-box"><img src="katering3.png" class="service-icon-img"></div>
-    <span>Katering</span>
-</div>
+<div class="service-mode" style="margin-top: 10px;">
+    <div class="service-btn katering" id="mKatering" onclick="changeMode('KATERING', this)">
+        <div class="icon-box"><img src="katering3.png" class="service-icon-img"></div>
+        <span>Katering</span>
+    </div>
     <div class="service-btn secondary" onclick="openComingSoon()">
         <div class="icon-box"><img src="jadi-mitra3.png" class="service-icon-img"></div>
         <span>Jadi Mitra</span>
@@ -616,7 +617,6 @@ mark {
         <span>NgIKLAN</span>
     </div>
 </div>
-
 <div id="map"></div>
 
 <div class="main-content">
@@ -625,18 +625,25 @@ mark {
         <input type="text" id="custName" placeholder="Masukkan nama...">
     </div>
     
-    <div id="boxMeja"><div id="wrapMeja" class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="Contoh: 08"></div></div>
-    <div id="boxAlamat" style="display:none;">
-    <div id="wrapAddr" class="input-card">
-        <label>Alamat Pengiriman</label>
-        <textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea>
+    <div id="boxMeja" style="display:none;">
+        <div id="wrapMeja" class="input-card">
+            <label>Nomor Meja</label>
+            <input type="number" id="tableNo" placeholder="Contoh: 08">
+        </div>
     </div>
-</div>
 
-<div id="boxTanggal" style="display:none;">
-    <div class="input-card">
-        <label>Tanggal Acara (Minimal Besok)</label>
-        <input type="date" id="eventDate">
+    <div id="boxAlamat" style="display:none;">
+        <div id="wrapAddr" class="input-card">
+            <label>Alamat Pengiriman</label>
+            <textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea>
+        </div>
+    </div>
+
+    <div id="boxTanggal" style="display:none;">
+        <div class="input-card">
+            <label>Tanggal Acara (Minimal Besok)</label>
+            <input type="date" id="eventDate">
+        </div>
     </div>
 </div>
     <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Pilih Menu</div>
@@ -1058,7 +1065,7 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
+    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
     // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
@@ -1151,38 +1158,17 @@ function calculateOngkir(distMeter) {
     return 8000 + (Math.ceil(km - 5) * 2000);
 }
 
-// 3. Fungsi Ganti Mode Layanan (Otomatis Ubah Kolom)
-function changeMode(m, el) {
-    if (el.classList.contains('disabled')) return showOutOfRangeAlert();
-
-    currentMode = m;
-
-    // Visual tombol aktif
-    document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
-    el.classList.add('active');
-
-    // LOGIKA KOLOM OTOMATIS
-    // Dine In: Meja | Delivery: Alamat | Katering: Alamat + Tanggal
-    document.getElementById('boxMeja').style.display = (m === 'DINE IN') ? 'block' : 'none';
-    document.getElementById('boxAlamat').style.display = (m === 'DELIVERY' || m === 'KATERING') ? 'block' : 'none';
-    
-    const boxTgl = document.getElementById('boxTanggal');
-    if (boxTgl) {
-        boxTgl.style.display = (m === 'KATERING') ? 'block' : 'none';
-    }
-
-    refreshUI();
-}
-
-// 4. Fungsi Refresh UI (Ongkir Otomatis Hanya Delivery)
 function refreshUI() {
     let subtotal = 0; 
     const counts = {};
+    
+    // Hitung subtotal
     cart.forEach(c => { 
         subtotal += (c.harga + (c.ex || 0)); 
         counts[c.id] = (counts[c.id] || 0) + 1; 
     });
 
+    // Update tampilan angka (badge) di menu
     menuData.forEach(m => {
         const el = document.getElementById(`qty-${m.id}`);
         if(el) {
@@ -1209,7 +1195,6 @@ function refreshUI() {
             ongEl.style.display = 'block';
             ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
         } else {
-            // Mode selain delivery ongkir sembunyi
             priceEl.innerText = subtotal.toLocaleString('id-ID');
             distEl.style.display = 'none';
             ongEl.style.display = 'none';
@@ -1223,8 +1208,33 @@ function refreshUI() {
         ongEl.style.display = 'none';
         priceEl.innerText = "0";
         document.getElementById('btnOrder').disabled = true;
+        document.getElementById('btnOrder').innerText = 'PILIH MENU';
+        if (typeof toggleSummary === "function") toggleSummary(false);
     }
     updateOrderSummary();
+}
+
+// 3. Fungsi Ganti Mode Layanan (Otomatis Ubah Kolom)
+function changeMode(m, el) {
+    if (el.classList.contains('disabled')) return showOutOfRangeAlert();
+
+    currentMode = m;
+
+    // Visual tombol aktif
+    document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
+    el.classList.add('active');
+
+    // LOGIKA KOLOM OTOMATIS
+    // Dine In: Meja | Delivery: Alamat | Katering: Alamat + Tanggal
+    document.getElementById('boxMeja').style.display = (m === 'DINE IN') ? 'block' : 'none';
+    document.getElementById('boxAlamat').style.display = (m === 'DELIVERY' || m === 'KATERING') ? 'block' : 'none';
+    
+    const boxTgl = document.getElementById('boxTanggal');
+    if (boxTgl) {
+        boxTgl.style.display = (m === 'KATERING') ? 'block' : 'none';
+    }
+
+    refreshUI();
 }
 
 
