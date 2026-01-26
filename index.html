@@ -698,20 +698,21 @@ RADIUS_DELIVERY: 50
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    // Ubah bagian ini di awal script Anda
 async function startApp() {
     const overlay = document.getElementById('welcome-overlay');
     const btnStart = overlay.querySelector('button');
 
+    // Visual loading tombol tetap sama
     btnStart.innerHTML = '<span class="shake-ani" style="display:inline-block">⏳</span> Sedang Memuat Lokasi...';
     btnStart.disabled = true;
     btnStart.style.opacity = "0.8";
 
+    // 1. Ambil data menu secara paralel (tidak berubah)
     const menuPromise = loadMenu(); 
 
     const geoOptions = { 
         enableHighAccuracy: true, 
-        timeout: 10000, 
+        timeout: 8000, // Timeout 8 detik agar tidak stuck jika GPS lambat
         maximumAge: 0 
     };
 
@@ -720,17 +721,12 @@ async function startApp() {
         window.userLat = latitude;
         window.userLng = longitude;
 
-        // --- PERBAIKAN DI SINI ---
-        // Simpan langsung ke variabel global 'userDist' agar terbaca oleh fungsi ongkir
+        // --- PUSAT PERBAIKAN: Isi variabel userDist global ---
         userDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
-        
-        // Tetap simpan di window jika diperlukan untuk keperluan lain
         window.userDist = userDist; 
 
+        // Update badge (hanya logika jarak, tidak ubah tampilan)
         const dineBadge = document.getElementById('dineInBadge');
-        const deliveryBadge = document.getElementById('deliveryBadge');
-
-        // Gunakan variabel 'userDist' yang baru dihitung
         if (userDist > CONFIG.RADIUS_DINE_IN) {
             document.getElementById('mDine').classList.add('disabled');
             if(dineBadge) {
@@ -739,29 +735,23 @@ async function startApp() {
             }
         }
 
-        if (userDist < CONFIG.RADIUS_DELIVERY) {
-            document.getElementById('mDelivery').classList.add('disabled');
-            if(deliveryBadge) {
-                deliveryBadge.innerText = "Terlalu Dekat";
-                deliveryBadge.style.opacity = 1;
-            }
-        }
-
         initMap(latitude, longitude);
         initBanner();
         
         await menuPromise; 
-        overlay.style.display = 'none';
+        overlay.style.display = 'none'; // Menu dimunculkan
         syncQueue();
         
-        // PENTING: Panggil refreshUI agar harga ongkir langsung muncul setelah lokasi didapat
+        // --- TRIGGER OTOMATIS: Update harga & ongkir ---
         refreshUI();
         
-    }, async () => {
-        alert("Gagal mendeteksi lokasi. Ongkir mungkin tidak akurat.");
+    }, async (err) => {
+        // Jika GPS ditolak/gagal, menu tetap harus muncul
+        console.warn("GPS Error:", err.message);
         initBanner();
         await menuPromise;
-        overlay.style.display = 'none';
+        overlay.style.display = 'none'; // Pastikan menu tetap muncul
+        refreshUI();
     }, geoOptions);
 }
 
