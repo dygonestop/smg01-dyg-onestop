@@ -1110,16 +1110,16 @@ async function submitOrder() {
     function changeMode(m, el) {
     if (el.classList.contains('disabled')) return showOutOfRangeAlert();
 
-    // Simpan mode ke variabel global agar validasi submitOrder tidak alert terus
+    // 1. Simpan Mode ke variabel global
     currentMode = m;
 
-    // Reset status aktif tombol
+    // 2. Visual: Update tombol aktif
     document.querySelectorAll('.service-btn').forEach(o => {
         o.classList.remove('active', 'pulse-attention');
     });
     el.classList.add('active');
 
-    // PERBAIKAN POIN 2: Menampilkan kolom data pelanggan secara dinamis
+    // 3. Logika Kolom (Input Data Pelanggan)
     const boxMeja = document.getElementById('boxMeja');
     const boxAlamat = document.getElementById('boxAlamat');
 
@@ -1130,11 +1130,20 @@ async function submitOrder() {
         if(boxMeja) boxMeja.style.display = 'none';
         if(boxAlamat) boxAlamat.style.display = 'block';
     } else {
-        // Mode Take Away (jika ada) sembunyikan keduanya
         if(boxMeja) boxMeja.style.display = 'none';
         if(boxAlamat) boxAlamat.style.display = 'none';
     }
 
+    // 4. UX: Efek Scroll & Fokus (Pindahan dari listener bawah agar efek tetap ada)
+    const nameField = document.getElementById('custName');
+    if (nameField) {
+        setTimeout(() => {
+            nameField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            nameField.focus();
+        }, 300);
+    }
+
+    // 5. REFRESH UI (WAJIB ADA untuk update Ongkir & Total Harga)
     refreshUI();
 }
 
@@ -1215,38 +1224,6 @@ document.addEventListener('visibilitychange', function() {
             resetToInitialState();
         }
     }
-});
-
-document.querySelectorAll('.service-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-
-        // 1. MATIKAN ACTIVE LAIN
-        document.querySelectorAll('.service-btn')
-            .forEach(b => b.classList.remove('active'));
-
-        // 2. AKTIFKAN YANG DIKLIK
-        btn.classList.add('active');
-
-        // 3. AUTO SCROLL KE INPUT NAMA
-        const nameField = document.getElementById('custName');
-        if (!nameField) return;
-
-        // delay kecil agar animasi tombol sempat render
-        setTimeout(() => {
-            const rect = nameField.getBoundingClientRect();
-
-            // scroll hanya jika input belum terlihat/terlalu atas
-            if (rect.top > 150 || rect.bottom < 0) {
-                nameField.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-            }
-
-            // fokus otomatis (UX PRO)
-            nameField.focus();
-        }, 250);
-    });
 });
 
 </script>
