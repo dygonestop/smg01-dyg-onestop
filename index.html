@@ -236,154 +236,96 @@ mark {
     background: #FFFDE7 !important;
 }
 
-/* === GOJEK STYLE SERVICE BUTTON === */
+/* === SUPER-APP GRID STYLE (4 Tombol per Baris) === */
 .service-mode {
-    display: flex;
-    justify-content: space-around;
-    padding: 8px 18px 14px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Otomatis membagi 4 kolom sama besar */
+    gap: 12px;
+    padding: 15px 12px;
+    justify-items: center;
 }
 
 .service-btn {
-    width: 82px;
-    height: 82px;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    width: 100%;
+    max-width: 80px; /* Lebar maksimal tombol agar tidak kebesaran */
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
     cursor: pointer;
-    position: relative;
-    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efek membal (bouncy) */
 }
 
-.service-btn span {
-    position: relative; /* Ubah dari absolute ke relative */
-    display: block;    /* Pastikan teks mengambil baris baru */
-    margin-top: 4px;   /* Jarak antara ikon dan teks */
-    font-size: 11px;
-    font-weight: 900;
-    color: var(--text);
-    text-align: center;
-    line-height: 1;
-    width: 100%;
-    pointer-events: none;
-    z-index: 2;
-    opacity: 1; /* Ubah dari 0.3 ke 1 agar tulisan terlihat jelas */
-    transform: none; /* Hapus transform translate yang membuatnya ke tengah */
-    left: auto;      /* Reset posisi */
-    top: auto;       /* Reset posisi */
-}
-
-/* ICON */
+/* CONTAINER ICON */
 .service-btn .icon {
-    width: 70px;  /* Perkecil dari 90px agar ada ruang untuk teks di bawah */
-    height: 70px; /* Perkecil dari 90px */
+    width: 65px;  /* Ukuran icon besar ala Gojek */
+    height: 65px;
+    background: #FFFFFF;
+    border-radius: 20px; /* Rounded corner modern, bukan bulat sempurna */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.06);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 2px;
-    animation: floatIcon 2.8s ease-in-out infinite;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: visible;
+    transition: all 0.3s ease;
+    animation: floatIcon 3s ease-in-out infinite;
 }
 
-/* AKTIF */
-.service-btn.active {
-    background: linear-gradient(145deg, #1B4332, #2D6A4F);
-    color: white;
-    transform: translateY(-6px) scale(1.05);
-    box-shadow: 0 14px 30px rgba(27,67,50,0.45);
+.service-icon-img {
+    width: 75%;  /* Gambar besar dan jelas */
+    height: 75%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+/* TEKS DI BAWAH ICON */
+.service-btn span {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text);
+    text-align: center;
+    white-space: nowrap;
+    letter-spacing: -0.2px;
+}
+
+/* === EFEK AKTIF (STATE TERPILIH) === */
+.service-btn.active .icon {
+    background: linear-gradient(135deg, #1B4332, #2D6A4F);
+    box-shadow: 0 15px 25px rgba(27,67,50,0.3);
+    transform: scale(1.1) translateY(-5px);
+}
+
+.service-btn.active .service-icon-img {
+    filter: brightness(0) invert(1); /* Ikon jadi putih saat aktif agar mewah */
+    transform: scale(1.1);
 }
 
 .service-btn.active span {
-    color: white;
-}
-
-/* RING */
-.service-btn.active::after {
-    content: "";
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 2px solid rgba(27,67,50,0.5);
-    animation: pulseRing 1.4s infinite;
-}
-
-/* DISABLED */
-.service-btn.disabled {
-    opacity: 0.4;
-    filter: grayscale(1);
-}
-
-/* ANIMASI ICON */
-@keyframes floatIcon {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
-}
-
-/* RING PULSE */
-@keyframes pulseRing {
-    0% { transform: scale(0.9); opacity: 0.8; }
-    100% { transform: scale(1.2); opacity: 0; }
-}
-/* === SECONDARY GOJEK STYLE === */
-.secondary-mode {
-    margin-top: 5px; /* Memberi sedikit jarak antar baris */
-    opacity: 1;
-}
-
-.service-btn.secondary {
-    width: 82px;      /* Samakan dengan baris 1 */
-    height: 82px;     /* Samakan dengan baris 1 */
-    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-    background: white;
-    filter: none !important; /* Memaksa warna asli muncul */
-    opacity: 1 !important;
-}
-
-/* Ukuran Icon - Samakan dengan baris 1 */
-.service-btn.secondary .icon {
-    width: 60px; 
-    height: 60px;
-}
-
-/* INI KODE YANG TADI TIDAK ADA, MASUKKAN SEKARANG */
-.service-btn.secondary .service-icon-img {
-    filter: none !important;
-    opacity: 1 !important;
-    width: 90%;
-    height: 90%;
-    object-fit: contain;
-}
-
-.service-btn.secondary span {
-    position: relative;
-    top: auto;
-    left: auto;
-    transform: none;
-    font-size: 11px;
+    color: var(--primary);
     font-weight: 900;
-    color: var(--text);
-    opacity: 1;
 }
 
-/* jangan pakai ring hijau */
-.service-btn.secondary.active::after {
-    display: none;
+/* === EFEK UNTUK BARIS KE-2 (SECONDARY) === */
+.service-btn.secondary .icon {
+    animation: none; /* Baris bawah tenang, tidak melayang */
+    background: #fdfdfd;
 }
 
-/* animasi lebih lembut */
-@keyframes floatIconSoft {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-2px); }
+/* EFEK HOVER/TAP (MOBILE FRIENDLY) */
+.service-btn:active {
+    transform: scale(0.9);
 }
 
-/* efek tap */
-.service-btn.secondary:active {
-    transform: scale(0.92);
-    background: #EFEFEF;
+/* ANIMASI MELAYANG HALUS */
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
 }
+
+/* Sembunyikan Ring untuk Baris 2 */
+.service-btn.secondary.active::after { display: none; }
+
 
 /* === FORM EXTRA RINGKAS === */
 .form-group {
@@ -475,39 +417,41 @@ mark {
     <div id="banner-track"></div>
 </div>
 
-<!-- BARIS 1 : MODE ORDER -->
 <div class="service-mode">
-    <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
+    <div id="mDineIn" class="service-btn active" onclick="changeMode('DINE IN', this)">
         <div class="icon"><img src="dine-in3.png" class="service-icon-img"></div>
         <span>Dine In</span>
     </div>
-
-    <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
+    <div id="mTakeAway" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
         <div class="icon"><img src="take-away3.png" class="service-icon-img"></div>
         <span>Take Away</span>
     </div>
-
-    <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
+    <div id="mDelivery" class="service-btn" onclick="changeMode('DELIVERY', this)">
         <div class="icon"><img src="delivery3.png" class="service-icon-img"></div>
         <span>Delivery</span>
     </div>
+    <div id="mKatering" class="service-btn" onclick="changeMode('KATERING', this)">
+        <div class="icon"><img src="katering3.png" class="service-icon-img"></div>
+        <span>Katering</span>
+    </div>
 </div>
 
-
-<div class="service-mode secondary-mode">
-    <div id="mKatering" class="service-btn secondary" onclick="changeMode('KATERING', this)">
-    <div class="icon"><img src="katering3.png" class="service-icon-img"></div>
-    <span>Katering</span>
-</div>
-
+<div class="service-mode secondary-mode" style="margin-top: -15px;">
+    <div class="service-btn secondary" onclick="openComingSoon()">
+        <div class="icon"><img src="member3.png" class="service-icon-img"></div>
+        <span>Member</span>
+    </div>
     <div class="service-btn secondary" onclick="openComingSoon()">
         <div class="icon"><img src="jadi-mitra3.png" class="service-icon-img"></div>
         <span>Jadi Mitra</span>
     </div>
-
     <div class="service-btn secondary" onclick="openComingSoon()">
         <div class="icon"><img src="ngiklan3.png" class="service-icon-img"></div>
         <span>NgIKLAN</span>
+    </div>
+    <div class="service-btn secondary" onclick="openComingSoon()">
+        <div class="icon"><img src="games3.png" class="service-icon-img"></div>
+        <span>Games</span>
     </div>
 </div>
 
@@ -933,44 +877,51 @@ function changeMode(m, el) {
     if (el.classList.contains('disabled')) return showOutOfRangeAlert();
     currentMode = m;
 
+    // Hapus status active dari semua tombol (Baris 1 & Baris 2)
     document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
+    // Tambah status active ke tombol yang diklik
     el.classList.add('active');
 
-    // Kontrol visibilitas box
+    // Ambil elemen box input
     const boxMeja = document.getElementById('boxMeja');
     const boxAlamat = document.getElementById('boxAlamat');
     const boxKatering = document.getElementById('boxKateringInfo');
 
-    // Reset view
-    boxMeja.style.display = 'none';
-    boxAlamat.style.display = 'none';
-    boxKatering.style.display = 'none';
+    // Sembunyikan semua box terlebih dahulu (Reset)
+    if(boxMeja) boxMeja.style.display = 'none';
+    if(boxAlamat) boxAlamat.style.display = 'none';
+    if(boxKatering) boxKatering.style.display = 'none';
 
+    // Logika penampilan box berdasarkan mode yang dipilih
     if (m === 'DINE IN') {
-        boxMeja.style.display = 'block';
+        if(boxMeja) boxMeja.style.display = 'block';
     } else if (m === 'DELIVERY') {
-        boxAlamat.style.display = 'block';
+        if(boxAlamat) boxAlamat.style.display = 'block';
     } else if (m === 'KATERING') {
-        boxAlamat.style.display = 'block'; // Katering butuh alamat
-        boxKatering.style.display = 'block'; // Munculkan kalender
-        
-        // LOGIKA MINIMAL H+1 (Besok)
-        const inputTgl = document.getElementById('tglKatering');
-        const besok = new Date();
-        besok.setDate(besok.getDate() + 1); // Tambah 1 hari dari hari ini
-        
-        const yyyy = besok.getFullYear();
-        const mm = String(besok.getMonth() + 1).padStart(2, '0');
-        const dd = String(besok.getDate()).padStart(2, '0');
-        
-        const minDate = `${yyyy}-${mm}-${dd}`;
-        inputTgl.min = minDate; // Set minimal tanggal di kalender
-        inputTgl.value = minDate; // Set default ke besok
+        if(boxAlamat) boxAlamat.style.display = 'block'; // Katering butuh alamat
+        if(boxKatering) {
+            boxKatering.style.display = 'block'; // Munculkan kalender
+            
+            // Atur tanggal minimal H+1 (Besok)
+            const inputTgl = document.getElementById('tglKatering');
+            if(inputTgl) {
+                const besok = new Date();
+                besok.setDate(besok.getDate() + 1); 
+                
+                const yyyy = besok.getFullYear();
+                const mm = String(besok.getMonth() + 1).padStart(2, '0');
+                const dd = String(besok.getDate()).padStart(2, '0');
+                
+                const minDate = `${yyyy}-${mm}-${dd}`;
+                inputTgl.min = minDate; 
+                inputTgl.value = minDate;
+            }
+        }
     }
 
-    refreshUI();
+    // Update tampilan UI lainnya (seperti total harga dll)
+    if (typeof refreshUI === "function") refreshUI();
 }
-
 
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
