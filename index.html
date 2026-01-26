@@ -564,7 +564,10 @@ mark {
             <div style="font-size:60px; margin-bottom:15px;">📍</div>
             <h2 style="font-weight:900; font-size:20px;">Hei.. Senang bisa mengenalmu</h2>
             <p style="color:var(--muted); font-size:13px; margin-bottom:25px;">
-                Klik Mulai Sekarang Untuk Memulai Pengalamanmu Berbelanja di sini.
+                PERHATIAN GAIS!!!.
+Aplikasi disesuaikan dengan radius dari WARUNG DOYONG.
+Pastikan izin lokasi agar aplikasi dapat dijalankan.
+Terima Kasih
             </p>
 
             <button onclick="startApp()" class="order-btn" style="width:100%;">
@@ -1019,7 +1022,9 @@ async function submitOrder() {
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
     const dI = document.getElementById('eventDate'); // Elemen Tanggal Katering
-    const noAntrean = document.getElementById('noAntrean').innerText;
+    // Menggunakan nilai "0" jika elemen tidak ditemukan, agar kode tidak macet
+const antreanEl = document.getElementById('noAntrean');
+const noAntrean = antreanEl ? antreanEl.innerText : "0";
 
     // VALIDASI: Cek apakah sudah pilih mode?
     if (!currentMode) {
@@ -1099,7 +1104,7 @@ async function submitOrder() {
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
+    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
     // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
