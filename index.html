@@ -279,8 +279,8 @@ mark {
 
 /* ICON */
 .service-btn .icon {
-    width: 60px;  /* Perkecil dari 90px agar ada ruang untuk teks di bawah */
-    height: 60px; /* Perkecil dari 90px */
+    width: 70px;  /* Perkecil dari 90px agar ada ruang untuk teks di bawah */
+    height: 70px; /* Perkecil dari 90px */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -329,27 +329,43 @@ mark {
 }
 /* === SECONDARY GOJEK STYLE === */
 .secondary-mode {
-    margin-top: -4px;
-    opacity: 0.92;
+    margin-top: 5px; /* Memberi sedikit jarak antar baris */
+    opacity: 1;
 }
 
 .service-btn.secondary {
-    width: 70px;
-    height: 70px;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-    background: #F7F7F7;
+    width: 82px;      /* Samakan dengan baris 1 */
+    height: 82px;     /* Samakan dengan baris 1 */
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    background: white;
+    filter: none !important; /* Memaksa warna asli muncul */
+    opacity: 1 !important;
 }
 
-/* Penyesuaian khusus untuk tombol sekunder agar lebih kecil */
+/* Ukuran Icon - Samakan dengan baris 1 */
 .service-btn.secondary .icon {
-    width: 85px;
-    height: 85px;
+    width: 60px; 
+    height: 60px;
+}
+
+/* INI KODE YANG TADI TIDAK ADA, MASUKKAN SEKARANG */
+.service-btn.secondary .service-icon-img {
+    filter: none !important;
+    opacity: 1 !important;
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
 }
 
 .service-btn.secondary span {
-    font-size: 9px;
-    font-weight: 800;
-    color: var(--muted);
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--text);
+    opacity: 1;
 }
 
 /* jangan pakai ring hijau */
@@ -367,19 +383,6 @@ mark {
 .service-btn.secondary:active {
     transform: scale(0.92);
     background: #EFEFEF;
-}
-
-.service-btn.secondary::before {
-    content: "SOON";
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: var(--accent);
-    color: white;
-    font-size: 7px;
-    font-weight: 900;
-    padding: 2px 5px;
-    border-radius: 10px;
 }
 
 /* === FORM EXTRA RINGKAS === */
@@ -492,10 +495,10 @@ mark {
 
 
 <div class="service-mode secondary-mode">
-    <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="katering3.png" class="service-icon-img"></div>
-        <span>Katering</span>
-    </div>
+    <div id="mKatering" class="service-btn secondary" onclick="changeMode('KATERING', this)">
+    <div class="icon"><img src="katering3.png" class="service-icon-img"></div>
+    <span>Katering</span>
+</div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
         <div class="icon"><img src="jadi-mitra3.png" class="service-icon-img"></div>
