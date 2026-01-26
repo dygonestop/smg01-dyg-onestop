@@ -587,49 +587,54 @@ mark {
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    // Ubah bagian ini di awal script Anda
+// 1. Inisialisasi variabel di awal
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-    async function startApp() {
+// 2. JALANKAN MENU SEGERA SAAT SCRIPT DIMUAT
+loadMenu(); 
+
+async function startApp() {
+    // Jalankan GPS di latar belakang
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
         window.userLat = latitude;
         window.userLng = longitude;
 
-        // 1. AMBIL ELEMEN TOMBOL
         const dineBtn = document.getElementById('mDineIn');
         const deliBtn = document.getElementById('mDelivery');
 
-        // 2. RESET: Bersihkan class lama agar badge bisa update otomatis
+        // Reset class
         if(dineBtn) dineBtn.classList.remove('disabled', 'too-far');
         if(deliBtn) deliBtn.classList.remove('disabled', 'too-close');
 
-        // 3. HITUNG JARAK (Cukup sekali saja)
+        // Hitung jarak
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
-        // 4. LOGIKA SATPAM DINE IN (Terlalu Jauh)
+        // Satpam Dine-In & Delivery
         if (userDist > CONFIG.RADIUS_DINE_IN) {
             if(dineBtn) dineBtn.classList.add('disabled', 'too-far');
         }
-
-        // 5. LOGIKA SATPAM DELIVERY (Terlalu Dekat - Minimal 200m)
         const MIN_DELIVERY_DIST = 200; 
         if (userDist < MIN_DELIVERY_DIST) {
             if(deliBtn) deliBtn.classList.add('disabled', 'too-close');
         }
 
-        // 6. LANJUTKAN INIT APP
+        // PENTING: Update ongkir jika user sudah terlanjur pilih menu saat GPS baru loading
+        if (typeof refreshUI === "function") refreshUI();
+
+        // Selesaikan init lainnya
         initMap(latitude, longitude);
         initBanner();
         document.getElementById('welcome-overlay').style.display = 'none';
-        await loadMenu();
         syncQueue();
 
-    }, () => {
-        alert("Gagal akses lokasi. Harap aktifkan GPS untuk pengalaman terbaik.");
-        // Jika GPS mati, biasanya kita tetap hilangkan overlay agar menu tetap muncul
+    }, (err) => {
+        console.warn("GPS Error:", err);
+        // Tetap hilangkan overlay agar pelanggan bisa lihat menu walau GPS mati
         document.getElementById('welcome-overlay').style.display = 'none';
+        // Jalankan loadMenu di sini juga sebagai cadangan jika GPS error total
+        if(menuData.length === 0) loadMenu(); 
     }, { enableHighAccuracy: true });
 }
 
