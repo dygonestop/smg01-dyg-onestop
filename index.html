@@ -925,9 +925,6 @@ function changeMode(m, el) {
     // 5. REFRESH UI (Hitung ulang total belanja)
     if (typeof refreshUI === "function") refreshUI();
 }
-    // Update tampilan UI lainnya (seperti total harga dll)
-    if (typeof refreshUI === "function") refreshUI();
-}
 
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
