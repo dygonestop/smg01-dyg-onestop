@@ -708,9 +708,7 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 // GANTI FUNGSI startApp ANDA DENGAN INI
 async function startApp() {
     const overlay = document.getElementById('welcome-overlay');
-    const status = document.getElementById('gps-status');
-
-    status.innerText = '📍 Mengakses lokasi...';
+    
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
         window.userLat = latitude;
@@ -1010,7 +1008,7 @@ async function submitOrder() {
     // VALIDASI: Cek apakah sudah pilih mode?
     if (!currentMode) {
         closeModal();
-        alert("Layanan Pesan Menu hanya untuk (Dine In, Take Away, Delivery, Katering)");
+        alert("Layanan P Menu hanya untuk (Dine In, Take Away, Delivery, Katering)");
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
