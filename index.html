@@ -784,7 +784,8 @@ mark {
         const counts = {}; cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
 
         document.getElementById('menu-container').innerHTML = items.map(m => {
-            const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
+            const nl = m.nama.toLowerCase();
+            const kl = m.kat.toLowerCase();
             const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
             
             // Aturan 1: Mie dengan kata LIK tidak dapat varian
@@ -793,13 +794,12 @@ mark {
             const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah")) && !isLik;
             
             const isDrink = kl.includes("drink") || kl.includes("minum") || kl.includes("beverage");
-            const isPaketHemat = kl.includes("hemat");
-            const allowSuhu = (isDrink || isPaketHemat) && !NO_SUHU_MENUS.has(normalizeMenuName(m.nama));
+            const allowSuhu = (isDrink || kl.includes("hemat")) && !NO_SUHU_MENUS.has(normalizeMenuName(m.nama));
 
             return `
             <div class="menu-item">
                 <div class="menu-info">
-                    <h4 data-name="${m.nama}">${m.nama}</h4>
+                    <h4 data-full-name="${m.nama}">${m.nama}</h4>
                     <div class="price">Rp ${m.harga.toLocaleString()}</div>
                     <div class="variant-area">
                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
@@ -817,20 +817,20 @@ mark {
         }).join('');
     }
 
-    // Aturan 2: Filter Menu dengan Stabilo Hijau
+    // Aturan 2: Filter Menu dengan Stabilo Hijau (Fixed)
     function filterMenu() {
         const q = document.getElementById('searchMenu').value.toLowerCase();
         document.querySelectorAll('.menu-item').forEach(it => {
             const h4 = it.querySelector('h4');
-            const originalText = h4.getAttribute('data-name');
+            const fullName = h4.getAttribute('data-full-name');
             
-            if (originalText.toLowerCase().includes(q)) {
+            if (fullName.toLowerCase().includes(q)) {
                 it.style.display = 'flex';
                 if (q.length > 0) {
                     const regex = new RegExp(`(${q})`, 'gi');
-                    h4.innerHTML = originalText.replace(regex, `<span class="highlight">$1</span>`);
+                    h4.innerHTML = fullName.replace(regex, `<span class="highlight">$1</span>`);
                 } else {
-                    h4.innerHTML = originalText;
+                    h4.innerHTML = fullName;
                 }
             } else {
                 it.style.display = 'none';
@@ -879,7 +879,7 @@ mark {
     }
 
     function calculateOngkir(dist) {
-        const km = dist / 1000;
+        const km = (dist || 0) / 1000;
         if (km <= 1.5) return 3000; if (km <= 3) return 5000; if (km <= 5) return 8000;
         return 8000 + (Math.ceil(km - 5) * 2000);
     }
@@ -920,17 +920,22 @@ mark {
         
         const summary = {};
         cart.forEach(c => {
-            let lbl = c.nama; let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+            let lbl = c.nama;
+            let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
             if(tags) lbl += ` [${tags}]`;
             if (!summary[lbl]) summary[lbl] = { qty: 0, p: c.price };
             summary[lbl].qty++;
         });
 
         const rows = Object.entries(summary).map(([k, v]) => `📍 *${v.qty}x* ${k} (Rp ${(v.qty*v.p).toLocaleString()})`);
-        const msg = `Halo cloudkitchen.dyg++!\n\n🛵 *${currentMode}*\n👤 *Nama:* ${n}\n🔢 *ANTREAN: ${document.getElementById('noAntrean').innerText}*\n━━━━━━━━━━━━━━\n\n*PESANAN:*\n${rows.join('\n')}\n\n*TOTAL: Rp ${document.getElementById('miniPrice').innerText}*`;
+        const totalText = document.getElementById('miniPrice').innerText;
+        const antreanText = document.getElementById('noAntrean').innerText;
+
+        const msg = `Halo cloudkitchen.dyg++!\n\n🛵 *${currentMode}*\n👤 *Nama:* ${n}\n🔢 *ANTREAN: ${antreanText}*\n━━━━━━━━━━━━━━\n\n*PESANAN:*\n${rows.join('\n')}\n\n*TOTAL: Rp ${totalText}*`;
         
         sessionStorage.setItem('orderSubmitted', 'true');
-        window.location.href = `https://wa.me/${currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN}?text=${encodeURIComponent(msg)}`;
+        const waLink = `https://wa.me/${currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN}?text=${encodeURIComponent(msg)}`;
+        window.location.href = waLink;
     }
 
     function initMap(lat, lng) {
@@ -948,8 +953,8 @@ mark {
     }
 
     function toggleSummary(s) { document.getElementById('orderSummaryPanel').classList.toggle('active', s); document.getElementById('summaryOverlay').style.display = s ? 'block' : 'none'; }
-    
     function filterByTab(cat, el) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderMenu(cat); }
+    
     async function syncQueue() {
         try { const r = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`); const n = await r.text(); if(n) document.getElementById('noAntrean').innerText = "#"+n; } catch(e){}
         setTimeout(syncQueue, 20000);
