@@ -710,7 +710,6 @@ mark {
 
     let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-    // List Pengecualian Suhu (Input User)
     const NO_SUHU_MENUS = new Set([
         "kopi klothok", "kopi lelet", "kopi coklat", "kopi jahe", "es kopi item", "es kopiko", "kopi ka'amel", "kopi susu beri", 
         "es susu mantan", "es jossu", "es bissu", "es jeruk susu", "es choco oren", "es jeruk yakult", "es milksex beri", 
@@ -719,59 +718,35 @@ mark {
     ]);
 
     async function startApp() {
-        // Injeksi CSS via JS untuk merapatkan jarak dan merapikan banner
         const style = document.createElement('style');
         style.innerHTML = `
-            #banner-container { width: 100%; overflow: hidden; border-radius: 12px; margin-bottom: 10px; height: 180px; }
+            #banner-container { width: 100%; overflow: hidden; border-radius: 12px; margin-bottom: 8px; height: 180px; }
             #banner-track { display: flex; transition: transform 0.5s ease-in-out; height: 100%; }
             #banner-track img { width: 100%; flex-shrink: 0; object-fit: cover; }
-            .customer-info-box { margin-bottom: 5px !important; padding-bottom: 5px !important; }
-            #cat-tabs { margin-top: 0px !important; padding-top: 5px; }
+            .customer-info-box { margin-bottom: 4px !important; padding-bottom: 0 !important; }
+            #boxMeja, #boxAlamat, #boxTanggal { margin-bottom: 4px !important; }
+            .section-title { margin-top: 5px !important; margin-bottom: 5px !important; }
+            #cat-tabs { margin-top: 0 !important; padding-top: 0 !important; }
+            .highlight { background-color: #2ecc71; color: white; padding: 0 2px; border-radius: 2px; }
         `;
         document.head.appendChild(style);
 
         const overlay = document.getElementById('welcome-overlay');
-        
         navigator.geolocation.getCurrentPosition(async (pos) => {
             try {
                 const { latitude, longitude } = pos.coords;
-                window.userLat = latitude;
-                window.userLng = longitude;
-                const distMeter = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
-                window.userDist = distMeter;
-
-                const dineBadge = document.getElementById('dineInBadge');
-                const deliveryBadge = document.getElementById('deliveryBadge');
-                const mDine = document.getElementById('mDine');
-                const mDelivery = document.getElementById('mDelivery');
-
-                if (distMeter > CONFIG.RADIUS_DINE_IN) {
-                    if (mDine) mDine.classList.add('disabled');
-                    if (dineBadge) { dineBadge.innerText = "Luar Jangkauan"; dineBadge.style.opacity = 1; }
-                }
-                if (distMeter < CONFIG.RADIUS_DELIVERY) {
-                    if (mDelivery) mDelivery.classList.add('disabled');
-                    if (deliveryBadge) { deliveryBadge.innerText = "Pakai Dine In"; deliveryBadge.style.opacity = 1; }
-                }
-
+                window.userLat = latitude; window.userLng = longitude;
+                window.userDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
                 initMap(latitude, longitude);
                 initBanner();
                 overlay.style.display = 'none';
                 await loadMenu();
                 syncQueue();
-            } catch (err) {
-                overlay.style.display = 'none';
-            }
-        }, (err) => {
-            overlay.style.display = 'none';
-            loadMenu();
-            initBanner();
-        }, { enableHighAccuracy: true, timeout: 8000 });
+            } catch (err) { overlay.style.display = 'none'; }
+        }, () => { overlay.style.display = 'none'; loadMenu(); initBanner(); }, { enableHighAccuracy: true, timeout: 8000 });
     }
 
-    function normalizeMenuName(name) {
-        return name.toLowerCase().replace(/\s+/g, ' ').trim();
-    }
+    function normalizeMenuName(name) { return name.toLowerCase().replace(/\s+/g, ' ').trim(); }
 
     async function loadMenu() {
         try {
@@ -783,7 +758,7 @@ mark {
             }).filter(m => m.nama);
             renderTabs();
             renderMenu();
-        } catch (e) { console.error("Menu error:", e); }
+        } catch (e) { console.error(e); }
     }
 
     function renderTabs() {
@@ -794,25 +769,24 @@ mark {
 
     function renderMenu(filterKat = 'ALL') {
         const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
-        const counts = {}; 
-        cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
+        const counts = {}; cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
 
         document.getElementById('menu-container').innerHTML = items.map(m => {
             const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
             const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
-            const isMieG = nl.includes("mie") && nl.includes("goreng");
-            const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"));
-            const isDrink = kl.includes("drink") || kl.includes("minum") || kl.includes("beverage");
-            const isPaketHemat = kl.includes("hemat");
             
-            const menuNameClean = normalizeMenuName(m.nama);
-            // Syarat Suhu: Kategori Drink ATAU Paket Hemat, tapi BUKAN list pengecualian
-            const allowSuhu = (isDrink || isPaketHemat) && !NO_SUHU_MENUS.has(menuNameClean);
+            // Logika pengecualian LIK: Jika ada kata 'lik', jangan beri varian mie
+            const isLik = nl.includes("lik");
+            const isMieG = nl.includes("mie") && nl.includes("goreng") && !isLik;
+            const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah")) && !isLik;
+            
+            const isDrink = kl.includes("drink") || kl.includes("minum") || kl.includes("beverage");
+            const allowSuhu = (isDrink || kl.includes("hemat")) && !NO_SUHU_MENUS.has(normalizeMenuName(m.nama));
 
             return `
-            <div class="menu-item">
+            <div class="menu-item" id="item-${m.id}">
                 <div class="menu-info">
-                    <h4 data-name="${m.nama}">${m.nama}</h4>
+                    <h4 class="menu-name-label" data-full-name="${m.nama}">${m.nama}</h4>
                     <div class="price">Rp ${m.harga.toLocaleString()}</div>
                     <div class="variant-area">
                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
@@ -830,155 +804,123 @@ mark {
         }).join('');
     }
 
+    function filterMenu() {
+        const q = document.getElementById('searchMenu').value.toLowerCase();
+        document.querySelectorAll('.menu-item').forEach(it => {
+            const label = it.querySelector('.menu-name-label');
+            const fullName = label.getAttribute('data-full-name');
+            const lowerName = fullName.toLowerCase();
+
+            if (lowerName.includes(q) && q !== "") {
+                it.style.display = 'flex';
+                // Stabilo Hijau (Highlight)
+                const regex = new RegExp(`(${q})`, 'gi');
+                label.innerHTML = fullName.replace(regex, `<span class="highlight">$1</span>`);
+            } else if (q === "") {
+                it.style.display = 'flex';
+                label.innerHTML = fullName;
+            } else {
+                it.style.display = 'none';
+            }
+        });
+    }
+
     function updateCart(id, change, forceVariant = null) {
         const item = menuData.find(m => m.id === id);
         if (!item) return;
 
         if (change > 0) {
-            const nEl = document.getElementById(`n-${id}`), mEl = document.getElementById(`m-${id}`), 
-                  rEl = document.getElementById(`r-${id}`), sEl = document.getElementById(`s-${id}`);
-
+            const nEl = document.getElementById(`n-${id}`), sEl = document.getElementById(`s-${id}`);
             const vNasi = forceVariant ? forceVariant.vN : (nEl ? nEl.value : null);
-            let extraPrice = 0;
-            if (vNasi) {
-                const varianSpek = VARIAN_NASI.find(x => x.n === vNasi);
-                if (varianSpek) extraPrice = varianSpek.e;
-            }
+            let extra = 0; if (vNasi) extra = VARIAN_NASI.find(x => x.n === vNasi)?.e || 0;
 
-            let vData = forceVariant ? {...forceVariant} : {
-                vN: vNasi, vM: mEl ? mEl.value : null, vR: rEl ? rEl.value : null, vS: sEl ? sEl.value : null, ex: extraPrice
+            const vData = forceVariant || {
+                vN: vNasi, vM: document.getElementById(`m-${id}`)?.value, vR: document.getElementById(`r-${id}`)?.value, 
+                vS: sEl ? sEl.value : null, ex: extra
             };
             
-            cart.push({ 
-                ...item, ...vData,
-                name: vData.vS ? `${item.nama} (${vData.vS})` : (vData.vN ? `${item.nama} (${vData.vN})` : item.nama),
-                price: item.harga + (vData.ex || extraPrice)
-            });
+            cart.push({ ...item, ...vData, price: item.harga + (vData.ex || 0), 
+                        name: vData.vS ? `${item.nama} (${vData.vS})` : (vData.vN ? `${item.nama} (${vData.vN})` : item.nama) });
         } else {
-            let idx = cart.findLastIndex(c => 
-                c.id === id && 
-                c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
-                c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
-            );
+            const idx = cart.findLastIndex(c => c.id === id && c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null));
             if (idx !== -1) cart.splice(idx, 1);
         }
         refreshUI();
     }
 
-    function calculateOngkir(distMeter) {
-        const km = distMeter / 1000;
-        if (km <= 1.5) return 3000;
-        if (km <= 3) return 5000;
-        if (km <= 5) return 8000;
-        return 8000 + (Math.ceil(km - 5) * 2000);
-    }
-
     function refreshUI() {
-        let subtotal = 0; const counts = {};
-        cart.forEach(c => { subtotal += c.price; counts[c.id] = (counts[c.id] || 0) + 1; });
-
+        let sub = 0; const counts = {}; cart.forEach(c => { sub += c.price; counts[c.id] = (counts[c.id] || 0) + 1; });
         document.querySelectorAll('[id^="qty-"]').forEach(span => {
-            const id = span.id.replace('qty-', '');
-            span.innerText = counts[id] || 0;
+            const id = span.id.replace('qty-', ''); span.innerText = counts[id] || 0;
             if(span.previousElementSibling) span.previousElementSibling.disabled = !(counts[id]);
         });
-
-        const sInd = document.getElementById('swipeInd'), distEl = document.getElementById('dist-info'),
-              ongEl = document.getElementById('ongkir-label'), priceEl = document.getElementById('miniPrice');
-
-        if (subtotal > 0) {
-            sInd.style.display = 'block';
-            if (currentMode === 'DELIVERY') {
-                let ongkir = calculateOngkir(window.userDist || 0);
-                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
-                distEl.style.display = 'block'; distEl.innerText = `Rute: ${((window.userDist||0)/1000).toFixed(1)} KM`;
-                ongEl.style.display = 'block'; ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
-            } else {
-                priceEl.innerText = subtotal.toLocaleString('id-ID');
-                distEl.style.display = 'none'; ongEl.style.display = 'none';
-            }
-            document.getElementById('btnOrder').disabled = false;
-            document.getElementById('btnOrder').innerText = `PESAN (${cart.length})`;
+        const pEl = document.getElementById('miniPrice'), bOrder = document.getElementById('btnOrder');
+        if (sub > 0) {
+            let total = sub + (currentMode === 'DELIVERY' ? calculateOngkir(window.userDist) : 0);
+            pEl.innerText = total.toLocaleString('id-ID');
+            bOrder.disabled = false; bOrder.innerText = `PESAN (${cart.length})`;
         } else {
-            sInd.style.display = 'none'; distEl.style.display = 'none'; ongEl.style.display = 'none';
-            priceEl.innerText = "0"; document.getElementById('btnOrder').disabled = true;
-            document.getElementById('btnOrder').innerText = 'PILIH MENU';
+            pEl.innerText = "0"; bOrder.disabled = true; bOrder.innerText = 'PILIH MENU';
         }
         updateOrderSummary();
     }
 
+    function calculateOngkir(dist) {
+        const km = (dist || 0) / 1000;
+        if (km <= 1.5) return 3000; if (km <= 3) return 5000; if (km <= 5) return 8000;
+        return 8000 + (Math.ceil(km - 5) * 2000);
+    }
+
     function changeMode(m, el) {
-        if (el.classList.contains('disabled')) { alert("Lokasi di luar jangkauan."); return; }
+        if (el.classList.contains('disabled')) return alert("Luar jangkauan!");
         currentMode = m;
         document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
         el.classList.add('active');
         document.getElementById('boxMeja').style.display = (m === 'DINE IN') ? 'block' : 'none';
         document.getElementById('boxAlamat').style.display = (m === 'DELIVERY' || m === 'KATERING') ? 'block' : 'none';
-        if (document.getElementById('boxTanggal')) document.getElementById('boxTanggal').style.display = (m === 'KATERING') ? 'block' : 'none';
+        if(document.getElementById('boxTanggal')) document.getElementById('boxTanggal').style.display = (m === 'KATERING') ? 'block' : 'none';
         refreshUI();
     }
 
     function updateOrderSummary() {
-        const container = document.getElementById('summaryItems');
-        if (cart.length === 0) {
-            container.innerHTML = `<div style="text-align:center;padding:40px;color:#999;font-size:12px;">Keranjang kosong</div>`;
-            return;
-        }
         const groups = {};
         cart.forEach(c => {
-            const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
+            const key = `${c.id}-${c.vN}-${c.vS}`;
             if (!groups[key]) groups[key] = { ...c, qty: 0 };
             groups[key].qty++;
         });
-        container.innerHTML = Object.values(groups).map(item => `
+        document.getElementById('summaryItems').innerHTML = Object.values(groups).map(item => `
             <div class="summary-item">
-                <div class="item-detail-name">
-                    <b>${item.name}</b>
-                    <span>Rp ${(item.price).toLocaleString('id-ID')} x ${item.qty}</span>
-                </div>
+                <div class="item-detail-name"><b>${item.name}</b><span>Rp ${item.price.toLocaleString()} x ${item.qty}</span></div>
                 <div class="mini-qty-box">
-                    <button class="mini-qty-btn" onclick="updateCart('${item.id}', -1, ${JSON.stringify({vN:item.vN,vM:item.vM,vR:item.vR,vS:item.vS,ex:item.ex})})">−</button>
+                    <button class="mini-qty-btn" onclick="updateCart('${item.id}', -1, ${JSON.stringify(item)})">−</button>
                     <span>${item.qty}</span>
-                    <button class="mini-qty-btn" onclick="updateCart('${item.id}', 1, ${JSON.stringify({vN:item.vN,vM:item.vM,vR:item.vR,vS:item.vS,ex:item.ex})})">+</button>
+                    <button class="mini-qty-btn" onclick="updateCart('${item.id}', 1, ${JSON.stringify(item)})">+</button>
                 </div>
-            </div>`).join('');
+            </div>`).join('') || '<div style="text-align:center;padding:20px;color:#999">Keranjang kosong</div>';
     }
 
     async function submitOrder() {
-        if (!currentMode) { alert("Pilih layanan!"); window.scrollTo(0,0); return; }
-        const nI = document.getElementById('custName'), tI = document.getElementById('tableNo'), 
-              aI = document.getElementById('addressDetail'), noAntrean = document.getElementById('noAntrean').innerText;
-
-        if (!nI.value.trim()) { alert("Nama wajib diisi"); nI.focus(); return; }
-        if (currentMode === 'DINE IN' && !tI.value.trim()) { alert("Meja wajib diisi"); tI.focus(); return; }
-        if (currentMode === 'DELIVERY' && !aI.value.trim()) { alert("Alamat wajib diisi"); aI.focus(); return; }
-
+        if (!currentMode) return alert("Pilih layanan!");
+        const n = document.getElementById('custName').value;
+        if (!n) return alert("Nama wajib diisi!");
         const summary = {};
         cart.forEach(c => {
-            let label = c.nama;
-            let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-            if(tags) label += ` [${tags}]`;
-            if (!summary[label]) summary[label] = { qty: 0, price: c.price };
-            summary[label].qty++;
+            let lbl = c.nama; let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+            if(tags) lbl += ` [${tags}]`;
+            if (!summary[lbl]) summary[lbl] = { qty: 0, p: c.price };
+            summary[lbl].qty++;
         });
-
-        const pRowsWA = Object.entries(summary).map(([name, data]) => `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.price).toLocaleString('id-ID')})`);
-        const finalPrice = document.getElementById('miniPrice').innerText;
-        
-        let msg = `Halo cloudkitchen.dyg++!\n\n🛵 *${currentMode}*\n👤 *Nama:* ${nI.value}\n🔢 *ANTREAN: ${noAntrean}*\n━━━━━━━━━━━━━━\n`;
-        if (currentMode === 'DINE IN') msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
-        else msg += `🏠 *Alamat:* ${aI.value}\n🌐 *Lokasi:* http://maps.google.com/?q=${window.userLat},${window.userLng}\n`;
-
-        msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n\n*TOTAL BAYAR: Rp ${finalPrice}*\n\nTerimakasih!`;
-        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+        const rows = Object.entries(summary).map(([k, v]) => `📍 *${v.qty}x* ${k} (Rp ${(v.qty*v.p).toLocaleString()})`);
+        const msg = `Halo cloudkitchen.dyg++!\n\n🛵 *${currentMode}*\n👤 *Nama:* ${n}\n🔢 *ANTREAN: ${document.getElementById('noAntrean').innerText}*\n━━━━━━━━━━━━━━\n\n*PESANAN:*\n${rows.join('\n')}\n\n*TOTAL: Rp ${document.getElementById('miniPrice').innerText}*`;
         sessionStorage.setItem('orderSubmitted', 'true');
-        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+        window.location.href = `https://wa.me/${currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN}?text=${encodeURIComponent(msg)}`;
     }
 
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("Warung").openPopup();
+        L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("Warung");
         L.marker([lat, lng]).addTo(map).bindPopup("Kamu");
     }
 
@@ -986,50 +928,17 @@ mark {
         const track = document.getElementById('banner-track');
         if(!track) return;
         track.innerHTML = MY_BANNERS.map(img => `<img src="${img}">`).join('');
-        setInterval(() => { 
-            bannerIdx = (bannerIdx + 1) % MY_BANNERS.length; 
-            track.style.transform = `translateX(-${bannerIdx * 100}%)`; 
-        }, 4000);
+        setInterval(() => { bannerIdx = (bannerIdx + 1) % MY_BANNERS.length; track.style.transform = `translateX(-${bannerIdx * 100}%)`; }, 4000);
     }
 
-    function toggleSummary(show) {
-        document.getElementById('orderSummaryPanel').classList.toggle('active', show);
-        document.getElementById('summaryOverlay').style.display = show ? 'block' : 'none';
-    }
-
-    function filterMenu() {
-        const q = document.getElementById('searchMenu').value.toLowerCase();
-        document.querySelectorAll('.menu-item').forEach(it => {
-            const name = it.querySelector('h4').dataset.name.toLowerCase();
-            it.style.display = name.includes(q) ? 'flex' : 'none';
-        });
-    }
-
-    function filterByTab(cat, el) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        el.classList.add('active');
-        renderMenu(cat);
-    }
-
+    function toggleSummary(s) { document.getElementById('orderSummaryPanel').classList.toggle('active', s); document.getElementById('summaryOverlay').style.display = s ? 'block' : 'none'; }
+    function filterByTab(cat, el) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderMenu(cat); }
     async function syncQueue() {
-        try {
-            const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
-            const num = await resp.text();
-            if (num) document.getElementById('noAntrean').innerText = "#" + num;
-        } catch(e) {}
+        try { const r = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`); const n = await r.text(); if(n) document.getElementById('noAntrean').innerText = "#"+n; } catch(e){}
         setTimeout(syncQueue, 20000);
     }
 
-    function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
-    function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-
     window.addEventListener('DOMContentLoaded', startApp);
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && sessionStorage.getItem('orderSubmitted') === 'true') {
-            sessionStorage.removeItem('orderSubmitted');
-            window.location.reload();
-        }
-    });
 </script>
 <div id="modalComingSoon" class="modal-overlay">
     <div class="modal-card">
