@@ -260,31 +260,32 @@ mark {
 }
 
 .service-btn span {
-    position: absolute; /* Letakkan teks di atas ikon */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* Geser ke tengah sempurna */
+    position: relative; /* Ubah dari absolute ke relative */
+    display: block;    /* Pastikan teks mengambil baris baru */
+    margin-top: 4px;   /* Jarak antara ikon dan teks */
     font-size: 11px;
     font-weight: 900;
     color: var(--text);
     text-align: center;
     line-height: 1;
-    width: 90%; /* Supaya teks panjang bisa membungkus/wrap */
-    pointer-events: none; /* Klik tembus ke tombol */
+    width: 100%;
+    pointer-events: none;
     z-index: 2;
-opacity: 0.3;
+    opacity: 1; /* Ubah dari 0.3 ke 1 agar tulisan terlihat jelas */
+    transform: none; /* Hapus transform translate yang membuatnya ke tengah */
+    left: auto;      /* Reset posisi */
+    top: auto;       /* Reset posisi */
 }
 
 /* ICON */
-/* Pastikan kontainer icon memiliki ukuran tetap */
 .service-btn .icon {
-    width: 90px; 
-    height: 90px;
+    width: 60px;  /* Perkecil dari 90px agar ada ruang untuk teks di bawah */
+    height: 60px; /* Perkecil dari 90px */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 4px;
-animation: floatIcon 2.8s ease-in-out infinite;
+    margin-bottom: 2px;
+    animation: floatIcon 2.8s ease-in-out infinite;
 }
 
 /* AKTIF */
