@@ -545,12 +545,13 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
-        // Cek jangkauan Dine In saja, tapi jangan otomatis klik Delivery
+        // SINKRONISASI RADIUS: Pastikan ID sesuai dengan HTML (mDineIn)
         if (userDist > CONFIG.RADIUS_DINE_IN) {
-            const dineBtn = document.getElementById('mDine');
+            const dineBtn = document.getElementById('mDineIn'); // ID disesuaikan
             if(dineBtn) {
                 dineBtn.classList.add('disabled');
-                dineBtn.onclick = () => showOutOfRangeAlert();
+                // Kita tidak perlu mengubah .onclick di sini karena 
+                // fungsi changeMode sudah menangani pengecekan class 'disabled'
             }
         }
         
@@ -874,51 +875,56 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
     }
 
 function changeMode(m, el) {
-    if (el.classList.contains('disabled')) return showOutOfRangeAlert();
+    // 1. CEK RADIUS: Jika tombol punya class 'disabled' (dari startApp), stop & alert!
+    if (el.classList.contains('disabled')) {
+        return showOutOfRangeAlert(); 
+    }
+
+    // 2. SET MODE AKTIF
     currentMode = m;
 
-    // Hapus status active dari semua tombol (Baris 1 & Baris 2)
+    // 3. UI: Update status tombol (semua tombol baris 1 & 2)
     document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
-    // Tambah status active ke tombol yang diklik
     el.classList.add('active');
 
-    // Ambil elemen box input
+    // 4. LOGIKA INPUT BOX (Meja, Alamat, Tanggal)
     const boxMeja = document.getElementById('boxMeja');
     const boxAlamat = document.getElementById('boxAlamat');
     const boxKatering = document.getElementById('boxKateringInfo');
 
-    // Sembunyikan semua box terlebih dahulu (Reset)
+    // Sembunyikan semua dulu (Reset Default)
     if(boxMeja) boxMeja.style.display = 'none';
     if(boxAlamat) boxAlamat.style.display = 'none';
     if(boxKatering) boxKatering.style.display = 'none';
 
-    // Logika penampilan box berdasarkan mode yang dipilih
+    // Tampilkan sesuai pilihan user
     if (m === 'DINE IN') {
         if(boxMeja) boxMeja.style.display = 'block';
-    } else if (m === 'DELIVERY') {
+    } 
+    else if (m === 'DELIVERY') {
         if(boxAlamat) boxAlamat.style.display = 'block';
-    } else if (m === 'KATERING') {
+    } 
+    else if (m === 'KATERING') {
         if(boxAlamat) boxAlamat.style.display = 'block'; // Katering butuh alamat
         if(boxKatering) {
-            boxKatering.style.display = 'block'; // Munculkan kalender
+            boxKatering.style.display = 'block'; 
             
-            // Atur tanggal minimal H+1 (Besok)
+            // Set Tanggal H+1
             const inputTgl = document.getElementById('tglKatering');
             if(inputTgl) {
                 const besok = new Date();
-                besok.setDate(besok.getDate() + 1); 
-                
-                const yyyy = besok.getFullYear();
-                const mm = String(besok.getMonth() + 1).padStart(2, '0');
-                const dd = String(besok.getDate()).padStart(2, '0');
-                
-                const minDate = `${yyyy}-${mm}-${dd}`;
-                inputTgl.min = minDate; 
+                besok.setDate(besok.getDate() + 1);
+                const minDate = besok.toISOString().split('T')[0];
+                inputTgl.min = minDate;
                 inputTgl.value = minDate;
             }
         }
     }
+    // Jika TAKE AWAY dipilih, tidak ada box yang muncul (display none tetap)
 
+    // 5. REFRESH UI (Hitung ulang total belanja)
+    if (typeof refreshUI === "function") refreshUI();
+}
     // Update tampilan UI lainnya (seperti total harga dll)
     if (typeof refreshUI === "function") refreshUI();
 }
