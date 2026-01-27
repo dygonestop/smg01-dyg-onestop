@@ -586,7 +586,7 @@ mark {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyBaLbR1GDBH0pF02p5wONVnkq_EIDjQCLtw1zGGFUeKRy8rqV-0gBk2FHAtIKpcweo/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzswdM3SdT_EyAxL2hCQfJzB-ddmMZjIKjGvZotaUrd1avS7PrKSnozyFKhLnqLVIUuFg/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1022,12 +1022,15 @@ mark {
 
 <div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
     <button onclick="event.stopPropagation(); handleCekPoin()" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:10px; font-weight:900; font-size:10px; margin-right:10px; cursor:pointer; white-space:nowrap; height:40px; box-shadow:0 4px 8px rgba(0,0,0,0.1);">🪙 POIN</button>
+    
     <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
+    
     <div style="flex:1">
         <div id="dist-info" class="dist-info"></div>
         <div id="ongkir-label" class="ongkir-tag"></div>
         <div class="price-total">Rp <span id="miniPrice">0</span></div>
     </div>
+    
     <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
 </div>
 
@@ -1053,6 +1056,5 @@ mark {
         <button onclick="closeComingSoon()" style="width:100%;padding:12px;border-radius:12px;border:none;background:var(--primary);color:white;font-weight:800;">Kembali</button>
     </div>
 </div>
-
 </body>
 </html>
