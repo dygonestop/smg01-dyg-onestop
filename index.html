@@ -273,11 +273,10 @@ mark {
 }
 
 .service-icon-img {
-    width: 75%;  /* Gambar besar dan jelas */
-    height: 75%;
+    width: 130%;
+    height: 130%;
     object-fit: contain;
-    transition: transform 0.3s ease;
-}
+} /* <--- Tambahkan ini */
 
 /* TEKS DI BAWAH ICON */
 .service-btn span {
@@ -994,7 +993,6 @@ async function startApp() {
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
     const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
-
     // --- LOGIKA PROMO UNTUK WHATSAPP ---
     let promoText = "";
     if (isRedeem) {
