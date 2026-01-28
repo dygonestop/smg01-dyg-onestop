@@ -360,71 +360,61 @@ mark {
 .form-group input:focus,
 .form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15); }
 
-/* === VOUCHER CONTAINER (MODERN & SLEEK VERSION) === */
+/* === VOUCHER CONTAINER (MODERN & SLEEK) === */
 .voucher-container {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 5px 6px 5px 12px; /* Lebih ramping tinggi-nya */
+    background: #F8F9FA; /* Warna abu sangat muda agar bersih */
+    border: 1px solid #E0E0E0;
     border-radius: 12px;
-    background: #fdfdfd; /* Warna putih bersih */
-    border: 1px solid #e0e0e0; /* Border tipis halus */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04); /* Shadow sangat lembut */
-    width: 100%;
-    margin-bottom: 12px; /* Jarak ke elemen di bawahnya */
+    padding: 4px 6px 4px 12px;
+    margin-bottom: 12px;
     transition: all 0.3s ease;
 }
 
-/* Efek saat input diklik */
 .voucher-container:focus-within {
     border-color: var(--accent);
-    background: #fff;
-    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.12);
+    background: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.1);
 }
 
-.voucher-container .voucher-icon { 
-    font-size: 16px; 
-    filter: grayscale(0.5); /* Icon tidak terlalu mencolok */
+.voucher-icon {
+    font-size: 16px;
+    margin-right: 8px;
+    filter: grayscale(1); /* Membuat ikon lebih kalem */
 }
 
-.voucher-container input#vouchCode {
+input#vouchCode {
     flex: 1;
-    padding: 6px 0;
-    border: none; /* Hilangkan border internal input */
-    background: transparent;
-    font-size: 12px;
+    border: none !important;
+    background: transparent !important;
+    font-size: 12px !important;
     font-weight: 600;
     color: var(--text);
-    outline: none;
-    text-transform: uppercase; /* Otomatis huruf besar agar rapi */
+    padding: 6px 0;
+    text-transform: uppercase;
 }
 
-.voucher-container input#vouchCode::placeholder { 
-    color: #bbb; 
-    text-transform: none; /* Placeholder tetap huruf kecil/normal */
+input#vouchCode::placeholder {
+    color: #AAA;
+    text-transform: none;
     font-weight: 400;
-    font-style: italic;
 }
 
-.voucher-container .btn-apply-vouch {
-    padding: 7px 15px;
+.btn-apply-vouch {
+    background: var(--primary); /* Menggunakan warna hijau utama agar senada */
+    color: white;
     border: none;
-    border-radius: 9px;
-    background: var(--primary); /* Mengikuti warna utama aplikasi */
-    color: #fff;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 11px;
     font-weight: 800;
-    font-size: 10px;
-    letter-spacing: 0.5px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
 }
 
-.voucher-container .btn-apply-vouch:hover { 
-    filter: brightness(1.2);
-}
-
-.voucher-container .btn-apply-vouch:active {
-    transform: scale(0.95); /* Efek klik membal */
+.btn-apply-vouch:active {
+    transform: scale(0.95);
 }
 
 /* Price total row */
@@ -556,19 +546,19 @@ mark {
 <div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
     <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
 
-    <div class="bottom-content" onclick="event.stopPropagation();">
-        <div class="voucher-container">
-            <span class="voucher-icon">🎟️</span>
-            <input type="text" id="vouchCode" placeholder="Gunakan kode promo..." autocomplete="off">
-            <button class="btn-apply-vouch" onclick="applyVoucher()">PAKAI</button>
-        </div>
-
-        <div class="price-total-row">
-            <div id="dist-info" class="dist-info"></div>
-            <div id="ongkir-label" class="ongkir-tag"></div>
-            <div class="price-total">Rp <span id="miniPrice">0</span></div>
-        </div>
+<div class="bottom-content" onclick="event.stopPropagation();">
+    <div class="voucher-container">
+        <span class="voucher-icon">🎟️</span>
+        <input type="text" id="vouchCode" placeholder="Punya kode promo?" autocomplete="off">
+        <button class="btn-apply-vouch" onclick="applyVoucher()">KLAIM</button>
     </div>
+
+    <div class="price-total-row">
+        <div id="dist-info" class="dist-info"></div>
+        <div id="ongkir-label" class="ongkir-tag"></div>
+        <div class="price-total">Rp <span id="miniPrice">0</span></div>
+    </div>
+</div>
 
     <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>
         PESAN
