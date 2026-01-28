@@ -473,24 +473,6 @@ mark {
 /* Menampilkan dropdown saat class 'show' aktif */
 .show { display: block !important; }
 
-function toggleNavMenu(event) {
-    event.stopPropagation(); // Mencegah klik tembus ke elemen lain
-    document.getElementById("myDropdown").classList.toggle("show");
-}
-
-// Menutup dropdown jika pengguna klik di mana saja selain menu
-window.onclick = function(event) {
-    if (!event.target.matches('.btn-menu-circle')) {
-        var dropdowns = document.getElementsByClassName("dropdown-content");
-        for (var i = 0; i < dropdowns.length; i++) {
-            var openDropdown = dropdowns[i];
-            if (openDropdown.classList.contains('show')) {
-                openDropdown.classList.remove('show');
-            }
-        }
-    }
-}
-
     </style>
 </head>
 <body>
@@ -1150,6 +1132,24 @@ function changeMode(m, el) {
     function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
+
+function toggleNavMenu(event) {
+    event.stopPropagation(); // Mencegah klik tembus ke elemen lain
+    document.getElementById("myDropdown").classList.toggle("show");
+}
+
+// Menutup dropdown jika pengguna klik di mana saja selain menu
+window.onclick = function(event) {
+    if (!event.target.matches('.btn-menu-circle')) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+            }
+        }
+    }
+}
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
