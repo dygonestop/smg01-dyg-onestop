@@ -1029,88 +1029,86 @@ mark {
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
 
 // Fungsi untuk membuka modal
-function openPopup(id) {
-  const modal = document.getElementById(id);
-  if (modal) {
-    modal.style.display = 'flex'; // Menggunakan flex agar konten di tengah
-  }
-}
+<script>
+        // Fungsi pembantu untuk buka/tutup modal
+        // Tidak mengubah logic internal validateVoucher atau checkMember
+        function openPopup(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.style.display = 'flex';
+        }
 
-// Fungsi untuk menutup modal
-function closePopup(id) {
-  const modal = document.getElementById(id);
-  if (modal) {
-    modal.style.display = 'none';
-  }
-}
+        function closePopup(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.style.display = 'none';
+        }
 
-// Pastikan modal tertutup saat klik di luar area konten (opsional tapi bagus)
-window.onclick = function(event) {
-  if (event.target.className === 'modal') {
-    event.target.style.display = 'none';
-  }
-}
+        // Tutup modal jika user klik di area luar kotak modal
+        window.onclick = function(event) {
+            if (event.target.className === 'modal' || event.target.className === 'modal-overlay') {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
 
-</script>
-
-<div id="modalComingSoon" class="modal-overlay">
-    <div class="modal-card">
-        <div style="font-size:48px;margin-bottom:10px;">🚧</div>
-        <h3 style="font-weight:900;margin-bottom:6px;">Sedang Dalam Pengembangan</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
-            Fitur ini belum tersedia.<br>
-            Kembali lagi besok ya 🙏
-        </p>
-        <button onclick="closeComingSoon()"
-            style="width:100%;padding:12px;border-radius:12px;border:none;
-                   background:var(--primary);color:white;font-weight:800;">
-            Kembali
-        </button>
+    <div id="modalComingSoon" class="modal-overlay">
+        <div class="modal-card">
+            <div style="font-size:48px;margin-bottom:10px;">🚧</div>
+            <h3 style="font-weight:900;margin-bottom:6px;">Sedang Dalam Pengembangan</h3>
+            <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
+                Fitur ini belum tersedia.<br>
+                Kembali lagi besok ya 🙏
+            </p>
+            <button onclick="closePopup('modalComingSoon')"
+                style="width:100%;padding:12px;border-radius:12px;border:none;
+                       background:var(--primary);color:white;font-weight:800;">
+                Kembali
+            </button>
+        </div>
     </div>
-</div>
 
-<div id="popupVoucher" class="modal">
-  <div class="modal-content">
-    <h3>🎟️ Gunakan Voucher</h3>
-    <hr>
-    <input type="text" id="inputVoucher" placeholder="MASUKKAN KODE" style="text-transform: uppercase;">
-    <p class="info-text">ℹ️ Voucher 1x pakai</p>
-    <div class="modal-footer">
-      <button onclick="closePopup('popupVoucher')" class="btn-secondary">BATAL</button>
-      <button onclick="valdiateVoucher()" class="btn-primary">GUNAKAN</button>
+    <div id="popupVoucher" class="modal">
+      <div class="modal-content">
+        <h3>🎟️ Gunakan Voucher</h3>
+        <hr>
+        <input type="text" id="inputVoucher" placeholder="MASUKKAN KODE" style="text-transform: uppercase;">
+        <p class="info-text">ℹ️ Voucher 1x pakai</p>
+        <div class="modal-footer" style="display: flex; gap: 10px; margin-top: 15px;">
+          <button onclick="closePopup('popupVoucher')" class="btn-secondary" style="flex:1;">BATAL</button>
+          <button onclick="valdiateVoucher()" class="btn-primary" style="flex:1;">GUNAKAN</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<div id="popupCekPoin" class="modal">
-  <div class="modal-content">
-    <h3>⭐ Cek Poin Member</h3>
-    <hr>
-    <p>Masukkan No HP (628xxx)</p>
-    <input type="number" id="inputNoHP" placeholder="628XXXXXXXX">
-    <div class="modal-footer">
-      <button onclick="closePopup('popupCekPoin')" class="btn-secondary">BATAL</button>
-      <button onclick="checkMember()" class="btn-primary">CEK POIN</button>
+    <div id="popupCekPoin" class="modal">
+      <div class="modal-content">
+        <h3>⭐ Cek Poin Member</h3>
+        <hr>
+        <p style="font-size: 13px; margin-bottom: 10px;">Masukkan No HP (628xxx)</p>
+        <input type="number" id="inputNoHP" placeholder="628XXXXXXXX">
+        <div class="modal-footer" style="display: flex; gap: 10px; margin-top: 15px;">
+          <button onclick="closePopup('popupCekPoin')" class="btn-secondary" style="flex:1;">BATAL</button>
+          <button onclick="checkMember()" class="btn-primary" style="flex:1;">CEK POIN</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<div id="popupDaftar" class="modal">
-  <div class="modal-content">
-    <h3>📝 Daftar Member</h3>
-    <hr>
-    <input type="text" id="regNama" placeholder="Nama Lengkap">
-    <input type="text" id="regNoHP" readonly>
-    <div class="modal-footer">
-      <button onclick="closePopup('popupDaftar')" class="btn-secondary">BATAL</button>
-      <button onclick="registerMember()" class="btn-primary">SIMPAN</button>
+    <div id="popupDaftar" class="modal">
+      <div class="modal-content">
+        <h3>📝 Daftar Member</h3>
+        <hr>
+        <input type="text" id="regNama" placeholder="Nama Lengkap" style="margin-bottom: 10px;">
+        <input type="text" id="regNoHP" readonly style="background: #f0f0f0;">
+        <div class="modal-footer" style="display: flex; gap: 10px; margin-top: 15px;">
+          <button onclick="closePopup('popupDaftar')" class="btn-secondary" style="flex:1;">BATAL</button>
+          <button onclick="registerMember()" class="btn-primary" style="flex:1;">SIMPAN</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-<div class="action-buttons">
-    <div id="btnVoucher" title="Pakai Voucher" onclick="openPopup('popupVoucher')">🎟️</div>
-    
-    <button id="btnPoin" onclick="openPopup('popupCekPoin')">🪙 CEK POIN</button>
-</div>
+
+    <div class="action-buttons">
+        <div id="btnVoucher" title="Pakai Voucher" onclick="openPopup('popupVoucher')">🎟️</div>
+        <button id="btnPoin" onclick="openPopup('popupCekPoin')">🪙 CEK POIN</button>
+    </div>
+
 </body>
 </html>
