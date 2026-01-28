@@ -176,113 +176,91 @@
 
         #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; backdrop-filter: blur(2px); }
 
-/* === BOTTOM BAR === */
-.bottom-bar { 
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: white;
-    padding: 12px 20px 25px;
-    border-radius: 25px 25px 0 0;
-    box-shadow: 0 -8px 25px rgba(0,0,0,0.08);
-    z-index: 1000;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-}
+        .bottom-bar { 
+            position: fixed; bottom: 0; left: 0; right: 0; background: white; 
+            padding: 12px 20px 25px; border-radius: 25px 25px 0 0; 
+            box-shadow: 0 -8px 25px rgba(0,0,0,0.08); z-index: 1000; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        
+        .swipe-hint {
+            position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: white; padding: 3px 10px; border-radius: 15px;
+            font-size: 9px; font-weight: 700; display: none;
+        }
 
-/* Swipe hint */
-.swipe-hint {
-    position: absolute;
-    top: -18px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--primary);
-    color: white;
-    padding: 3px 10px;
-    border-radius: 15px;
-    font-size: 9px;
-    font-weight: 700;
-    display: none;
-}
-
-/* Price & info */
-.price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
-.dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
-.ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
-
-/* === ORDER BUTTON === */
-.order-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 12px;
-    font-weight: 800;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.order-btn:disabled { opacity: 0.5; }
-.order-btn:active { transform: scale(0.92); filter: brightness(1.2); transition: transform 0.1s ease; }
-
-/* === MODAL === */
-.modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 10001;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-.modal-card {
-    background: white;
-    width: 100%;
-    max-width: 360px;
-    padding: 25px;
-    border-radius: 20px;
-    text-align: center;
-}
-
-/* Summary animation */
+        .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
+        .dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
+        .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
+        .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
+        .order-btn:disabled { opacity: 0.5; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: white; width: 100%; max-width: 360px; padding: 25px; border-radius: 20px; text-align: center; }
 .summary-item.removing {
     opacity: 0;
     transform: translateX(-20px);
     transition: all 0.25s ease;
 }
 
-/* Highlight teks */
+/* Efek stabilo kuning untuk teks yang cocok dengan pencarian */
 mark {
-    background-color: #FFEB3B;
+    background-color: #FFEB3B; /* Warna kuning stabilo */
     color: black;
     padding: 0 2px;
     border-radius: 2px;
     font-weight: 800;
 }
+/* Animasi tombol saat ditekan (Touch Effect) */
+.order-btn:active, .modal-card button:active {
+    transform: scale(0.92); /* Mengecil sedikit */
+    filter: brightness(1.2); /* Menjadi lebih terang */
+    transition: transform 0.1s ease;
+}
 
-/* === SERVICE BUTTONS (SUPER-APP GRID STYLE) === */
+/* Tambahan agar transisi kembali ke ukuran normal tidak kaku */
+.order-btn {
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Animasi Berdetak (Pulse) */
+@keyframes pulse-yellow {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
+}
+
+.pulse-attention {
+    animation: pulse-yellow 1s infinite;
+    border: 2px solid var(--accent) !important;
+    background: #FFFDE7 !important;
+}
+
+/* === SUPER-APP GRID STYLE (4 Tombol per Baris) === */
 .service-mode {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, 1fr); /* Otomatis membagi 4 kolom sama besar */
     gap: 12px;
     padding: 15px 12px;
     justify-items: center;
 }
+
 .service-btn {
     width: 100%;
-    max-width: 80px;
+    max-width: 80px; /* Lebar maksimal tombol agar tidak kebesaran */
     display: flex;
     flex-direction: column;
     align-items: center;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efek membal (bouncy) */
 }
+
+/* CONTAINER ICON */
 .service-btn .icon {
-    width: 65px;
+    width: 65px;  /* Ukuran icon besar ala Gojek */
     height: 65px;
     background: #FFFFFF;
-    border-radius: 20px;
+    border-radius: 20px; /* Rounded corner modern, bukan bulat sempurna */
     box-shadow: 0 10px 20px rgba(0,0,0,0.06);
     display: flex;
     align-items: center;
@@ -293,12 +271,15 @@ mark {
     transition: all 0.3s ease;
     animation: floatIcon 3s ease-in-out infinite;
 }
+
 .service-icon-img {
-    width: 75%;
+    width: 75%;  /* Gambar besar dan jelas */
     height: 75%;
     object-fit: contain;
     transition: transform 0.3s ease;
 }
+
+/* TEKS DI BAWAH ICON */
 .service-btn span {
     font-size: 10px;
     font-weight: 800;
@@ -308,45 +289,111 @@ mark {
     letter-spacing: -0.2px;
 }
 
-/* Active state */
+/* === EFEK AKTIF (STATE TERPILIH) === */
 .service-btn.active .icon {
     background: linear-gradient(135deg, #1B4332, #2D6A4F);
     box-shadow: 0 15px 25px rgba(27,67,50,0.3);
     transform: scale(1.1) translateY(-5px);
 }
-.service-btn.active .service-icon-img { filter: brightness(0) invert(1); transform: scale(1.1); }
-.service-btn.active span { color: var(--primary); font-weight: 900; }
 
-/* Secondary row (no float) */
-.service-btn.secondary .icon { animation: none; background: #fdfdfd; }
-.service-btn:active { transform: scale(0.9); }
-@keyframes floatIcon { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.service-btn.active .service-icon-img {
+    filter: brightness(0) invert(1); /* Ikon jadi putih saat aktif agar mewah */
+    transform: scale(1.1);
+}
 
-/* Disabled badges */
-.service-btn.disabled.too-far::after,
-.service-btn.disabled.too-close::after {
+.service-btn.active span {
+    color: var(--primary);
+    font-weight: 900;
+}
+
+/* === EFEK UNTUK BARIS KE-2 (SECONDARY) === */
+.service-btn.secondary .icon {
+    animation: none; /* Baris bawah tenang, tidak melayang */
+    background: #fdfdfd;
+}
+
+/* EFEK HOVER/TAP (MOBILE FRIENDLY) */
+.service-btn:active {
+    transform: scale(0.9);
+}
+
+/* ANIMASI MELAYANG HALUS */
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+/* Sembunyikan Ring untuk Baris 2 */
+.service-btn.secondary.active::after { display: none; }
+
+/* CONTAINER POSISI BADGE */
+.service-btn.disabled {
+    position: relative;
+}
+
+/* BADGE STYLE (DINE IN - Terlalu Jauh) */
+.service-btn.disabled.too-far::after {
+    content: "TERLALU JAUH";
     position: absolute;
     top: -5px;
-    left: 50%;
-    transform: translateX(-50%);
+    background: #e74c3c; /* Merah */
+    color: white;
     font-size: 7px;
     font-weight: 900;
     padding: 3px 6px;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
     white-space: nowrap;
     z-index: 10;
+    letter-spacing: 0.5px;
     border: 1.5px solid white;
 }
-.service-btn.disabled.too-far::after { content: "TERLALU JAUH"; background: #e74c3c; color: white; box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4); }
-.service-btn.disabled.too-close::after { content: "TERLALU DEKAT"; background: #f39c12; color: white; box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4); }
 
-/* Badge pop animation */
-@keyframes badgePop { 0% { transform: translateX(-50%) scale(0) translateY(10px); opacity:0; } 100% { transform: translateX(-50%) scale(1) translateY(0); opacity:1; } }
+/* BADGE STYLE (DELIVERY - Terlalu Dekat) */
+.service-btn.disabled.too-close::after {
+    content: "TERLALU DEKAT";
+    position: absolute;
+    top: -5px;
+    background: #f39c12; /* Oranye/Kuning */
+    color: white;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 3px 6px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4);
+    white-space: nowrap;
+    z-index: 10;
+    letter-spacing: 0.5px;
+    border: 1.5px solid white;
+}
 
-/* === FORM === */
-.form-group { margin-bottom: 8px; }
-.form-group label { font-size: 10px; font-weight: 700; margin-bottom: 3px; display: block; color: #777; }
+/* Update sedikit di bagian ini agar badge center */
+.service-btn.disabled.too-far::after,
+.service-btn.disabled.too-close::after {
+    left: 50%;
+    transform: translateX(-50%);
+    /* properti lainnya tetap sama */
+}
+
+/* Update animasi agar tetap center saat pop-up */
+@keyframes badgePop {
+    0% { transform: translateX(-50%) scale(0) translateY(10px); opacity: 0; }
+    100% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
+}
+
+/* === FORM EXTRA RINGKAS === */
+.form-group {
+    margin-bottom: 8px;
+}
+
+.form-group label {
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 3px;
+    display: block;
+    color: #777;
+}
+
 .form-group input,
 .form-group textarea {
     width: 100%;
@@ -356,73 +403,42 @@ mark {
     border: 1px solid #E2E2E2;
     background: #FFFFFF;
 }
-.form-group textarea { resize: none; }
+
+/* textarea alamat jangan tinggi */
+.form-group textarea {
+    resize: none;
+}
+
+/* fokus tetap kelihatan */
 .form-group input:focus,
-.form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15); }
-
-/* === VOUCHER CONTAINER (MODERN FULL-WIDTH) === */
-.voucher-container {
-    display: flex;
-    align-items: center;
-    background: #F8F9FA; /* Abu-abu ultra light agar terlihat bersih */
-    border: 1px solid #EAEAEA;
-    border-radius: 12px;
-    padding: 2px 4px 2px 12px; /* Dibuat lebih slim/tipis */
-    margin-bottom: 5px; /* Jarak ke kolom harga */
-    width: 100%; /* Memanjang penuh sesuai idemu */
-    transition: all 0.3s ease;
-}
-
-/* Efek saat fokus diketik */
-.voucher-container:focus-within {
-    border-color: var(--primary);
-    background: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.voucher-icon {
-    font-size: 16px;
-    margin-right: 8px;
-    opacity: 0.6;
-}
-
-input#vouchCode {
-    flex: 1;
-    border: none !important;
-    background: transparent !important;
-    font-size: 12px !important;
-    font-weight: 700;
-    color: var(--text);
-    padding: 8px 0;
-    text-transform: uppercase; /* Otomatis kapital biar rapi */
+.form-group textarea:focus {
     outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
 }
 
-input#vouchCode::placeholder {
-    color: #ADB5BD;
-    text-transform: none;
-    font-weight: 500;
+/* Atur gambar agar pas di dalam kontainer tanpa merusak layout */
+.service-icon-img {
+    width: 130%;
+    height: 130%;
+    object-fit: contain; /* Gambar akan mengecil secara proporsional */
+
+/* Tambahan agar gambar tidak berubah warna jadi putih saat aktif (jika menggunakan PNG transparan) */
+.service-btn.active .service-icon-img {
+    /* Jika gambar Anda berwarna hitam dan ingin jadi putih saat aktif, gunakan filter: */
+    /* filter: brightness(0) invert(1); */
 }
 
-.btn-apply-vouch {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: 0.2s;
+/* Membuat gambar menjadi putih saat tombol aktif */
+.service-btn.active .service-icon-img {
+    filter: brightness(0) invert(1);
 }
 
-.btn-apply-vouch:active {
-    transform: scale(0.95);
+/* Membuat gambar menjadi abu-abu saat tombol mati (disabled) */
+.service-btn.disabled .service-icon-img {
+    filter: grayscale(1);
+    opacity: 0.5;
 }
-
-/* Price total row */
-.price-total-row { display: flex; flex-direction: column; padding-left: 1px; }
-
     </style>
 </head>
 <body>
@@ -546,28 +562,14 @@ input#vouchCode::placeholder {
     <div class="summary-scroll" id="summaryItems"></div>
 </div>
 
-<div class="bottom-bar">
-    <div class="swipe-hint" id="swipeInd" onclick="toggleSummary(true)" style="display:none;">
-        LIHAT RINCIAN PESANAN ▴
+<div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
+    <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
+    <div>
+        <div id="dist-info" class="dist-info"></div>
+        <div id="ongkir-label" class="ongkir-tag"></div>
+        <div class="price-total">Rp <span id="miniPrice">0</span></div>
     </div>
-    
-    <div class="voucher-container">
-        <span class="voucher-icon">🎟️</span>
-        <input type="text" id="vouchCode" placeholder="Punya kode promo?" autocomplete="off">
-        <button class="btn-apply-vouch" onclick="applyVoucher()">KLAIM</button>
-    </div>
-
-    <div class="bottom-main-row">
-        <div class="price-total-row">
-            <div id="dist-info" class="dist-info" style="display:none;"></div>
-            <div id="ongkir-label" class="ongkir-tag" style="display:none;"></div>
-            <div class="price-total">Rp <span id="miniPrice">0</span></div>
-        </div>
-        
-        <button class="order-btn" id="btnOrder" onclick="openModal()" disabled>
-            PESAN SEKARANG
-        </button>
-    </div>
+    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
@@ -584,7 +586,7 @@ input#vouchCode::placeholder {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycby5oOTjdB14FAd5LocitKTK4ewkDPUovcygC2R5qCcvQYtK6jBiAmDudLLTFvbDAWNE/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwmsL1frpP-vnwymYKFpYKR-C4SyasJpgAmxmTIvK0eVbBLIQggRL9nl2k8UwLXYw-P7A/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
