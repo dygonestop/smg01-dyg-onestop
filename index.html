@@ -6,6 +6,19 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
+body { 
+    margin: 0; 
+    padding: 0; 
+    background: var(--bg); 
+    font-family: 'Inter', sans-serif; 
+    color: var(--text); 
+    overflow-x: hidden;
+    /* Tambahkan ini agar di laptop tetap terlihat seperti HP */
+    max-width: 500px; 
+    margin: 0 auto; 
+    min-height: 100vh;
+    box-shadow: 0 0 50px rgba(0,0,0,0.05);
+}
         :root { 
             --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
             --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
@@ -275,12 +288,20 @@ mark {
     animation: floatIcon 3s ease-in-out infinite;
 }
 
+/* Atur gambar agar pas di dalam kontainer tanpa merusak layout */
 .service-icon-img {
-    width: 75%;  /* Gambar besar dan jelas */
-    height: 75%;
-    object-fit: contain;
-    transition: transform 0.3s ease;
+    width: 130%;
+    height: 130%;
+    object-fit: contain; /* Gambar akan mengecil secara proporsional */
+transition: transform 0.3s ease;
 }
+
+/* Membuat gambar menjadi abu-abu saat tombol mati (disabled) */
+.service-btn.disabled .service-icon-img {
+    filter: grayscale(1);
+    opacity: 0.5;
+}
+
 
 /* TEKS DI BAWAH ICON */
 .service-btn span {
@@ -350,6 +371,8 @@ mark {
     z-index: 10;
     letter-spacing: 0.5px;
     border: 1.5px solid white;
+left: 50%;
+    transform: translateX(-50%);
 }
 
 /* BADGE STYLE (DELIVERY - Terlalu Dekat) */
@@ -368,14 +391,8 @@ mark {
     z-index: 10;
     letter-spacing: 0.5px;
     border: 1.5px solid white;
-}
-
-/* Update sedikit di bagian ini agar badge center */
-.service-btn.disabled.too-far::after,
-.service-btn.disabled.too-close::after {
-    left: 50%;
+left: 50%;
     transform: translateX(-50%);
-    /* properti lainnya tetap sama */
 }
 
 /* Update animasi agar tetap center saat pop-up */
@@ -418,30 +435,6 @@ mark {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
-}
-
-/* Atur gambar agar pas di dalam kontainer tanpa merusak layout */
-.service-icon-img {
-    width: 130%;
-    height: 130%;
-    object-fit: contain; /* Gambar akan mengecil secara proporsional */
-}
-
-/* Tambahan agar gambar tidak berubah warna jadi putih saat aktif (jika menggunakan PNG transparan) */
-.service-btn.active .service-icon-img {
-    /* Jika gambar Anda berwarna hitam dan ingin jadi putih saat aktif, gunakan filter: */
-    /* filter: brightness(0) invert(1); */
-}
-
-/* Membuat gambar menjadi putih saat tombol aktif */
-.service-btn.active .service-icon-img {
-    filter: brightness(0) invert(1);
-}
-
-/* Membuat gambar menjadi abu-abu saat tombol mati (disabled) */
-.service-btn.disabled .service-icon-img {
-    filter: grayscale(1);
-    opacity: 0.5;
 }
 
 /* Style untuk Tombol Hamburger Lingkaran */
