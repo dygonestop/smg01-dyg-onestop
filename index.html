@@ -709,11 +709,14 @@ mark {
     function closeModal() { closePopup('modalConfirm'); }
     function openComingSoon() { openPopup('modalComingSoon'); }
 
-    window.onclick = function(event) {
-        if (event.target.classList.contains('modal') || event.target.classList.contains('modal-overlay')) {
-            event.target.style.display = 'none';
-        }
+ window.onclick = function(event) {
+    // Hanya tutup jika yang diklik adalah latar belakang modal, 
+    // dan pastikan yang diklik BUKAN bagian dari bottom-bar
+    if ((event.target.classList.contains('modal') || event.target.classList.contains('modal-overlay')) && 
+        !event.target.closest('.bottom-bar')) {
+        event.target.style.display = 'none';
     }
+}
 
     // --- LOGIKA MEMBER & VOUCHER ---
     async function checkMember() {
