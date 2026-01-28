@@ -360,28 +360,30 @@ mark {
 .form-group input:focus,
 .form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15); }
 
-/* === VOUCHER CONTAINER (MODERN & SLEEK) === */
+/* === VOUCHER CONTAINER (MODERN FULL-WIDTH) === */
 .voucher-container {
     display: flex;
     align-items: center;
-    background: #F8F9FA; /* Warna abu sangat muda agar bersih */
-    border: 1px solid #E0E0E0;
+    background: #F8F9FA; /* Abu-abu ultra light agar terlihat bersih */
+    border: 1px solid #EAEAEA;
     border-radius: 12px;
-    padding: 4px 6px 4px 12px;
-    margin-bottom: 12px;
+    padding: 2px 4px 2px 12px; /* Dibuat lebih slim/tipis */
+    margin-bottom: 5px; /* Jarak ke kolom harga */
+    width: 100%; /* Memanjang penuh sesuai idemu */
     transition: all 0.3s ease;
 }
 
+/* Efek saat fokus diketik */
 .voucher-container:focus-within {
-    border-color: var(--accent);
+    border-color: var(--primary);
     background: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .voucher-icon {
     font-size: 16px;
     margin-right: 8px;
-    filter: grayscale(1); /* Membuat ikon lebih kalem */
+    opacity: 0.6;
 }
 
 input#vouchCode {
@@ -389,28 +391,29 @@ input#vouchCode {
     border: none !important;
     background: transparent !important;
     font-size: 12px !important;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text);
-    padding: 6px 0;
-    text-transform: uppercase;
+    padding: 8px 0;
+    text-transform: uppercase; /* Otomatis kapital biar rapi */
+    outline: none;
 }
 
 input#vouchCode::placeholder {
-    color: #AAA;
+    color: #ADB5BD;
     text-transform: none;
-    font-weight: 400;
+    font-weight: 500;
 }
 
 .btn-apply-vouch {
-    background: var(--primary); /* Menggunakan warna hijau utama agar senada */
+    background: var(--primary);
     color: white;
     border: none;
-    padding: 6px 14px;
-    border-radius: 8px;
+    padding: 8px 14px;
+    border-radius: 10px;
     font-size: 11px;
     font-weight: 800;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: 0.2s;
 }
 
 .btn-apply-vouch:active {
@@ -418,7 +421,7 @@ input#vouchCode::placeholder {
 }
 
 /* Price total row */
-.price-total-row { display: flex; flex-direction: column; padding-left: 2px; }
+.price-total-row { display: flex; flex-direction: column; padding-left: 1px; }
 
     </style>
 </head>
@@ -543,26 +546,28 @@ input#vouchCode::placeholder {
     <div class="summary-scroll" id="summaryItems"></div>
 </div>
 
-<div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
-    <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
-
-<div class="bottom-content" onclick="event.stopPropagation();">
+<div class="bottom-bar">
+    <div class="swipe-hint" id="swipeInd" onclick="toggleSummary(true)" style="display:none;">
+        LIHAT RINCIAN PESANAN ▴
+    </div>
+    
     <div class="voucher-container">
         <span class="voucher-icon">🎟️</span>
         <input type="text" id="vouchCode" placeholder="Punya kode promo?" autocomplete="off">
         <button class="btn-apply-vouch" onclick="applyVoucher()">KLAIM</button>
     </div>
 
-    <div class="price-total-row">
-        <div id="dist-info" class="dist-info"></div>
-        <div id="ongkir-label" class="ongkir-tag"></div>
-        <div class="price-total">Rp <span id="miniPrice">0</span></div>
+    <div class="bottom-main-row">
+        <div class="price-total-row">
+            <div id="dist-info" class="dist-info" style="display:none;"></div>
+            <div id="ongkir-label" class="ongkir-tag" style="display:none;"></div>
+            <div class="price-total">Rp <span id="miniPrice">0</span></div>
+        </div>
+        
+        <button class="order-btn" id="btnOrder" onclick="openModal()" disabled>
+            PESAN SEKARANG
+        </button>
     </div>
-</div>
-
-    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>
-        PESAN
-    </button>
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
