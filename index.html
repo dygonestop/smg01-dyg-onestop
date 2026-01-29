@@ -565,27 +565,19 @@ function closeVoucherPrompt() {
 }
 
 function checkVoucherCode() {
-    const code = document.getElementById('voucherCodeInput').value.trim().toUpperCase();
+    const input = document.getElementById('voucherCodeInput').value.trim().toUpperCase();
     
-    if (cart.length === 0) {
-        alert("Pilih menu terlebih dahulu sebelum menggunakan voucher.");
-        return;
-    }
-
-    if (validCodes[code]) {
-        appliedVoucher = { 
-            code: code, 
-            discount: validCodes[code].value, 
-            type: validCodes[code].type 
-        };
-        alert("Selamat! Kode " + code + " berhasil dipasang.");
+    if (databaseVoucher[input]) {
+        appliedVoucher = databaseVoucher[input]; // Simpan voucher ke sistem
+        appliedVoucher.code = input; // Simpan namanya juga
+        
+        alert("Klaim Berhasil! Voucher " + input + " telah terpasang.");
         closeVoucherPrompt();
-        refreshUI();
+        refreshUI(); // Langsung update tampilan
     } else {
-        alert("Maaf, kode voucher tidak valid atau sudah kadaluarsa.");
+        alert("Maaf, kode voucher tidak valid.");
     }
 }
-
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
@@ -793,20 +785,22 @@ function renderMenu(filterKat = 'ALL') {
     const ongEl = document.getElementById('ongkir-label');
     const priceEl = document.getElementById('miniPrice');
 
+    // --- LOGIKA OTOMATIS HARGA ---
+    let ongkir = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
+    let diskonNominal = 0;
+
+    if (appliedVoucher) {
+        if (appliedVoucher.tipe === "NOMINAL") {
+            diskonNominal = appliedVoucher.potongan;
+        } else if (appliedVoucher.tipe === "ONGKIR") {
+            diskonNominal = ongkir;
+        }
+    }
+
     if (subtotal > 0) {
         sInd.style.display = 'block';
-        let ongkir = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
         
-        // --- LOGIKA HITUNG VOUCHER ---
-        let diskonNominal = 0;
-        if (appliedVoucher) {
-            if (appliedVoucher.tipe === "NOMINAL") {
-                diskonNominal = appliedVoucher.potongan;
-            } else if (appliedVoucher.tipe === "ONGKIR") {
-                diskonNominal = ongkir;
-            }
-        }
-
+        // Rumus: (Harga Menu + Ongkir) - Diskon
         let totalAkhir = (subtotal + ongkir) - diskonNominal;
         if (totalAkhir < 0) totalAkhir = 0;
         
@@ -819,16 +813,15 @@ function renderMenu(filterKat = 'ALL') {
             distEl.style.display = 'none';
         }
 
-        // --- VISUAL TEKS MERAH VOUCHER ---
+        // --- VISUAL TEKS MERAH ---
         if (appliedVoucher) {
             ongEl.style.display = 'block';
-            ongEl.style.color = 'var(--danger)'; // Warna Merah
-            ongEl.style.fontWeight = 'bold';
-            ongEl.innerText = `- Potongan Voucher Rp ${diskonNominal.toLocaleString('id-ID')}`;
+            ongEl.style.color = 'var(--danger)';
+            ongEl.style.fontWeight = '800';
+            ongEl.innerText = `Voucher ${appliedVoucher.code}: -Rp ${diskonNominal.toLocaleString('id-ID')}`;
         } else if (currentMode === 'DELIVERY') {
             ongEl.style.display = 'block';
-            ongEl.style.color = 'var(--text)';
-            ongEl.style.fontWeight = 'normal';
+            ongEl.style.color = 'var(--muted)';
             ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
         } else {
             ongEl.style.display = 'none';
@@ -837,13 +830,13 @@ function renderMenu(filterKat = 'ALL') {
         document.getElementById('btnOrder').disabled = false;
         document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
     } else {
+        // Jika keranjang kosong, harga tetap 0 tapi voucher tetap tersimpan
         sInd.style.display = 'none';
         distEl.style.display = 'none';
         ongEl.style.display = 'none';
         priceEl.innerText = "0";
         document.getElementById('btnOrder').disabled = true;
         document.getElementById('btnOrder').innerText = 'PILIH MENU';
-        appliedVoucher = null; // Reset voucher jika keranjang kosong
         toggleSummary(false);
     }
     updateOrderSummary();
