@@ -429,7 +429,7 @@ mark {
         <div onclick="toggleMenuDropdown()" style="cursor:pointer; padding: 5px; font-size: 20px;">☰</div>
         
         <div id="menuDropdown" style="display:none; position:absolute; top:35px; left:0; background:white; color:black; border-radius:12px; width:150px; box-shadow:0 8px 20px rgba(0,0,0,0.2); z-index:2000; overflow:hidden;">
-            <div onclick="openVoucherModal()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
+            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
@@ -546,43 +546,7 @@ mark {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// Tambahkan di bagian atas script bersama variabel lainnya
-let activeDiscount = 0;
-let claimedVoucherName = "";
-
-// Fungsi untuk membuka modal voucher
-function openVoucherPrompt() {
-    toggleMenuDropdown(); // Tutup hamburger menu
-    document.getElementById('modalVoucher').style.display = 'flex';
-    document.getElementById('voucherCode').value = "";
-}
-
-function closeVoucher() {
-    document.getElementById('modalVoucher').style.display = 'none';
-}
-
-function claimVoucher() {
-    const code = document.getElementById('voucherCode').value.toUpperCase().trim();
-    
-    // Logika Voucher (Bisa Anda tambah sendiri kodenya di sini)
-    if (code === "HEMAT5K") {
-        activeDiscount = 5000;
-        claimedVoucherName = "HEMAT5K";
-    } else if (code === "DYG++") {
-        activeDiscount = 10000;
-        claimedVoucherName = "DYG++";
-    } else if (code === "") {
-        alert("Masukkan kode voucher terlebih dahulu!");
-        return;
-    } else {
-        alert("Yah, kode voucher tidak valid!");
-        return;
-    }
-
-    alert(`🎉 Berhasil! Voucher ${claimedVoucherName} senilai Rp ${activeDiscount.toLocaleString()} telah terpasang.`);
-    closeVoucher();
-    refreshUI(); // Update tampilan harga seketika
-}
+   // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
         WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwmsL1frpP-vnwymYKFpYKR-C4SyasJpgAmxmTIvK0eVbBLIQggRL9nl2k8UwLXYw-P7A/exec',
@@ -768,71 +732,54 @@ function renderMenu(filterKat = 'ALL') {
     }
 
     function refreshUI() {
-    let subtotal = 0; 
-    const counts = {};
-    cart.forEach(c => { 
-        subtotal += (c.harga + (c.ex || 0)); 
-        counts[c.id] = (counts[c.id] || 0) + 1; 
-    });
+        let subtotal = 0; 
+        const counts = {};
+        cart.forEach(c => { 
+            subtotal += (c.harga + (c.ex || 0)); 
+            counts[c.id] = (counts[c.id] || 0) + 1; 
+        });
 
-    menuData.forEach(m => {
-        const el = document.getElementById(`qty-${m.id}`);
-        if(el) {
-            const val = counts[m.id] || 0;
-            el.innerText = val;
-            el.previousElementSibling.disabled = val === 0;
-        }
-    });
+        menuData.forEach(m => {
+            const el = document.getElementById(`qty-${m.id}`);
+            if(el) {
+                const val = counts[m.id] || 0;
+                el.innerText = val;
+                el.previousElementSibling.disabled = val === 0;
+            }
+        });
 
-    const sInd = document.getElementById('swipeInd');
-    const distEl = document.getElementById('dist-info');
-    const ongEl = document.getElementById('ongkir-label');
-    const priceEl = document.getElementById('miniPrice');
+        const sInd = document.getElementById('swipeInd');
+        const distEl = document.getElementById('dist-info');
+        const ongEl = document.getElementById('ongkir-label');
+        const priceEl = document.getElementById('miniPrice');
 
-    if (subtotal > 0) {
-        sInd.style.display = 'block';
-        let ongkir = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
-        
-        // HITUNG TOTAL AKHIR
-        let totalAkhir = (subtotal + ongkir) - activeDiscount;
-        if (totalAkhir < 0) totalAkhir = 0; // Jangan sampai minus
-
-        // Visualisasi Potongan Harga
-        let visualPrice = "";
-        if (activeDiscount > 0) {
-            visualPrice = `<span style="text-decoration: line-through; color: #999; font-size: 12px; margin-right: 5px;">Rp ${(subtotal + ongkir).toLocaleString('id-ID')}</span>`;
-            ongEl.innerHTML = `<span style="color:var(--accent)">Voucher -Rp ${activeDiscount.toLocaleString('id-ID')}</span>`;
-            ongEl.style.display = 'block';
-        } else if (currentMode === 'DELIVERY') {
-            ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
-            ongEl.style.display = 'block';
+        if (subtotal > 0) {
+            sInd.style.display = 'block';
+            if (currentMode === 'DELIVERY') {
+                let ongkir = calculateOngkir(userDist);
+                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+                distEl.style.display = 'block';
+                distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
+                ongEl.style.display = 'block';
+                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+            } else {
+                priceEl.innerText = subtotal.toLocaleString('id-ID');
+                distEl.style.display = 'none';
+                ongEl.style.display = 'none';
+            }
+            document.getElementById('btnOrder').disabled = false;
+            document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
         } else {
-            ongEl.style.display = 'none';
-        }
-
-        const totalTampil = (subtotal + ongkir) - activeDiscount;
-priceEl.innerHTML = `${activeDiscount > 0 ? '<span style="text-decoration:line-through; color:#999; font-size:12px;">Rp ' + (subtotal + ongkir).toLocaleString('id-ID') + '</span> ' : ''}${totalTampil.toLocaleString('id-ID')}`;
-        
-        if (currentMode === 'DELIVERY') {
-            distEl.style.display = 'block';
-            distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
-        } else {
+            sInd.style.display = 'none';
             distEl.style.display = 'none';
+            ongEl.style.display = 'none';
+            priceEl.innerText = "0";
+            document.getElementById('btnOrder').disabled = true;
+            document.getElementById('btnOrder').innerText = 'PILIH MENU';
+            toggleSummary(false); // Tutup rincian jika item habis
         }
-
-        document.getElementById('btnOrder').disabled = false;
-        document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
-    } else {
-        sInd.style.display = 'none';
-        distEl.style.display = 'none';
-        ongEl.style.display = 'none';
-        priceEl.innerText = "0";
-        document.getElementById('btnOrder').disabled = true;
-        document.getElementById('btnOrder').innerText = 'PILIH MENU';
-        toggleSummary(false);
+        updateOrderSummary();
     }
-    updateOrderSummary();
-}
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
@@ -876,12 +823,15 @@ priceEl.innerHTML = `${activeDiscount > 0 ? '<span style="text-decoration:line-t
     }
 
     async function submitOrder() {
-    // 1. VALIDASI: Cek apakah sudah pilih mode?
-
+    // VALIDASI: Cek apakah sudah pilih mode?
     if (!currentMode) {
         closeModal();
         alert("Mohon pilih layanan terlebih dahulu (Dine In, Take Away, atau Delivery)");
+        
+        // Scroll ke atas agar tombol layanan terlihat
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Beri efek getar/pulse pada tombol layanan yang aktif/tersedia
         document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
             el.classList.add('shake-ani');
             el.style.border = "2px solid var(--accent)";
@@ -893,22 +843,23 @@ priceEl.innerHTML = `${activeDiscount > 0 ? '<span style="text-decoration:line-t
         return; 
     }
 
-    // 2. VALIDASI NAMA/MEJA/ALAMAT
+    // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
     if (navigator.vibrate) navigator.vibrate(50);
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
-    const noAntrean = document.getElementById('noAntrean').innerText;
-    const tglK = document.getElementById('tglKatering')?.value || '';
+const noAntrean = document.getElementById('noAntrean').innerText;
+    const tglK = document.getElementById('tglKatering')?.value || ''; // Tambahkan ini
 
+    // Validasi input kosong (Nama, Meja, atau Alamat)
     const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
     cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
 
     let targetEl = null;
     if (!nI.value.trim()) targetEl = nI;
     else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
-    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
-    else if (currentMode === 'KATERING' && !tglK) targetEl = document.getElementById('tglKatering');
+else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+    else if (currentMode === 'KATERING' && !document.getElementById('tglKatering').value) targetEl = document.getElementById('tglKatering'); // Tambahkan ini
 
     if (targetEl) {
         const targetCard = targetEl.closest('.input-card');
@@ -919,65 +870,67 @@ priceEl.innerHTML = `${activeDiscount > 0 ? '<span style="text-decoration:line-t
         return; 
     }
 
-    // --- 3. HITUNG LOGIKA MATEMATIS (Mencegah Harga Tumpuk) ---
-    let subtotalMenu = 0;
+    // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
     const summary = {};
-    
     cart.forEach(c => {
         let label = c.nama;
         let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
         if(tags) label += ` [${tags}]`;
+        const itemKey = label;
         const itemPrice = c.harga + (c.ex || 0);
         
-        subtotalMenu += itemPrice; // Hitung total murni
-
-        if (!summary[label]) {
-            summary[label] = { qty: 0, pricePerItem: itemPrice };
+        if (!summary[itemKey]) {
+            summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
         }
-        summary[label].qty++;
+        summary[itemKey].qty++;
     });
 
     const pRowsWA = Object.entries(summary).map(([name, data]) => 
         `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
     );
 
-const subtotalHanyaMenu = cart.reduce((sum, c) => sum + (c.harga + (c.ex || 0)), 0);
+    // --- 3. Hitung Data & Link Lokasi ---
+    const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
-    const totalSebelumDiskon = subtotalHanyaMenu + ongkirVal;
-    const totalAkhirBayar = totalSebelumDiskon - activeDiscount;
+    const finalPrice = document.getElementById('miniPrice').innerText;
+    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
 
-    // --- 4. SUSUN FORMAT PESAN WHATSAPP ---
+    // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
-    msg += `👤 *Nama:* ${document.getElementById('custName').value}\n`;
-    msg += `🔢 *ANTREAN: ${document.getElementById('noAntrean').innerText}*\n`;
+    msg += `👤 *Nama:* ${nI.value}\n`;
+    msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
     msg += `━━━━━━━━━━━━━━\n`;
 
     if (currentMode === 'DINE IN') {
-        msg += `🪑 *Nomor Meja:* ${document.getElementById('tableNo').value}\n`;
+        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
     } else {
-        msg += `🏠 *Alamat:* ${document.getElementById('addressDetail').value}\n`;
-        if (currentMode === 'KATERING') msg += `📅 *Tanggal Kirim:* ${document.getElementById('tglKatering').value}\n`;
-        msg += `🌐 *Lokasi:* http://maps.google.com/?q=${window.userLat},${window.userLng}\n`;
-        msg += `🛵 *Ongkir:* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
+        msg += `🏠 *Alamat:* ${aI.value}\n`;
+        // TAMBAHKAN KODE INI DI SINI
+        if (currentMode === 'KATERING') {
+            msg += `📅 *Tanggal Kirim:* ${tglK}\n`;
+        }
+        // -------------------------
+        msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
+        msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
     }
 
-    msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`; // pRowsWA diambil dari logika item looping
+    msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
     
-    if (activeDiscount > 0) {
-        msg += `\n🎁 *Voucher (${claimedVoucherName}):* -Rp ${activeDiscount.toLocaleString('id-ID')}\n`;
-    }
-
     const catatan = document.getElementById('orderNote').value || '-';
     msg += `\n*CATATAN:* ${catatan}\n`;
-    msg += `*TOTAL BAYAR: Rp ${totalAkhirBayar.toLocaleString('id-ID')}*\n\n`;
+    msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
     
     msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
     msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
     msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
     msg += `Terimakasih!`;
 
-    // --- 5. ANIMASI & KIRIM ---
+    // --- 5. Animasi Feedback Tombol & Pengiriman ---
+    // Memicu getar halus saat klik
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    // Mengubah tombol menjadi loading
     const btnKirim = document.querySelector('#modalConfirm button:last-child');
     if (btnKirim) {
         btnKirim.innerHTML = "⌛ Menghubungkan...";
@@ -985,10 +938,11 @@ const subtotalHanyaMenu = cart.reduce((sum, c) => sum + (c.harga + (c.ex || 0)),
         btnKirim.style.pointerEvents = "none";
     }
 
-    // Kirim data ke database
+    // Kirim data ke database di latar belakang
     const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${totalAkhirBayar}`, { mode: 'no-cors' });
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
 
+    // Tunggu animasi sebentar baru pindah ke WA
     setTimeout(() => {
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
@@ -1129,21 +1083,6 @@ function changeMode(m, el) {
         </button>
     </div>
 </div>
-<div id="modalVoucherPrompt" class="modal-overlay">
-    <div class="modal-card">
-        <div style="font-size: 40px; margin-bottom: 10px;">🎟️</div>
-        <h3 style="font-weight: 900; margin-bottom: 5px;">Punya Kode Voucher?</h3>
-        <p style="font-size: 12px; color: var(--muted); margin-bottom: 20px;">Masukkan kode unik yang Anda terima melalui email.</p>
-        
-        <div class="input-card" style="border: 2px solid #eee; margin-bottom: 20px;">
-            <input type="text" id="voucherCodeInput" placeholder="Contoh: DISKON5K" style="text-align: center; text-transform: uppercase; font-weight: 800; font-size: 16px;">
-        </div>
 
-        <div style="display: flex; gap: 8px;">
-            <button onclick="closeVoucherPrompt()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700;">Batal</button>
-            <button onclick="checkVoucherCode()" style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700;">Klaim</button>
-        </div>
-    </div>
-</div>
 </body>
 </html>
