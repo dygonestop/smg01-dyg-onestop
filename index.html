@@ -430,7 +430,7 @@ mark {
         
         <div id="menuDropdown" style="display:none; position:absolute; top:35px; left:0; background:white; color:black; border-radius:12px; width:150px; box-shadow:0 8px 20px rgba(0,0,0,0.2); z-index:2000; overflow:hidden;">
             <div onclick="openVoucher()" style="padding:12px;font-size:13px;font-weight:700;border-bottom:1px solid #eee;">
-    🎫 Voucher
+ 🎫 Voucher
 </div>
            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
@@ -561,6 +561,27 @@ const VOUCHERS = {
     "VOUCHER10": { type: "flat", value: 10000 },
     "VOUCHER20": { type: "percent", value: 20 }
 };
+function openVoucher() {
+    document.getElementById('menuDropdown').style.display = 'none';
+    document.getElementById('voucherModal').style.display = 'flex';
+}
+
+function closeVoucher() {
+    document.getElementById('voucherModal').style.display = 'none';
+}
+
+function applyVoucher() {
+    const code = document.getElementById('voucherInput').value.trim().toUpperCase();
+    if (!VOUCHERS[code]) {
+        alert("Kode voucher tidak valid");
+        return;
+    }
+
+    appliedVoucher = code;
+    calculateVoucher();
+    closeVoucher();
+    refreshUI();
+}
 
 
    // Ubah bagian ini di awal script Anda
@@ -596,27 +617,6 @@ window.onclick = function(event) {
             dropdown.style.display = 'none';
         }
     }
-}
-function openVoucher() {
-    document.getElementById('menuDropdown').style.display = 'none';
-    document.getElementById('voucherModal').style.display = 'flex';
-}
-
-function closeVoucher() {
-    document.getElementById('voucherModal').style.display = 'none';
-}
-
-function applyVoucher() {
-    const code = document.getElementById('voucherInput').value.trim().toUpperCase();
-    if (!VOUCHERS[code]) {
-        alert("Kode voucher tidak valid");
-        return;
-    }
-
-    appliedVoucher = code;
-    calculateVoucher();
-    closeVoucher();
-    refreshUI();
 }
 
 async function startApp() {
@@ -1148,28 +1148,38 @@ function changeMode(m, el) {
         </button>
     </div>
 </div>
+<!-- === MODAL VOUCHER === -->
 <div id="voucherModal" class="modal-overlay">
-    <div class="modal-card">
-        <h3 style="font-weight:900;margin-bottom:5px;">🎫 Klaim Voucher</h3>
-        <p style="font-size:12px;color:#777;margin-bottom:15px;">
-            Fitur ini masih dalam pengembangan, tapi kamu boleh coba 😄
-        </p>
+  <div class="modal-card">
+    <h3 style="font-weight:900;margin-bottom:6px;">🎫 Klaim Voucher</h3>
+    <p style="font-size:12px;color:#777;margin-bottom:14px;">
+      Masukkan kode voucher promo
+    </p>
 
-        <input type="text" id="voucherInput"
-            placeholder="Masukkan kode voucher"
-            style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;font-size:13px;margin-bottom:12px;text-align:center;font-weight:800;">
+    <input 
+      id="voucherInput"
+      placeholder="Contoh: VOUCHER10"
+      style="
+        width:100%;
+        padding:12px;
+        font-size:14px;
+        border-radius:10px;
+        border:1.5px solid #ddd;
+        margin-bottom:14px;
+        font-weight:700;
+        text-align:center;
+      "
+    >
 
-        <div style="display:flex;gap:8px;">
-            <button onclick="closeVoucher()"
-                style="flex:1;padding:12px;border-radius:10px;border:none;background:#eee;font-weight:700;">
-                Batal
-            </button>
-            <button onclick="applyVoucher()"
-                style="flex:1;padding:12px;border-radius:10px;border:none;background:var(--primary);color:white;font-weight:800;">
-                Klaim
-            </button>
-        </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="closeVoucher()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#eee;font-weight:700;">
+        Batal
+      </button>
+      <button onclick="applyVoucher()" style="flex:1;padding:12px;border-radius:12px;border:none;background:var(--primary);color:white;font-weight:800;">
+        Terapkan
+      </button>
     </div>
+  </div>
 </div>
 
 </body>
