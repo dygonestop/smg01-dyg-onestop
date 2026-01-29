@@ -429,8 +429,10 @@ mark {
         <div onclick="toggleMenuDropdown()" style="cursor:pointer; padding: 5px; font-size: 20px;">☰</div>
         
         <div id="menuDropdown" style="display:none; position:absolute; top:35px; left:0; background:white; color:black; border-radius:12px; width:150px; box-shadow:0 8px 20px rgba(0,0,0,0.2); z-index:2000; overflow:hidden;">
-            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
-            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
+            <div onclick="openVoucher()" style="padding:12px;font-size:13px;font-weight:700;border-bottom:1px solid #eee;">
+    🎫 Voucher
+</div>
+           <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
         </div>
@@ -528,7 +530,13 @@ mark {
     <div>
         <div id="dist-info" class="dist-info"></div>
         <div id="ongkir-label" class="ongkir-tag"></div>
-        <div class="price-total">Rp <span id="miniPrice">0</span></div>
+        <div id="voucherInfo" style="font-size:9px;color:#D63031;font-weight:900;display:none;">
+    − Voucher
+</div>
+<div class="price-total">
+    Rp <span id="miniPrice">0</span>
+</div>
+
     </div>
     <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
 </div>
@@ -546,6 +554,15 @@ mark {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+let appliedVoucher = null;
+let voucherDiscount = 0;
+
+const VOUCHERS = {
+    "VOUCHER10": { type: "flat", value: 10000 },
+    "VOUCHER20": { type: "percent", value: 20 }
+};
+
+
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
@@ -579,6 +596,27 @@ window.onclick = function(event) {
             dropdown.style.display = 'none';
         }
     }
+}
+function openVoucher() {
+    document.getElementById('menuDropdown').style.display = 'none';
+    document.getElementById('voucherModal').style.display = 'flex';
+}
+
+function closeVoucher() {
+    document.getElementById('voucherModal').style.display = 'none';
+}
+
+function applyVoucher() {
+    const code = document.getElementById('voucherInput').value.trim().toUpperCase();
+    if (!VOUCHERS[code]) {
+        alert("Kode voucher tidak valid");
+        return;
+    }
+
+    appliedVoucher = code;
+    calculateVoucher();
+    closeVoucher();
+    refreshUI();
 }
 
 async function startApp() {
@@ -732,7 +770,17 @@ function renderMenu(filterKat = 'ALL') {
     }
 
     function refreshUI() {
-        let subtotal = 0; 
+const voucherInfo = document.getElementById('voucherInfo');
+
+if (voucherDiscount > 0) {
+    voucherInfo.style.display = 'block';
+    voucherInfo.innerText = `− Voucher Rp ${voucherDiscount.toLocaleString('id-ID')}`;
+} else {
+    voucherInfo.style.display = 'none';
+}
+
+        let subtotal = 0;
+voucherDiscount = 0; 
         const counts = {};
         cart.forEach(c => { 
             subtotal += (c.harga + (c.ex || 0)); 
@@ -763,7 +811,20 @@ function renderMenu(filterKat = 'ALL') {
                 ongEl.style.display = 'block';
                 ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
             } else {
-                priceEl.innerText = subtotal.toLocaleString('id-ID');
+                let finalTotal = subtotal;
+
+if (appliedVoucher) {
+    const v = VOUCHERS[appliedVoucher];
+    if (v.type === "flat") {
+        voucherDiscount = v.value;
+    } else if (v.type === "percent") {
+        voucherDiscount = Math.floor(subtotal * v.value / 100);
+    }
+    finalTotal = Math.max(0, subtotal - voucherDiscount);
+}
+
+priceEl.innerText = finalTotal.toLocaleString('id-ID');
+
                 distEl.style.display = 'none';
                 ongEl.style.display = 'none';
             }
@@ -919,7 +980,11 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
     
     const catatan = document.getElementById('orderNote').value || '-';
     msg += `\n*CATATAN:* ${catatan}\n`;
-    msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
+    if (voucherDiscount > 0) {
+    msg += `🎫 *Voucher:* -Rp ${voucherDiscount.toLocaleString('id-ID')}\n`;
+}
+msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
+
     
     msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
     msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
@@ -1081,6 +1146,29 @@ function changeMode(m, el) {
                    background:var(--primary);color:white;font-weight:800;">
             Kembali
         </button>
+    </div>
+</div>
+<div id="voucherModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 style="font-weight:900;margin-bottom:5px;">🎫 Klaim Voucher</h3>
+        <p style="font-size:12px;color:#777;margin-bottom:15px;">
+            Fitur ini masih dalam pengembangan, tapi kamu boleh coba 😄
+        </p>
+
+        <input type="text" id="voucherInput"
+            placeholder="Masukkan kode voucher"
+            style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;font-size:13px;margin-bottom:12px;text-align:center;font-weight:800;">
+
+        <div style="display:flex;gap:8px;">
+            <button onclick="closeVoucher()"
+                style="flex:1;padding:12px;border-radius:10px;border:none;background:#eee;font-weight:700;">
+                Batal
+            </button>
+            <button onclick="applyVoucher()"
+                style="flex:1;padding:12px;border-radius:10px;border:none;background:var(--primary);color:white;font-weight:800;">
+                Klaim
+            </button>
+        </div>
     </div>
 </div>
 
