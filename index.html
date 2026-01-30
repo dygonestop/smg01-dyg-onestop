@@ -643,7 +643,7 @@ async function apiDaftarMember() {
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyEjISG341sJIlzdr_hqVtO7wZbn2gO8o_8dx6qX0dhP1jUEKLbG682eIswsx5ba94zkw/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyC_LeZ8YXm7Yfg7OnGUrY3QBcXGwYlpM_7vDwkhz6aJXc82WYzY0C_Ct-MhYRsRusKJA/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1015,26 +1015,20 @@ async function submitOrder() {
         btnKirim.style.pointerEvents = "none";
     }
 
+   // 1. Jalankan Simpan Data (DATABASE) lebih dulu tanpa ditunggu (Background)
     const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, ''); 
     const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
+    
+    // Kirim data ke Google Sheets
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=processOrder&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalTotal}`)
+    .then(r => console.log("Database Sync Started"));
 
-    // FUNGSI UTAMA PINDAH KE WA
-    const sendToWA = () => {
+    // 2. Beri jeda 100ms saja (tidak terasa oleh manusia) baru pindah ke WA
+    // Jeda ini memastikan perintah fetch di atas sudah "lepas landas" ke server
+    setTimeout(() => {
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    };
-
-    // EKSEKUSI DATABASE -> BARU WA (Tanpa Balapan)
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=processOrder&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalTotal}`)
-    .then(response => response.text())
-    .then(nextQueue => {
-        console.log("Database synced, queue:", nextQueue);
-        sendToWA(); // Pindah ke WA SETELAH database sukses
-    })
-    .catch(err => {
-        console.error("Gagal simpan database:", err);
-        sendToWA(); // TETAP ke WA walau database error supaya pelanggan tidak bingung
-    });
+    }, 100); 
 }
 
     function toggleSummary(open) {
