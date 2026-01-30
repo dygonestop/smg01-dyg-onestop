@@ -1007,7 +1007,7 @@ async function submitOrder() {
     msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
     msg += `Terimakasih!`;
 
-    // --- 5. Animasi & Eksekusi ---
+   // --- 5. Animasi & Eksekusi ---
     const btnKirim = document.querySelector('#modalConfirm button:last-child');
     if (btnKirim) {
         btnKirim.innerHTML = "⌛ Menghubungkan...";
@@ -1015,20 +1015,27 @@ async function submitOrder() {
         btnKirim.style.pointerEvents = "none";
     }
 
-   // 1. Jalankan Simpan Data (DATABASE) lebih dulu tanpa ditunggu (Background)
     const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, ''); 
     const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
-    
-    // Kirim data ke Google Sheets
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=processOrder&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalTotal}`)
-    .then(r => console.log("Database Sync Started"));
 
-    // 2. Beri jeda 100ms saja (tidak terasa oleh manusia) baru pindah ke WA
-    // Jeda ini memastikan perintah fetch di atas sudah "lepas landas" ke server
+    // 1. KIRIM DATA KE DATABASE (Jalan di Background)
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=processOrder&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalTotal}`)
+    .then(r => console.log("Database synced"));
+
+    // 2. EKSEKUSI WA + REFRESH (Jeda 150ms agar fetch sempat terkirim)
     setTimeout(() => {
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    }, 100); 
+        const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+        
+        // Buka WhatsApp (Redirect)
+        window.location.href = waUrl;
+
+        // Refresh Halaman (Akan terjadi setelah user kembali dari WA atau saat proses redirect)
+        // Ini memastikan saat web dibuka lagi, langsung muncul Welcome Overlay
+        setTimeout(() => {
+            location.reload();
+        }, 500); 
+    }, 150);
 }
 
     function toggleSummary(open) {

@@ -114,9 +114,25 @@ body{
 
 <div class="grid" id="list"></div>
 
-<audio id="notif" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
 <script>
+/* ================= FUNGSI SUARA ROBOT ================= */
+function playVoiceNotif() {
+  if ('speechSynthesis' in window) {
+    // Kita hentikan suara sebelumnya jika ada (biar tidak tumpang tindih)
+    window.speechSynthesis.cancel();
+
+    const pesan = new SpeechSynthesisUtterance("Orderan baru diterima... Orderan baru diterima... Orderan baru diterima");
+    
+    pesan.lang = 'id-ID'; // Menggunakan suara Bahasa Indonesia
+    pesan.rate = 0.9;     // Kecepatan sedikit kalem agar jelas
+    pesan.pitch = 1;      // Nada standar
+
+    window.speechSynthesis.speak(pesan);
+  } else {
+    console.log("Browser ini tidak mendukung fitur suara.");
+  }
+}
 /* ================= CONFIG FINAL ================= */
 const CONFIG = {
   API_URL: "https://script.google.com/macros/s/AKfycbyC_LeZ8YXm7Yfg7OnGUrY3QBcXGwYlpM_7vDwkhz6aJXc82WYzY0C_Ct-MhYRsRusKJA/exec",
@@ -127,38 +143,39 @@ const CONFIG = {
 /* ================= STATE ================= */
 let lastCount = 0;
 let removedRows = [];
+let currentOrders = []; // <-- TAMBAHKAN INI untuk menyimpan data secara global
 
 /* ================= LOAD ================= */
 async function loadOrders(){
   const status = document.getElementById("status");
   try{
-    const res = await fetch(
-      `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&_=${Date.now()}`
-    );
+    const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&_=${Date.now()}`);
     const data = await res.json();
 
     status.textContent = "● TERHUBUNG";
     status.style.color = "green";
 
+    // Jika jumlah data di server lebih banyak dari data di layar kita
     if(data.length > lastCount && lastCount !== 0){
-      document.getElementById("notif").play().catch(()=>{});
+      playVoiceNotif(); // Langsung bunyi tanpa file MP3
     }
+    
     lastCount = data.length;
+    currentOrders = data;
     render(data);
-  }catch(err){
-    console.error(err);
+  } catch(err) {
     status.textContent = "● TERPUTUS";
     status.style.color = "red";
   }
 }
-
 /* ================= RENDER ================= */
 function render(data){
   const box = document.getElementById("list");
+  // Filter data agar yang sudah diklik 'Selesai' (masuk removedRows) tidak muncul lagi saat auto-refresh
   const active = data.filter(o => !removedRows.includes(String(o.row)));
 
   if(active.length === 0){
-    box.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#999">Tidak ada pesanan</div>`;
+    box.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#999;padding:50px">Tidak ada pesanan baru</div>`;
     return;
   }
 
@@ -171,19 +188,17 @@ function render(data){
           <button class="nope" onclick="cancel(${o.row})">BATAL</button>
         </div>
       </div>
-
       <div class="no">#${o.Antrean}</div>
       <div class="name">${o.Nama || "Pelanggan"}</div>
       <div class="mode">${o.Mode}</div>
-
       <div class="items">
         ${o.Pesanan.split(',').map(i=>`• ${i.trim()}`).join("<br>")}
       </div>
-
-      <button class="btn" onclick="finish(${o.row})">✔ SELESAI</button>
+      <button class="btn" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
     </div>
   `).join("");
 
+  // Hammer JS untuk Swipe Left
   document.querySelectorAll(".card").forEach(card=>{
     const mc = new Hammer(card);
     mc.on("swipeleft",()=>{
@@ -197,19 +212,54 @@ function cancel(row){
   document.getElementById("ov-"+row).classList.remove("active");
 }
 
-function finish(row){
-  removedRows.push(String(row));
-  document.getElementById("c-"+row)?.remove();
+function finish(row) {
+  // 1. Cari data di variabel currentOrders
+  const orderData = currentOrders.find(o => o.row == row);
+  
+  if (orderData) {
+    // 2. CETAK DULU (Base64 ke RawBT) - Super Cepat
+    printOrder(orderData);
+    
+    // 3. Masukkan ke daftar 'dibuang' agar tidak muncul lagi saat refresh otomatis
+    removedRows.push(String(row));
+  }
 
-  fetch(
-    `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}`
-  ).catch(()=>{});
+  // 4. Update Tampilan (Hapus instan dari layar)
+  const card = document.getElementById("c-" + row);
+  if (card) card.remove();
+
+  // 5. Update Database di Background (User/Koki tidak perlu menunggu ini)
+  const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}`;
+  
+  fetch(url)
+    .then(r => console.log("Database Sync Success"))
+    .catch(e => console.error("Database Sync Failed, but print is OK"));
+}
+
+function printOrder(order) {
+  let txt = `      dyg++ KITCHEN\n`;
+  txt += `================================\n`;
+  txt += `Antrean : #${order.Antrean}\n`;
+  txt += `Nama    : ${order.Nama}\n`;
+  txt += `Mode    : ${order.Mode}\n`;
+  txt += `Waktu   : ${new Date().toLocaleTimeString()}\n`;
+  txt += `--------------------------------\n`;
+  txt += `PESANAN:\n`;
+  txt += `${order.Pesanan.split(',').map(i => "- " + i.trim()).join('\n')}\n`;
+  txt += `--------------------------------\n`;
+  txt += `\n\n\n\n`; // Ekstra spasi untuk memudahkan sobek kertas
+
+  // Gunakan btoa untuk Encode ke Base64 (Standard browser)
+  // Tambahkan pengaman untuk karakter non-ascii jika perlu
+  const base64Data = btoa(unescape(encodeURIComponent(txt)));
+  
+  // Eksekusi ke aplikasi RawBT
+  window.location.href = "rawbt:base64," + base64Data;
 }
 
 /* ================= LOOP ================= */
 loadOrders();
-setInterval(loadOrders, CONFIG.REFRESH);
-</script>
+setInterval(loadOrders, CONFIG.REFRESH);</script>
 
 </body>
 </html>
