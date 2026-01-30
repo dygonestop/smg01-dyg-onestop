@@ -916,16 +916,12 @@ function renderMenu(filterKat = 'ALL') {
         }
     }
 
-    async function submitOrder() {
-    // VALIDASI: Cek apakah sudah pilih mode?
+async function submitOrder() {
+    // 1. VALIDASI LAYANAN
     if (!currentMode) {
         closeModal();
         alert("Mohon pilih layanan terlebih dahulu (Dine In, Take Away, atau Delivery)");
-        
-        // Scroll ke atas agar tombol layanan terlihat
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        // Beri efek getar/pulse pada tombol layanan yang aktif/tersedia
         document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
             el.classList.add('shake-ani');
             el.style.border = "2px solid var(--accent)";
@@ -937,24 +933,24 @@ function renderMenu(filterKat = 'ALL') {
         return; 
     }
 
-    // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
     if (navigator.vibrate) navigator.vibrate(50);
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
-const noAntrean = document.getElementById('noAntrean').innerText;
-    const tglK = document.getElementById('tglKatering')?.value || ''; // Tambahkan ini
+    const noAntrean = document.getElementById('noAntrean').innerText;
+    const tglK = document.getElementById('tglKatering')?.value || '';
 
-    // Validasi input kosong (Nama, Meja, atau Alamat)
+    // Validasi input (Nama, Meja, Alamat)
     const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
     cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
 
     let targetEl = null;
     if (!nI.value.trim()) targetEl = nI;
     else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
-else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
-    else if (currentMode === 'KATERING' && !document.getElementById('tglKatering').value) targetEl = document.getElementById('tglKatering'); // Tambahkan ini
+    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+    else if (currentMode === 'KATERING' && !document.getElementById('tglKatering').value) targetEl = document.getElementById('tglKatering');
 
+    // JIKA ADA FIELD KOSONG (Konsep targetEl Anda)
     if (targetEl) {
         const targetCard = targetEl.closest('.input-card');
         closeModal();
@@ -964,7 +960,7 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
         return; 
     }
 
-    // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
+    // --- 2. Rangkai Rincian Pesanan ---
     const summary = {};
     cart.forEach(c => {
         let label = c.nama;
@@ -972,10 +968,7 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
         if(tags) label += ` [${tags}]`;
         const itemKey = label;
         const itemPrice = c.harga + (c.ex || 0);
-        
-        if (!summary[itemKey]) {
-            summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
-        }
+        if (!summary[itemKey]) summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
         summary[itemKey].qty++;
     });
 
@@ -983,13 +976,13 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
         `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
     );
 
-    // --- 3. Hitung Data & Link Lokasi ---
+    // --- 3. Hitung Data & Lokasi ---
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
+    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
-    // --- 4. Susun Format Pesan WhatsApp ---
+    // --- 4. Susun Pesan WA ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
@@ -1000,31 +993,21 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
         msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
     } else {
         msg += `🏠 *Alamat:* ${aI.value}\n`;
-        // TAMBAHKAN KODE INI DI SINI
-        if (currentMode === 'KATERING') {
-            msg += `📅 *Tanggal Kirim:* ${tglK}\n`;
-        }
-        // -------------------------
+        if (currentMode === 'KATERING') msg += `📅 *Tanggal Kirim:* ${tglK}\n`;
         msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
         msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
     }
 
     msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
-    
     const catatan = document.getElementById('orderNote').value || '-';
     msg += `\n*CATATAN:* ${catatan}\n`;
     msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
-    
     msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
     msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
     msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
     msg += `Terimakasih!`;
 
-    // --- 5. Animasi Feedback Tombol & Pengiriman ---
-    // Memicu getar halus saat klik
-    if (navigator.vibrate) navigator.vibrate(50);
-
-    // Mengubah tombol menjadi loading
+    // --- 5. Animasi & Eksekusi ---
     const btnKirim = document.querySelector('#modalConfirm button:last-child');
     if (btnKirim) {
         btnKirim.innerHTML = "⌛ Menghubungkan...";
@@ -1032,24 +1015,27 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
         btnKirim.style.pointerEvents = "none";
     }
 
-    // Menghitung total bersih (hanya angka)
-const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, ''); 
+    const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, ''); 
+    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
 
-// Mengirim data ke Backend dengan Action yang Benar
-fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=processOrder&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalTotal}`)
-.then(response => response.text())
-.then(nextQueue => {
-    console.log("Pesanan berhasil masuk antrean nomor: " + nextQueue);
-})
-.catch(err => console.error("Gagal mengirim ke database:", err));
-
-    // Tunggu animasi sebentar baru pindah ke WA
-    setTimeout(() => {
+    // FUNGSI UTAMA PINDAH KE WA
+    const sendToWA = () => {
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    }, 600); 
-}
+    };
 
+    // EKSEKUSI DATABASE -> BARU WA (Tanpa Balapan)
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=processOrder&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalTotal}`)
+    .then(response => response.text())
+    .then(nextQueue => {
+        console.log("Database synced, queue:", nextQueue);
+        sendToWA(); // Pindah ke WA SETELAH database sukses
+    })
+    .catch(err => {
+        console.error("Gagal simpan database:", err);
+        sendToWA(); // TETAP ke WA walau database error supaya pelanggan tidak bingung
+    });
+}
 
     function toggleSummary(open) {
         if (cart.length === 0 && open) return;
