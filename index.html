@@ -445,7 +445,7 @@ mark {
 </div>
 
 <div class="service-mode">
-    <div id="mDineIn" class="service-btn active" onclick="changeMode('DINE IN', this)">
+    <div id="mDineIn" class="service-btn" onclick="changeMode('DINE IN', this)">
         <div class="icon"><img src="dine-in3.png" class="service-icon-img"></div>
         <span>Dine In</span>
     </div>
@@ -643,7 +643,7 @@ async function apiDaftarMember() {
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyC_LeZ8YXm7Yfg7OnGUrY3QBcXGwYlpM_7vDwkhz6aJXc82WYzY0C_Ct-MhYRsRusKJA/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzsGgR6xMqCSIA-gdJYQFT00kLQy2RORTHaTaU8AVam_D_RCUx7LmEaA0aaZyJJrv8BLw/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -712,24 +712,24 @@ async function startApp() {
             if(deliBtn) deliBtn.classList.add('disabled', 'too-close');
         }
 
-        // 4. FINISH: Hapus overlay dan tampilkan sisanya
+// 4. FINISH: Hapus overlay dan tampilkan sisanya
         initMap(latitude, longitude);
         initBanner();
         document.getElementById('welcome-overlay').style.display = 'none';
         syncQueue();
 
-        // --- TAMBAHAN LOGIKA NETRAL ---
+        // --- TAMBAHAN LOGIKA NETRAL (SAAT SUKSES GPS) ---
         currentMode = null;
-        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-        // ------------------------------
+        document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
+        // ------------------------------------------------
 
     }, (err) => {
         alert("Gagal akses lokasi. Harap aktifkan GPS untuk pengalaman terbaik.");
         document.getElementById('welcome-overlay').style.display = 'none';
         
-        // --- TAMBAHAN LOGIKA NETRAL (SAAT ERROR) ---
+        // --- TAMBAHAN LOGIKA NETRAL (SAAT ERROR GPS) ---
         currentMode = null;
-        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
         // -------------------------------------------
     }, { enableHighAccuracy: true });
 }
@@ -929,7 +929,7 @@ async function submitOrder() {
     // 1. VALIDASI LAYANAN
     if (!currentMode) {
         closeModal();
-        alert("Mohon pilih layanan terlebih dahulu (Dine In, Take Away, atau Delivery)");
+        alert("Mohon pilih layanan terlebih dahulu (Dine In, Take Away, Delivery, atau Katering)");
         window.scrollTo({ top: 0, behavior: 'smooth' });
         document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
             el.classList.add('shake-ani');

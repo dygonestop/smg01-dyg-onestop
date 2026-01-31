@@ -135,7 +135,7 @@ function playVoiceNotif() {
 }
 /* ================= CONFIG FINAL ================= */
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbyC_LeZ8YXm7Yfg7OnGUrY3QBcXGwYlpM_7vDwkhz6aJXc82WYzY0C_Ct-MhYRsRusKJA/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbzsGgR6xMqCSIA-gdJYQFT00kLQy2RORTHaTaU8AVam_D_RCUx7LmEaA0aaZyJJrv8BLw/exec",
   TOKEN: "dyg-access-v2",
   REFRESH: 8000
 };
@@ -171,7 +171,6 @@ async function loadOrders(){
 /* ================= RENDER ================= */
 function render(data){
   const box = document.getElementById("list");
-  // Filter data agar yang sudah diklik 'Selesai' (masuk removedRows) tidak muncul lagi saat auto-refresh
   const active = data.filter(o => !removedRows.includes(String(o.row)));
 
   if(active.length === 0){
@@ -181,22 +180,19 @@ function render(data){
 
   box.innerHTML = active.map(o=>`
     <div class="card" id="c-${o.row}" data-row="${o.row}">
-      <div class="overlay" id="ov-${o.row}">
-        <b style="font-size:22px">SELESAI?</b>
-        <div>
-          <button class="yes" onclick="finish(${o.row})">YA</button>
-          <button class="nope" onclick="cancel(${o.row})">BATAL</button>
-        </div>
-      </div>
       <div class="no">#${o.Antrean}</div>
-      <div class="name">${o.Nama || "Pelanggan"}</div>
-      <div class="mode">${o.Mode}</div>
+      <div class="name">${o.Nama}</div>
+      <div class="mode">
+        ${o.Mode} 
+        ${o.Meja ? `<span style="color:var(--danger)">[ MEJA ${o.Meja} ]</span>` : ''}
+      </div>
       <div class="items">
         ${o.Pesanan.split(',').map(i=>`• ${i.trim()}`).join("<br>")}
       </div>
       <button class="btn" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
     </div>
   `).join("");
+}
 
   // Hammer JS untuk Swipe Left
   document.querySelectorAll(".card").forEach(card=>{
@@ -241,19 +237,21 @@ function printOrder(order) {
   txt += `================================\n`;
   txt += `Antrean : #${order.Antrean}\n`;
   txt += `Nama    : ${order.Nama}\n`;
-  txt += `Mode    : ${order.Mode}\n`;
+  txt += `Layanan : ${order.Mode}\n`;
+  
+  // Hanya cetak baris Meja jika datanya ada
+  if (order.Meja) {
+    txt += `Meja    : ${order.Meja}\n`;
+  }
+
   txt += `Waktu   : ${new Date().toLocaleTimeString()}\n`;
   txt += `--------------------------------\n`;
   txt += `PESANAN:\n`;
   txt += `${order.Pesanan.split(',').map(i => "- " + i.trim()).join('\n')}\n`;
   txt += `--------------------------------\n`;
-  txt += `\n\n\n\n`; // Ekstra spasi untuk memudahkan sobek kertas
+  txt += `\n\n\n\n`; 
 
-  // Gunakan btoa untuk Encode ke Base64 (Standard browser)
-  // Tambahkan pengaman untuk karakter non-ascii jika perlu
   const base64Data = btoa(unescape(encodeURIComponent(txt)));
-  
-  // Eksekusi ke aplikasi RawBT
   window.location.href = "rawbt:base64," + base64Data;
 }
 
