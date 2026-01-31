@@ -611,6 +611,49 @@ function verifyOTP() {
     }
 }
 
+async function apiDaftarMember() {
+    const nama = document.getElementById('m-reg-nama').value;
+    const noHP = document.getElementById('m-phone').value; // Mengambil nomor dari input awal
+    const email = document.getElementById('m-reg-email').value;
+    const finalBtn = document.getElementById('btn-final-daftar');
+
+    if (!nama) return alert("Nama tidak boleh kosong!");
+
+    // Efek Loading pada tombol final
+    finalBtn.innerText = "⌛ Menyimpan Data...";
+    finalBtn.disabled = true;
+
+    try {
+        // Panggil action=daftarMember sesuai yang ada di GAS kamu
+        const url = `${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=daftarMember` +
+                    `&nama=${encodeURIComponent(nama)}` +
+                    `&noHP=${encodeURIComponent(noHP)}` +
+                    `&email=${encodeURIComponent(email)}`;
+
+        const resp = await fetch(url);
+        const result = await resp.text();
+
+        if (result.trim() === "Success") {
+            alert("Selamat! Pendaftaran Member Berhasil.");
+            
+            // UI Update: Langsung tampilkan hasil poin (biasanya 0 untuk member baru)
+            document.getElementById('m-view-reg').style.display = 'none';
+            document.getElementById('m-view-result').style.display = 'block';
+            document.getElementById('m-res-nama').innerText = nama;
+            document.getElementById('m-res-poin').innerText = "0";
+        } else if (result.trim() === "Already Exists") {
+            alert("Nomor HP ini sudah terdaftar!");
+            location.reload(); // Refresh untuk reset state
+        } else {
+            throw new Error("Gagal menyimpan");
+        }
+    } catch (e) {
+        alert("Terjadi kesalahan sistem saat mendaftar. Coba lagi.");
+        finalBtn.innerText = "KLIK UNTUK SELESAIKAN PENDAFTARAN";
+        finalBtn.disabled = false;
+    }
+}
+
 function openMemberModal() {
     document.getElementById('modalMember').style.display = 'flex';
     document.getElementById('m-view-input').style.display = 'block';
