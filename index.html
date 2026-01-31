@@ -549,28 +549,34 @@ mark {
 let generatedOTP = null;
 
 // FUNGSI 1: Minta OTP ke Google Apps Script
-function requestOTP() {
+async function requestOTP() {
     const email = document.getElementById('m-reg-email').value;
     const btn = document.getElementById('btn-kirim-otp');
     
     if (!email.includes('@')) return alert("Masukkan email yang valid!");
 
-    btn.innerText = "Wait...";
+    // Efek Loading agar user tahu sedang diproses
+    btn.innerText = "Mengirim...";
     btn.disabled = true;
 
-    // Panggil Apps Script (Pastikan fungsi sendEmailOTP sudah ada di .gs)
-    google.script.run.withSuccessHandler(function(otp) {
-        if (otp === "error") {
-            alert("Gagal mengirim email!");
-            btn.disabled = false;
-            btn.innerText = "KIRIM OTP";
-        } else {
-            generatedOTP = otp;
-            document.getElementById('m-otp-box').style.display = 'block';
-            alert("Kode OTP berhasil dikirim. Cek Inbox/Spam email Anda.");
-            btn.innerText = "TERKIRIM";
+    try {
+        // Pemanggilan ke GAS harus menyertakan action=requestOTP
+        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=requestOTP&email=${email}`);
+        const otp = await resp.text();
+
+        if (otp === "error" || !otp) {
+            throw new Error("Gagal kirim email");
         }
-    }).sendEmailOTP(email);
+
+        generatedOTP = otp; // Simpan angka OTP yang dikirim GAS
+        document.getElementById('m-otp-box').style.display = 'block';
+        alert("Kode OTP dikirim ke: " + email);
+        btn.innerText = "TERKIRIM";
+    } catch (e) {
+        alert("Gagal mengirim email. Pastikan email benar atau coba lagi.");
+        btn.disabled = false;
+        btn.innerText = "KIRIM OTP";
+    }
 }
 
 // FUNGSI 2: Verifikasi Angka OTP
@@ -685,7 +691,7 @@ async function apiDaftarMember() {
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz4M11u29NQ-MlcUgvib5cDQC2L6_mGp6L5MrLnvm63uvKj0k_LxiuJSwfXRjT0aTSnNQ/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz10YNpOr_2VWoKZbD8TiGk9ic5IJwmA3qyYsUCOYiituktfAT9BWl1Um55n2VdDjIpRw/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
