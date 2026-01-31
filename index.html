@@ -663,7 +663,7 @@ async function apiCekMember() {
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwDKMn8LBkM1UFfqYcclvb1K0pmFEcNGQrm5dhwOxyojmwMJiyq_i3e2dFU9QlI6mAYIw/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzdDveudrC9NNPX0XnAE784Cif5pFZLW-tulkKHhMGj41-8KCioaJuj76vjzeWRsoNYgg/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -736,7 +736,8 @@ async function startApp() {
         initMap(latitude, longitude);
         initBanner();
         document.getElementById('welcome-overlay').style.display = 'none';
-        syncQueue();
+        document.getElementById("noAntrean").innerText = "#" + antrean;
+
 
         // --- TAMBAHAN LOGIKA NETRAL (SAAT SUKSES GPS) ---
         currentMode = null;
@@ -979,7 +980,7 @@ async function submitOrder() {
     else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
     else if (currentMode === 'KATERING' && !document.getElementById('tglKatering').value) targetEl = document.getElementById('tglKatering');
 
-    // JIKA ADA FIELD KOSONG (Konsep targetEl Anda)
+    // JIKA ADA FIELD KOSONG
     if (targetEl) {
         const targetCard = targetEl.closest('.input-card');
         closeModal();
@@ -1009,6 +1010,7 @@ async function submitOrder() {
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
+    // FIX BUG: Link Google Maps diperbaiki agar valid
     const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
     // --- 4. Susun Pesan WA ---
@@ -1036,7 +1038,7 @@ async function submitOrder() {
     msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
     msg += `Terimakasih!`;
 
-   // --- 5. Animasi & Eksekusi ---
+    // --- 5. Animasi & Eksekusi ---
     const btnKirim = document.querySelector('#modalConfirm button:last-child');
     if (btnKirim) {
         btnKirim.innerHTML = "⌛ Menghubungkan...";
@@ -1048,19 +1050,25 @@ async function submitOrder() {
     const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
 
     // 1. Jalankan Fetch ke Database (Background)
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=processOrder&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalTotal}`)
-    .then(r => console.log("Data Sent"));
+    // FIX BUG: Menambahkan parameter &meja agar terkirim ke monitor dapur
+    const dbUrl = `${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=processOrder` +
+                  `&nama=${encodeURIComponent(nI.value)}` +
+                  `&pesanan=${encodeURIComponent(pesananTeks)}` +
+                  `&mode=${encodeURIComponent(currentMode)}` +
+                  `&meja=${encodeURIComponent(tI ? tI.value : '')}` +
+                  `&total=${finalTotal}`;
+
+    fetch(dbUrl).then(r => console.log("Data Sent to Database"));
 
     // 2. Eksekusi Pindah ke WA
     const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
     window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
 
-    // 3. RESET TAMPILAN WEB (Tanpa Refresh Total)
-    // Ini berjalan tepat setelah perintah ke WA ditembakkan
+    // 3. RESET TAMPILAN WEB
     setTimeout(() => {
         // Kosongkan Keranjang
-        cart = {};
-        updateCart();
+        cart = [];
+        refreshUI();
         
         // Tutup semua Modal
         closeConfirm();
@@ -1071,7 +1079,7 @@ async function submitOrder() {
             welcome.style.display = 'flex';
         }
 
-        // Kembalikan tombol ke status normal (jika nanti user balik ke web)
+        // Kembalikan tombol ke status normal
         if (btnKirim) {
           btnKirim.innerHTML = "Konfirmasi & Kirim WA";
           btnKirim.style.opacity = "1";
@@ -1079,7 +1087,6 @@ async function submitOrder() {
         }
     }, 500); 
 }
-
     function toggleSummary(open) {
         if (cart.length === 0 && open) return;
         document.getElementById('orderSummaryPanel').classList.toggle('active', open);

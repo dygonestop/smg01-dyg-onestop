@@ -135,7 +135,7 @@ function playVoiceNotif() {
 }
 /* ================= CONFIG FINAL ================= */
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbwDKMn8LBkM1UFfqYcclvb1K0pmFEcNGQrm5dhwOxyojmwMJiyq_i3e2dFU9QlI6mAYIw/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbzdDveudrC9NNPX0XnAE784Cif5pFZLW-tulkKHhMGj41-8KCioaJuj76vjzeWRsoNYgg/exec",
   TOKEN: "dyg-access-v2",
   REFRESH: 8000
 };
@@ -147,32 +147,30 @@ let currentOrders = []; // <-- TAMBAHKAN INI untuk menyimpan data secara global
 
 /* ================= LOAD ================= */
 async function loadOrders(){
-console.log("Mencoba mengambil data..."); // Cek di console
+  console.log("Mencoba mengambil data...");
   const status = document.getElementById("status");
-  const status = document.getElementById("status");
-  // Jangan ubah teks di sini, biarkan dia default "Menghubungkan" saat mulai
-  
+
   try {
-    const response = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&_=${Date.now()}`);
-    
+    const response = await fetch(
+      `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&_=${Date.now()}`
+    );
+
     if (!response.ok) throw new Error("Network response was not ok");
 
     const data = await response.json();
 
-    // Jika sampai di sini, berarti koneksi berhasil
     status.textContent = "● TERHUBUNG";
     status.style.color = "green";
 
     if(data.length > lastCount && lastCount !== 0){
       playVoiceNotif();
     }
-    
+
     lastCount = data.length;
     currentOrders = data;
     render(data);
 
   } catch(err) {
-    // Jika ada error (internet mati, URL salah, atau token salah)
     console.error("Detail Error:", err);
     status.textContent = "● TERPUTUS";
     status.style.color = "red";
