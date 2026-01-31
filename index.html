@@ -554,7 +554,15 @@ async function requestOTP() {
     const btn = document.getElementById('btn-kirim-otp');
     
     if (!email.includes('@')) return alert("Masukkan email yang valid!");
+// Di dalam fungsi requestOTP() index.html, tambahkan pengecekan ini:
+const otp = await resp.text();
 
+if (otp === "email_exists") {
+    alert("Maaf, Email ini sudah terdaftar sebagai member dyg++!");
+    btn.disabled = false;
+    btn.innerText = "KIRIM OTP";
+    return;
+}
     // Efek Loading agar user tahu sedang diproses
     btn.innerText = "Mengirim...";
     btn.disabled = true;
@@ -583,12 +591,20 @@ async function requestOTP() {
 function verifyOTP() {
     const input = document.getElementById('m-otp-code').value;
     const finalBtn = document.getElementById('btn-final-daftar');
+    const otpBox = document.getElementById('m-otp-box');
 
     if (input == generatedOTP) {
         alert("Email Terverifikasi!");
+        
+        // UI UX: Sembunyikan kotak OTP & Input Email agar bersih
+        otpBox.style.display = 'none';
+        document.getElementById('m-reg-email').disabled = true;
+        document.getElementById('btn-kirim-otp').style.display = 'none';
+        
+        // Aktifkan tombol daftar utama
         finalBtn.disabled = false;
         finalBtn.style.opacity = "1";
-        document.getElementById('m-otp-box').style.display = 'none';
+        finalBtn.innerText = "KLIK UNTUK SELESAIKAN PENDAFTARAN";
     } else {
         alert("Kode OTP salah!");
     }
@@ -607,91 +623,47 @@ function closeMemberModal() {
 }
 
 async function apiCekMember() {
-    let phone = document.getElementById('m-phone').value.trim();
-    
-    // VALIDASI KETAT
-    if (phone.startsWith('0')) {
-        alert("Peringatan: Jangan gunakan angka 0 di depan. Gunakan format 628...");
-        return;
-    }
-    if (phone.startsWith('+')) {
-        alert("Peringatan: Jangan gunakan simbol (+). Gunakan format 628...");
-        return;
-    }
-    if (!phone.startsWith('628')) {
-        alert("Peringatan: Nomor harus diawali dengan 628... (Kode Negara Indonesia)");
-        return;
-    }
-    if (isNaN(phone)) {
-        alert("Peringatan: Masukkan hanya angka saja!");
-        return;
-    }
-    if (phone.length < 10) {
-        alert("Peringatan: Nomor terlalu pendek!");
-        return;
-    }
+    const phone = document.getElementById('m-phone').value;
+    const btn = document.querySelector('#m-view-input button'); // Ambil tombol cek
+    const originalText = btn.innerText;
 
-    // Jika lolos validasi, baru panggil API
+    if (phone.length < 10) return alert("Masukkan nomor WA yang benar!");
+
+    // UI UX: Beri feedback loading
+    btn.disabled = true;
+    btn.innerText = "MENGECEK...";
+    btn.style.opacity = "0.7";
+
     try {
         const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${phone}`);
         const res = await resp.json();
 
-        document.getElementById('m-view-input').style.display = 'none';
         if (res.exists) {
+            // Jika Member Ada
+            document.getElementById('m-view-input').style.display = 'none';
             document.getElementById('m-view-result').style.display = 'block';
             document.getElementById('m-res-nama').innerText = res.nama;
-            document.getElementById('m-res-poin').innerText = res.poin.toLocaleString();
+            document.getElementById('m-res-poin').innerText = res.poin;
         } else {
+            // Jika Member Tidak Ada
+            document.getElementById('m-view-input').style.display = 'none';
             document.getElementById('m-view-reg').style.display = 'block';
         }
     } catch (e) {
-        alert("Terjadi kesalahan koneksi.");
+        alert("Koneksi sibuk, coba lagi.");
+    } finally {
+        // Kembalikan tombol ke asal
+        btn.disabled = false;
+        btn.innerText = originalText;
+        btn.style.opacity = "1";
     }
 }
-async function apiDaftarMember() {
-    const phone = document.getElementById('m-phone').value;
-    const nama = document.getElementById('m-reg-nama').value;
-    const email = document.getElementById('m-reg-email').value; // AMBIL EMAIL
-    const btnReg = event.target; 
 
-    if (!nama) return alert("Nama wajib diisi!");
-    if (!email) return alert("Email wajib diisi!"); // Tambahan validasi email
 
-    // 1. Matikan tombol agar tidak klik berkali-kali
-    btnReg.disabled = true;
-    btnReg.innerText = "SEDANG MENDAFTAR...";
-    btnReg.style.opacity = "0.5";
-
-    try {
-        // 2. Cek ulang ke database (Tetap pakai noHP sebagai kunci utama)
-        const checkResp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${phone}`);
-        const checkRes = await checkResp.json();
-
-        if (checkRes.exists) {
-            alert("Nomor kamu sudah terdaftar! Langsung cek poin saja ya.");
-            apiCekMember(); 
-            return;
-        }
-
-        // 3. JALANKAN PENDAFTARAN (Tambahkan parameter &email di akhir)
-        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=daftarMember&nama=${nama}&noHP=${phone}&email=${email}`);
-        const res = await resp.text();
-        
-        if (res === "Success") {
-            alert("Selamat! Pendaftaran Member Berhasil.");
-            apiCekMember(); 
-        }
-    } catch (e) {
-        alert("Gagal mendaftar. Silakan coba lagi.");
-        btnReg.disabled = false;
-        btnReg.innerText = "DAFTAR JADI MEMBER";
-        btnReg.style.opacity = "1";
-    }
-}
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz10YNpOr_2VWoKZbD8TiGk9ic5IJwmA3qyYsUCOYiituktfAT9BWl1Um55n2VdDjIpRw/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwDKMn8LBkM1UFfqYcclvb1K0pmFEcNGQrm5dhwOxyojmwMJiyq_i3e2dFU9QlI6mAYIw/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
