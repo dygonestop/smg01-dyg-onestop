@@ -11,7 +11,7 @@
         .pos-container { width: 100%; max-width: 1100px; background: #F1F5F9; display: flex; flex-direction: column; }
         .main-content { display: flex; flex: 1; overflow: hidden; }
         .menu-side { flex: 1; display: flex; flex-direction: column; background: #F8FAFC; border-right: 1px solid #e2e8f0; }
-        .admin-side { width: 360px; display: flex; flex-direction: column; background: white; border-left: 2px solid #cbd5e1; }
+        .admin-side { width: 380px; display: flex; flex-direction: column; background: white; border-left: 2px solid #cbd5e1; }
         .monitor-table td { padding: 4px 8px; font-size: 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9; }
         .scroll-custom::-webkit-scrollbar { width: 4px; }
         .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -23,7 +23,7 @@
     <div class="bg-[#1B4332] text-white p-3 flex justify-between items-center shrink-0">
         <h1 class="text-lg font-black italic tracking-tighter text-emerald-400">dyg++ <span class="text-white opacity-50 ml-2">POS SECURE</span></h1>
         <div class="text-right">
-            <p class="text-[8px] uppercase opacity-60">Fisik Laci</p>
+            <p class="text-[8px] uppercase opacity-60">Fisik Laci (Sistem)</p>
             <p id="v-cash" class="text-lg font-black text-emerald-400">Rp 0</p>
         </div>
     </div>
@@ -40,48 +40,83 @@
         <div class="admin-side">
             <div class="flex-1 p-3 overflow-y-auto scroll-custom space-y-4">
                 
-                <div class="bg-slate-900 text-white rounded-xl p-3 shadow-lg">
-                    <p class="text-[9px] font-black text-emerald-400 uppercase mb-2">Monitor Shift Aktif</p>
+                <div class="bg-slate-900 text-white rounded-xl p-3 shadow-lg border-b-4 border-emerald-500">
+                    <p class="text-[9px] font-black text-emerald-400 uppercase mb-2 text-center">Monitor Shift Aktif</p>
                     <table class="w-full monitor-table">
-                        <tr><td>Modal Awal</td><td id="m-modal" class="text-right text-blue-300 font-black">Rp 0</td></tr>
-                        <tr><td>Cash Masuk</td><td id="m-cash" class="text-right text-emerald-400 font-black">Rp 0</td></tr>
-                        <tr><td>Belanja/Out</td><td id="m-out" class="text-right text-red-400 font-black">- Rp 0</td></tr>
-                        <tr><td>QRIS (Non-Laci)</td><td id="m-qris" class="text-right text-orange-400 font-black">Rp 0</td></tr>
-                        <tr><td>Online (Non-Laci)</td><td id="m-online" class="text-right text-purple-400 font-black">Rp 0</td></tr>
+                        <tr><td>Modal Awal</td><td id="m-modal" class="text-right text-blue-300">Rp 0</td></tr>
+                        <tr><td>Cash Masuk</td><td id="m-cash" class="text-right text-emerald-400">Rp 0</td></tr>
+                        <tr><td>Belanja/Out</td><td id="m-out" class="text-right text-red-400">- Rp 0</td></tr>
+                        <tr><td>QRIS</td><td id="m-qris" class="text-right text-orange-400">Rp 0</td></tr>
+                        <tr><td>Online Food</td><td id="m-online" class="text-right text-purple-400">Rp 0</td></tr>
                     </table>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl border-2 border-blue-100 space-y-2 shadow-md">
-                    <p class="text-[10px] font-black text-blue-800 uppercase italic">Input Finance</p>
-                    <div class="flex gap-1">
-                        <select id="f-type" class="flex-1 p-2 bg-slate-100 border rounded text-[10px] font-extrabold outline-none">
-                            <option value="modal">💰 MODAL AWAL</option>
-                            <option value="pengeluaran">🛒 PENGELUARAN</option>
-                            <option value="online_food">🛵 ONLINE FOOD</option>
-                        </select>
-                        <input id="f-amt" type="number" placeholder="Rp 0" class="flex-1 p-2 border-2 border-slate-200 rounded text-[11px] font-black focus:border-blue-500">
+                <div class="bg-white p-3 rounded-xl border-2 border-slate-200 space-y-3">
+                    <p class="text-[10px] font-black text-slate-800 uppercase">Kontrol Shift</p>
+                    
+                    <div class="flex flex-col gap-2">
+                        <div class="flex gap-1">
+                            <input id="input-modal" type="number" placeholder="Input Modal" class="flex-1 p-2 bg-blue-50 border border-blue-200 rounded text-[11px] font-bold">
+                            <button onclick="handleShift('open')" id="btn-open-shift" class="bg-blue-600 text-white px-3 rounded-lg font-black text-[10px] active:scale-95">BUKA SHIFT</button>
+                        </div>
+                        <div class="flex gap-1">
+                            <input id="input-closing" type="number" placeholder="Input Uang Fisik" class="flex-1 p-2 bg-red-50 border border-red-200 rounded text-[11px] font-bold">
+                            <button onclick="handleShift('close')" id="btn-close-shift" class="bg-red-600 text-white px-3 rounded-lg font-black text-[10px] active:scale-95">TUTUP SHIFT</button>
+                        </div>
                     </div>
-                    <input id="f-desc" type="text" placeholder="Keterangan..." class="w-full p-2 border rounded text-[10px] font-bold">
-                    <button onclick="confirmFinance()" id="btn-f" class="w-full py-3 bg-blue-600 text-white rounded-lg font-black text-[11px] active:bg-blue-800">SIMPAN & KUNCI DATA</button>
                 </div>
 
-                <div class="bg-slate-50 rounded-xl p-2 border border-slate-200">
-                    <p class="text-[8px] font-black text-slate-400 mb-2 uppercase">Order List</p>
+                <div class="bg-white p-3 rounded-xl border-2 border-slate-200 space-y-2">
+                    <p class="text-[10px] font-black text-orange-600 uppercase italic">Input Finance (Operasional)</p>
+                    <div class="flex gap-1">
+                        <select id="f-type" class="flex-1 p-2 bg-slate-100 border rounded text-[10px] font-bold">
+                            <option value="pengeluaran">🛒 PENGELUARAN/BELANJA</option>
+                            <option value="online_food">🛵 ONLINE FOOD</option>
+                        </select>
+                        <input id="f-amt" type="number" placeholder="Rp" class="w-24 p-2 border-2 rounded text-[11px] font-black">
+                    </div>
+                    <input id="f-desc" type="text" placeholder="Keterangan..." class="w-full p-2 border rounded text-[10px] font-bold">
+                    <button onclick="confirmFinance()" id="btn-f" class="w-full py-2 bg-slate-800 text-white rounded font-black text-[10px]">SIMPAN & KUNCI FINANCE</button>
+                </div>
+
+                <div class="bg-emerald-50 p-3 rounded-xl border-2 border-emerald-200 space-y-2">
+                    <p class="text-[10px] font-black text-emerald-800 uppercase">Loyalty Member</p>
+                    <div class="flex gap-1">
+                        <input id="m-hp" type="number" placeholder="No HP Member..." class="flex-1 p-2 border rounded text-[11px] font-bold">
+                        <button onclick="checkMember()" class="bg-emerald-600 text-white px-3 rounded font-black text-[10px]">CEK</button>
+                    </div>
+                    <div id="member-info" class="hidden text-[10px] font-bold text-emerald-700 bg-white p-2 rounded border border-emerald-100">
+                        <p id="m-nama-display"></p>
+                        <p id="m-poin-display"></p>
+                        <button id="btn-voucher" onclick="useVoucher()" class="mt-2 w-full py-1 bg-orange-500 text-white rounded text-[9px] font-black">PAKAI POIN (POTONG RP 5.000)</button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 rounded-xl p-2 border border-slate-200">
+                    <p class="text-[8px] font-black text-slate-400 mb-1 uppercase">Daftar Belanja</p>
                     <div id="cart-list" class="space-y-1"></div>
                 </div>
             </div>
 
-            <div class="p-4 bg-slate-50 border-t-2">
+            <div class="p-4 bg-slate-50 border-t-4 border-white">
+                <div class="flex justify-between items-center mb-1 text-slate-500">
+                    <span class="font-bold text-[9px]">SUBTOTAL</span>
+                    <span id="v-subtotal" class="font-bold text-[10px]">Rp 0</span>
+                </div>
+                <div class="flex justify-between items-center mb-2 text-orange-600">
+                    <span class="font-bold text-[9px]">DISKON POIN</span>
+                    <span id="v-discount" class="font-bold text-[10px]">- Rp 0</span>
+                </div>
                 <div class="flex justify-between items-center mb-3 text-[#1B4332]">
-                    <span class="font-black text-[10px]">TOTAL BILL</span>
+                    <span class="font-black text-[10px]">TOTAL AKHIR</span>
                     <span id="v-total" class="text-2xl font-black">Rp 0</span>
                 </div>
                 <div class="flex gap-2">
-                    <select id="i-mode" class="w-24 p-2 bg-white border rounded text-[10px] font-black">
+                    <select id="i-mode" class="w-24 p-2 bg-white border-2 border-slate-200 rounded text-[10px] font-black">
                         <option value="CASH">💵 CASH</option>
                         <option value="QRIS">📱 QRIS</option>
                     </select>
-                    <button onclick="confirmOrder()" id="btn-order" class="flex-1 bg-[#1B4332] text-white py-3 rounded-lg font-black text-[11px] hover:bg-black">BAYAR & KUNCI</button>
+                    <button onclick="confirmOrder()" id="btn-order" class="flex-1 bg-[#1B4332] text-white py-3 rounded-lg font-black text-[11px] shadow-lg active:scale-95">BAYAR & KUNCI</button>
                 </div>
             </div>
         </div>
@@ -90,70 +125,98 @@
 
 <script>
     const CONFIG = {
-        API: "https://script.google.com/macros/s/AKfycbwnosmfFMt7Vd3HGHw4AnDCKXCFDgZZqtpFWUzJvMxBzCs092z1OAYhngA_SvGjUWLSmA/exec",
+        API: "https://script.google.com/macros/s/AKfycbxXaJ5v5qEv-zvpyxdWR6oFKiYWWhdBk0U3zavhq3NZTU2eVDiJIkZVbBX3ZiVMP9NPzQ/exec",
         CSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv",
         TOKEN: "dyg-access-v2"
     };
 
-    let cart = {}, menuData = [];
+    let cart = {}, menuData = [], activeCat = 'ALL';
+    let discountMember = 0, currentMemberHP = "";
 
-    // --- LOGIKA KONFIRMASI FINANCE ---
-    function confirmFinance() {
+    // --- LOGIKA SHIFT (POIN 1 & 3) ---
+    async function handleShift(type) {
+        if (type === 'open') {
+            const amt = document.getElementById('input-modal').value;
+            if (!amt || amt <= 0) return alert("❌ Masukkan nominal modal awal!");
+            
+            const tanya = confirm(`BUKA SHIFT?\nModal: Rp ${Number(amt).toLocaleString()}\n\nSetelah dibuka, modal tidak bisa diedit.`);
+            if (tanya) {
+                try {
+                    document.getElementById('btn-open-shift').innerText = "PROSES...";
+                    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=modal&data=${encodeURIComponent(JSON.stringify(["", "MODAL AWAL", "ADMIN", Number(amt)]))}`);
+                    alert("✅ Shift Berhasil Dibuka!");
+                    localStorage.setItem('shift_active', 'true');
+                    location.reload(); 
+                } catch(e) { alert("Koneksi Gagal!"); }
+            }
+        } else {
+            const fisik = document.getElementById('input-closing').value;
+            if (!fisik) return alert("❌ Masukkan total uang fisik di laci!");
+            
+            const sysCash = parseInt(document.getElementById('v-cash').innerText.replace(/\D/g,''));
+            const selisih = fisik - sysCash;
+
+            const tanya = confirm(`TUTUP SHIFT SEKARANG?\n\nHasil Sistem: Rp ${sysCash.toLocaleString()}\nUang Fisik: Rp ${Number(fisik).toLocaleString()}\nSelisih: Rp ${selisih.toLocaleString()}\n\nKlik OK untuk setor & reset.`);
+            if (tanya) {
+                try {
+                    const closingData = { sys: sysCash, fisik: Number(fisik), selisih: selisih };
+                    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=settle&data=${encodeURIComponent(JSON.stringify(closingData))}`);
+                    alert("✅ Shift Berhasil Ditutup & Dilaporkan!");
+                    localStorage.removeItem('shift_active');
+                    location.reload();
+                } catch(e) { alert("Gagal Tutup Shift!"); }
+            }
+        }
+    }
+
+    // Proteksi UI Shift
+    function checkShiftStatus() {
+        const isActive = localStorage.getItem('shift_active') === 'true';
+        document.getElementById('input-modal').disabled = isActive;
+        document.getElementById('btn-open-shift').disabled = isActive;
+        if(isActive) {
+            document.getElementById('btn-open-shift').classList.replace('bg-blue-600', 'bg-slate-400');
+            document.getElementById('btn-open-shift').innerText = "SHIFT JALAN";
+        }
+    }
+
+    // --- LOGIKA FINANCE (OPERASIONAL) ---
+    async function confirmFinance() {
         const typeEl = document.getElementById('f-type');
-        const typeText = typeEl.options[typeEl.selectedIndex].text;
         const amt = document.getElementById('f-amt').value;
         const desc = document.getElementById('f-desc').value;
-
         if(!amt || !desc) return alert("❌ Data Belum Lengkap!");
-
-        const tanya = confirm(`CEK LAGI BOSKU!\n\nIndikator: ${typeText}\nNominal: Rp ${Number(amt).toLocaleString()}\nKeterangan: ${desc}\n\nData sudah sesuai? Klik 'YA' untuk simpan & kunci.`);
         
+        const tanya = confirm(`INPUT BIAYA?\nNominal: Rp ${Number(amt).toLocaleString()}\nKet: ${desc}`);
         if(tanya) {
-            saveFinance();
+            const btn = document.getElementById('btn-f');
+            btn.disabled = true; btn.innerText = "MENGUNCI...";
+            try {
+                await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=${typeEl.value}&data=${encodeURIComponent(JSON.stringify(["", desc, "ADMIN", Number(amt)]))}`);
+                alert("✅ Finance Terkunci!");
+                document.getElementById('f-amt').value = ""; document.getElementById('f-desc').value = "";
+                refreshDashboard();
+            } finally { btn.disabled = false; btn.innerText = "SIMPAN & KUNCI FINANCE"; }
         }
     }
 
-    async function saveFinance() {
-        const t = document.getElementById('f-type').value;
-        const a = document.getElementById('f-amt').value;
-        const d = document.getElementById('f-desc').value;
-        const btn = document.getElementById('btn-f');
-
-        // Proteksi Input Ganda
-        btn.disabled = true;
-        btn.innerText = "SEDANG MENGUNCI DATA...";
-        btn.classList.add('bg-gray-400');
-
+    // --- LOGIKA MEMBER (POIN 2) ---
+    async function checkMember() {
+        const hp = document.getElementById('m-hp').value;
+        if (!hp) return;
         try {
-            await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=${t}&data=${encodeURIComponent(JSON.stringify(["", d, "ADMIN", Number(a)]))}`);
-            // Reset input setelah sukses
-            document.getElementById('f-amt').value = "";
-            document.getElementById('f-desc').value = "";
-            alert("✅ Data Berhasil Dikunci!");
-            refreshDashboard();
-        } catch(e) {
-            alert("❌ Gagal Terkoneksi!");
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "INPUT DATA FINANCE";
-            btn.classList.remove('bg-gray-400');
-        }
+            const resp = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${hp}`);
+            const data = await resp.json();
+            if (data.exists) {
+                currentMemberHP = hp;
+                document.getElementById('member-info').classList.remove('hidden');
+                document.getElementById('m-nama-display').innerText = "Nama: " + data.nama;
+                document.getElementById('m-poin-display').innerText = "Poin: " + data.poin;
+            } else { alert("❌ Member tidak ditemukan!"); }
+        } catch(e) { alert("Koneksi Error!"); }
     }
 
-    // --- LOGIKA KONFIRMASI ORDER ---
-    function confirmOrder() {
-        const total = Object.values(cart).reduce((s, i) => s + (i.price * i.qty), 0);
-        if(total === 0) return alert("❌ Keranjang Kosong!");
-        
-        const mode = document.getElementById('i-mode').value;
-        const tanya = confirm(`BAYAR SEKARANG?\n\nTotal: Rp ${total.toLocaleString()}\nMetode: ${mode}\n\nSudah terima uang? Klik 'YA' untuk proses.`);
-        
-        if(tanya) {
-            submitOrder();
-        }
-    }
-
-   let poinAkanDipotong = 0; // Variabel global untuk mencatat poin yang ditukar
+    let poinAkanDipotong = 0; // Variabel global untuk mencatat poin yang ditukar
 
 function useVoucher() {
     const poinText = document.getElementById('m-poin-display').innerText;
@@ -220,35 +283,22 @@ async function submitOrder() {
     }
 }
 
+    // --- DASHBOARD & CORE POS ---
     async function refreshDashboard() {
-    try {
-        // Gunakan timestamp agar data tidak basi (cache)
-        const response = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance&nocache=${Date.now()}`);
-        const d = await response.json();
-        
-        console.log("Data diterima:", d); // Cek di console log tablet jika ada
-
-        // Update Tabel Monitor dengan angka dari server
-        document.getElementById('m-modal').innerText = "Rp " + (Number(d.totalModal) || 0).toLocaleString();
-        document.getElementById('m-cash').innerText = "Rp " + (Number(d.totalCash) || 0).toLocaleString();
-        document.getElementById('m-out').innerText = "- Rp " + (Number(d.totalOut) || 0).toLocaleString();
-        document.getElementById('m-qris').innerText = "Rp " + (Number(d.totalQris) || 0).toLocaleString();
-        document.getElementById('m-online').innerText = "Rp " + (Number(d.totalOnline) || 0).toLocaleString();
-        
-        // Update Header (Uang Fisik Laci)
-        const laciSekarang = (Number(d.totalModal) + Number(d.totalCash)) - Number(d.totalOut);
-        document.getElementById('v-cash').innerText = "Rp " + laciSekarang.toLocaleString();
-
-        // Beri efek kilat kuning sebentar biar admin tahu angka baru masuk
-        document.querySelector('.monitor-table').classList.add('bg-slate-800');
-        setTimeout(() => document.querySelector('.monitor-table').classList.remove('bg-slate-800'), 500);
-
-    } catch(e) {
-        console.error("Gagal update tabel:", e);
+        try {
+            const resp = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance&nocache=${Date.now()}`);
+            const d = await resp.json();
+            document.getElementById('m-modal').innerText = "Rp " + (d.totalModal || 0).toLocaleString();
+            document.getElementById('m-cash').innerText = "Rp " + (d.totalCash || 0).toLocaleString();
+            document.getElementById('m-out').innerText = "- Rp " + (d.totalOut || 0).toLocaleString();
+            document.getElementById('m-qris').innerText = "Rp " + (d.totalQris || 0).toLocaleString();
+            document.getElementById('m-online').innerText = "Rp " + (d.totalOnline || 0).toLocaleString();
+            
+            const laci = (Number(d.totalModal) + Number(d.totalCash)) - Number(d.totalOut);
+            document.getElementById('v-cash').innerText = "Rp " + laci.toLocaleString();
+        } catch(e) {}
     }
-}
 
-    // --- FUNGSI POS STANDAR ---
     async function loadMenu() {
         const resp = await fetch(CONFIG.CSV);
         const csv = await resp.text();
@@ -271,7 +321,7 @@ async function submitOrder() {
         menuData.forEach(m => {
             if ((activeCat === 'ALL' || m.kat === activeCat) && (!s || m.nama.toLowerCase().includes(s))) {
                 const qty = cart[m.nama]?.qty || 0;
-                container.innerHTML += `<div onclick="addToCart('${m.nama}', ${m.harga})" class="bg-white p-2 border rounded-lg h-14 flex flex-col justify-center cursor-pointer relative">
+                container.innerHTML += `<div onclick="addToCart('${m.nama}', ${m.harga})" class="bg-white p-2 border rounded-lg h-14 flex flex-col justify-center cursor-pointer relative shadow-sm hover:bg-emerald-50 active:scale-95">
                     ${qty ? `<div class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-black">${qty}</div>` : ''}
                     <h3 class="text-[8px] font-bold truncate uppercase">${m.nama}</h3>
                     <p class="text-[9px] font-black text-emerald-700">Rp ${m.harga.toLocaleString()}</p>
@@ -282,25 +332,34 @@ async function submitOrder() {
 
     function addToCart(n, p) { cart[n] = { price: p, qty: (cart[n]?.qty || 0) + 1 }; updateCartUI(); }
     function changeQty(n, d) { cart[n].qty += d; if(cart[n].qty <= 0) delete cart[n]; updateCartUI(); }
+    
     function updateCartUI() {
         const list = document.getElementById('cart-list');
-        let t = 0; list.innerHTML = "";
+        let sub = 0; list.innerHTML = "";
         Object.keys(cart).forEach(n => {
-            t += (cart[n].price * cart[n].qty);
-            list.innerHTML += `<div class="flex justify-between items-center text-[9px] bg-white p-1 rounded border">
+            sub += (cart[n].price * cart[n].qty);
+            list.innerHTML += `<div class="flex justify-between items-center text-[9px] bg-white p-1 rounded border shadow-sm">
                 <span class="truncate w-24">${n}</span>
-                <div class="flex items-center gap-1 font-black">
-                    <button onclick="changeQty('${n}',-1)" class="w-4 h-4 bg-slate-100 rounded">-</button>
+                <div class="flex items-center gap-2 font-black">
+                    <button onclick="changeQty('${n}',-1)" class="w-4 h-4 bg-slate-200 rounded text-center">-</button>
                     <span>${cart[n].qty}</span>
-                    <button onclick="changeQty('${n}',1)" class="w-4 h-4 bg-slate-100 rounded">+</button>
+                    <button onclick="changeQty('${n}',1)" class="w-4 h-4 bg-slate-200 rounded text-center">+</button>
                 </div>
             </div>`;
         });
-        document.getElementById('v-total').innerText = "Rp " + t.toLocaleString();
+        document.getElementById('v-subtotal').innerText = "Rp " + sub.toLocaleString();
+        document.getElementById('v-discount').innerText = "- Rp " + discountMember.toLocaleString();
+        document.getElementById('v-total').innerText = "Rp " + (sub - discountMember).toLocaleString();
         renderMenu();
     }
+
     function filterCat(v) { activeCat = v; renderMenu(); }
-    window.onload = () => { loadMenu(); refreshDashboard(); };
+    
+    window.onload = () => { 
+        loadMenu(); 
+        refreshDashboard(); 
+        checkShiftStatus(); 
+    };
 </script>
 </body>
 </html>
