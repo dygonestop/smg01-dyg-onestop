@@ -11,7 +11,34 @@
         .pos-container { width: 100%; max-width: 1100px; background: #F1F5F9; display: flex; flex-direction: column; }
         .main-content { display: flex; flex: 1; overflow: hidden; }
         .menu-side { flex: 1; display: flex; flex-direction: column; background: #F8FAFC; border-right: 1px solid #e2e8f0; }
-        .admin-side { width: 380px; display: flex; flex-direction: column; background: white; border-left: 2px solid #cbd5e1; }
+        /* Pastikan admin-side membagi ruang dengan benar */
+.admin-side { 
+    width: 360px; 
+    display: flex; 
+    flex-direction: column; 
+    height: 100%; /* Paksa tinggi penuh */
+    background: white; 
+    border-left: 2px solid #cbd5e1; 
+}
+
+/* Area input & monitor yang bisa di-scroll */
+.admin-scroll-area {
+    flex: 1; /* Mengambil sisa ruang yang tersedia */
+    overflow-y: auto;
+    padding: 12px;
+}
+
+/* Area pembayaran terkunci di bawah */
+.admin-footer-payment {
+    padding: 16px;
+    background: #f8fafc;
+    border-top: 2px solid #e2e8f0;
+    shrink-0; /* Jangan biarkan area ini mengecil */
+}
+
+/* Custom Scrollbar agar tidak makan tempat */
+.admin-scroll-area::-webkit-scrollbar { width: 4px; }
+.admin-scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .monitor-table td { padding: 4px 8px; font-size: 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9; }
         .scroll-custom::-webkit-scrollbar { width: 4px; }
         .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -38,87 +65,82 @@
         </div>
 
         <div class="admin-side">
-            <div class="flex-1 p-3 overflow-y-auto scroll-custom space-y-4">
-                
-                <div class="bg-slate-900 text-white rounded-xl p-3 shadow-lg border-b-4 border-emerald-500">
-                    <p class="text-[9px] font-black text-emerald-400 uppercase mb-2 text-center">Monitor Shift Aktif</p>
-                    <table class="w-full monitor-table">
-                        <tr><td>Modal Awal</td><td id="m-modal" class="text-right text-blue-300">Rp 0</td></tr>
-                        <tr><td>Cash Masuk</td><td id="m-cash" class="text-right text-emerald-400">Rp 0</td></tr>
-                        <tr><td>Belanja/Out</td><td id="m-out" class="text-right text-red-400">- Rp 0</td></tr>
-                        <tr><td>QRIS</td><td id="m-qris" class="text-right text-orange-400">Rp 0</td></tr>
-                        <tr><td>Online Food</td><td id="m-online" class="text-right text-purple-400">Rp 0</td></tr>
-                    </table>
-                </div>
+    <div class="scroll-area p-3 space-y-4">
+        
+        <div class="bg-slate-900 text-white rounded-xl p-3 shadow-lg border-b-4 border-emerald-500">
+            <p class="text-[9px] font-black text-emerald-400 uppercase mb-2 text-center">Monitor Shift Aktif</p>
+            <table class="w-full monitor-table">
+                <tr><td>Modal Awal</td><td id="m-modal" class="text-right text-blue-300">Rp 0</td></tr>
+                <tr><td>Cash Masuk</td><td id="m-cash" class="text-right text-emerald-400">Rp 0</td></tr>
+                <tr><td>Belanja/Out</td><td id="m-out" class="text-right text-red-400">- Rp 0</td></tr>
+                <tr><td>QRIS</td><td id="m-qris" class="text-right text-orange-400">Rp 0</td></tr>
+                <tr><td>Online Food</td><td id="m-online" class="text-right text-purple-400">Rp 0</td></tr>
+            </table>
+        </div>
 
-                <div class="bg-white p-3 rounded-xl border-2 border-slate-200 space-y-3">
-                    <p class="text-[10px] font-black text-slate-800 uppercase">Kontrol Shift</p>
-                    
-                    <div class="flex flex-col gap-2">
-                        <div class="flex gap-1">
-                            <input id="input-modal" type="number" placeholder="Input Modal" class="flex-1 p-2 bg-blue-50 border border-blue-200 rounded text-[11px] font-bold">
-                            <button onclick="handleShift('open')" id="btn-open-shift" class="bg-blue-600 text-white px-3 rounded-lg font-black text-[10px] active:scale-95">BUKA SHIFT</button>
-                        </div>
-                        <div class="flex gap-1">
-                            <input id="input-closing" type="number" placeholder="Input Uang Fisik" class="flex-1 p-2 bg-red-50 border border-red-200 rounded text-[11px] font-bold">
-                            <button onclick="handleShift('close')" id="btn-close-shift" class="bg-red-600 text-white px-3 rounded-lg font-black text-[10px] active:scale-95">TUTUP SHIFT</button>
-                        </div>
-                    </div>
+        <div class="bg-white p-3 rounded-xl border-2 border-slate-200 space-y-3">
+            <p class="text-[10px] font-black text-slate-800 uppercase">Kontrol Shift</p>
+            <div class="flex flex-col gap-2">
+                <div class="flex gap-1">
+                    <input id="input-modal" type="number" placeholder="Input Modal" class="flex-1 p-2 bg-blue-50 border border-blue-200 rounded text-[11px] font-bold">
+                    <button onclick="handleShift('open')" id="btn-open-shift" class="bg-blue-600 text-white px-3 rounded-lg font-black text-[10px] active:scale-95">BUKA SHIFT</button>
                 </div>
-
-                <div class="bg-white p-3 rounded-xl border-2 border-slate-200 space-y-2">
-                    <p class="text-[10px] font-black text-orange-600 uppercase italic">Input Finance (Operasional)</p>
-                    <div class="flex gap-1">
-                        <select id="f-type" class="flex-1 p-2 bg-slate-100 border rounded text-[10px] font-bold">
-                            <option value="pengeluaran">🛒 PENGELUARAN/BELANJA</option>
-                            <option value="online_food">🛵 ONLINE FOOD</option>
-                        </select>
-                        <input id="f-amt" type="number" placeholder="Rp" class="w-24 p-2 border-2 rounded text-[11px] font-black">
-                    </div>
-                    <input id="f-desc" type="text" placeholder="Keterangan..." class="w-full p-2 border rounded text-[10px] font-bold">
-                    <button onclick="confirmFinance()" id="btn-f" class="w-full py-2 bg-slate-800 text-white rounded font-black text-[10px]">SIMPAN & KUNCI FINANCE</button>
-                </div>
-
-                <div class="bg-emerald-50 p-3 rounded-xl border-2 border-emerald-200 space-y-2">
-                    <p class="text-[10px] font-black text-emerald-800 uppercase">Loyalty Member</p>
-                    <div class="flex gap-1">
-                        <input id="m-hp" type="number" placeholder="No HP Member..." class="flex-1 p-2 border rounded text-[11px] font-bold">
-                        <button onclick="checkMember()" class="bg-emerald-600 text-white px-3 rounded font-black text-[10px]">CEK</button>
-                    </div>
-                    <div id="member-info" class="hidden text-[10px] font-bold text-emerald-700 bg-white p-2 rounded border border-emerald-100">
-                        <p id="m-nama-display"></p>
-                        <p id="m-poin-display"></p>
-                        <button id="btn-voucher" onclick="useVoucher()" class="mt-2 w-full py-1 bg-orange-500 text-white rounded text-[9px] font-black">PAKAI POIN (POTONG RP 5.000)</button>
-                    </div>
-                </div>
-
-                <div class="bg-slate-100 rounded-xl p-2 border border-slate-200">
-                    <p class="text-[8px] font-black text-slate-400 mb-1 uppercase">Daftar Belanja</p>
-                    <div id="cart-list" class="space-y-1"></div>
+                <div class="flex gap-1">
+                    <input id="input-closing" type="number" placeholder="Input Uang Fisik" class="flex-1 p-2 bg-red-50 border border-red-200 rounded text-[11px] font-bold">
+                    <button onclick="handleShift('close')" id="btn-close-shift" class="bg-red-600 text-white px-3 rounded-lg font-black text-[10px] active:scale-95">TUTUP SHIFT</button>
                 </div>
             </div>
+        </div>
 
-            <div class="p-4 bg-slate-50 border-t-4 border-white">
-                <div class="flex justify-between items-center mb-1 text-slate-500">
-                    <span class="font-bold text-[9px]">SUBTOTAL</span>
-                    <span id="v-subtotal" class="font-bold text-[10px]">Rp 0</span>
-                </div>
-                <div class="flex justify-between items-center mb-2 text-orange-600">
-                    <span class="font-bold text-[9px]">DISKON POIN</span>
-                    <span id="v-discount" class="font-bold text-[10px]">- Rp 0</span>
-                </div>
-                <div class="flex justify-between items-center mb-3 text-[#1B4332]">
-                    <span class="font-black text-[10px]">TOTAL AKHIR</span>
-                    <span id="v-total" class="text-2xl font-black">Rp 0</span>
-                </div>
-                <div class="flex gap-2">
-                    <select id="i-mode" class="w-24 p-2 bg-white border-2 border-slate-200 rounded text-[10px] font-black">
-                        <option value="CASH">💵 CASH</option>
-                        <option value="QRIS">📱 QRIS</option>
-                    </select>
-                    <button onclick="confirmOrder()" id="btn-order" class="flex-1 bg-[#1B4332] text-white py-3 rounded-lg font-black text-[11px] shadow-lg active:scale-95">BAYAR & KUNCI</button>
-                </div>
+        <div class="bg-white p-3 rounded-xl border-2 border-slate-200 space-y-2">
+            <p class="text-[10px] font-black text-orange-600 uppercase italic">Input Finance (Operasional)</p>
+            <div class="flex gap-1">
+                <select id="f-type" class="flex-1 p-2 bg-slate-100 border rounded text-[10px] font-bold">
+                    <option value="pengeluaran">🛒 PENGELUARAN/BELANJA</option>
+                    <option value="online_food">🛵 ONLINE FOOD</option>
+                </select>
+                <input id="f-amt" type="number" placeholder="Rp" class="w-24 p-2 border-2 rounded text-[11px] font-black">
             </div>
+            <input id="f-desc" type="text" placeholder="Keterangan..." class="w-full p-2 border rounded text-[10px] font-bold">
+            <button onclick="confirmFinance()" id="btn-f" class="w-full py-2 bg-slate-800 text-white rounded font-black text-[10px]">SIMPAN & KUNCI FINANCE</button>
+        </div>
+
+        <div class="bg-emerald-50 p-3 rounded-xl border-2 border-emerald-200 space-y-2">
+            <p class="text-[10px] font-black text-emerald-800 uppercase">Loyalty Member</p>
+            <div class="flex gap-1">
+                <input id="m-hp" type="number" placeholder="No HP Member..." class="flex-1 p-2 border rounded text-[11px] font-bold">
+                <button onclick="checkMember()" class="bg-emerald-600 text-white px-3 rounded font-black text-[10px]">CEK</button>
+            </div>
+            <div id="member-info" class="hidden text-[10px] font-bold text-emerald-700 bg-white p-2 rounded border border-emerald-100">
+                <p id="m-nama-display"></p>
+                <p id="m-poin-display"></p>
+                <button id="btn-voucher" onclick="useVoucher()" class="mt-2 w-full py-1 bg-orange-500 text-white rounded text-[9px] font-black">PAKAI POIN</button>
+            </div>
+        </div>
+
+        <div class="bg-slate-100 rounded-xl p-2 border border-slate-200">
+            <p class="text-[8px] font-black text-slate-400 mb-1 uppercase">Daftar Belanja</p>
+            <div id="cart-list" class="space-y-1"></div>
+        </div>
+    </div> <div class="sticky-bottom p-4 bg-slate-50 border-t-4 border-white">
+        <div class="flex justify-between items-center mb-1 text-slate-500">
+            <span class="font-bold text-[9px]">SUBTOTAL</span>
+            <span id="v-subtotal" class="font-bold text-[10px]">Rp 0</span>
+        </div>
+        <div class="flex justify-between items-center mb-2 text-orange-600">
+            <span class="font-bold text-[9px]">DISKON POIN</span>
+            <span id="v-discount" class="font-bold text-[10px]">- Rp 0</span>
+        </div>
+        <div class="flex justify-between items-center mb-3 text-[#1B4332]">
+            <span class="font-black text-[10px]">TOTAL AKHIR</span>
+            <span id="v-total" class="text-2xl font-black">Rp 0</span>
+        </div>
+        <div class="flex gap-2">
+            <select id="i-mode" class="w-24 p-2 bg-white border-2 border-slate-200 rounded text-[10px] font-black">
+                <option value="CASH">💵 CASH</option>
+                <option value="QRIS">📱 QRIS</option>
+            </select>
+            <button onclick="confirmOrder()" id="btn-order" class="flex-1 bg-[#1B4332] text-white py-3 rounded-lg font-black text-[11px] shadow-lg active:scale-95">BAYAR & KUNCI</button>
         </div>
     </div>
 </div>
