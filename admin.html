@@ -122,34 +122,37 @@ document.getElementById("v-total").innerText="Rp "+(sub-discountMember).toLocale
 }
 
 // FUNGSI CETAK UTAMA (Mendukung Bluetooth via RawBT)
+// FUNGSI CETAK PERBAIKAN (Agar tidak muncul kode/tag)
 function fastPrint58mm(htmlContent){
     const printerWidth = "58mm";
-    const fullHtml = `
-        <!DOCTYPE html>
-        <html>
+    // Template minimalis tanpa tag berlebihan agar printer tidak bingung
+    const fullHtml = `<html>
         <head>
+            <meta charset="UTF-8">
             <style>
-                body { font-family: 'Courier New', monospace; width: ${printerWidth}; padding: 0; margin: 0; font-size: 12px; }
+                body { font-family: monospace; width: 58mm; padding: 0; margin: 0; font-size: 10px; }
                 .c { text-align: center; }
                 .r { text-align: right; }
                 .b { font-weight: bold; }
-                hr { border-top: 1px dashed #000; margin: 5px 0; }
+                hr { border-top: 1px dashed #000; margin: 2px 0; }
                 table { width: 100%; border-collapse: collapse; }
+                td { vertical-align: top; }
             </style>
         </head>
         <body>${htmlContent}</body>
         </html>`;
 
-    // Cek jika Mobile (Android/iOS)
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (isMobile) {
-        // Kirim ke RawBT (Wajib install RawBT di Android)
-        window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(fullHtml)));
+        // PERBAIKAN DI SINI: Tambahkan parameter 'text/html' agar RawBT merender HTML-nya
+        // base64 harus diawali dengan format data URL yang dikenal RawBT
+        const base64Data = btoa(unescape(encodeURIComponent(fullHtml)));
+        window.location.href = "rawbt:data:text/html;base64," + base64Data;
     } else {
-        // Mode Desktop
         const iframe = document.createElement("iframe");
-        iframe.style.display = "none";
+        iframe.style.position = "absolute"; iframe.style.width = "0px"; 
+        iframe.style.height = "0px"; iframe.style.border = "none";
         document.body.appendChild(iframe);
         const doc = iframe.contentWindow.document;
         doc.open(); doc.write(fullHtml); doc.close();
@@ -160,7 +163,6 @@ function fastPrint58mm(htmlContent){
         }, 500);
     }
 }
-
 async function submitOrder(){
     const subtotal = Object.values(cart).reduce((s,i)=>s+i.price*i.qty,0);
     const total = subtotal - discountMember;
