@@ -88,51 +88,9 @@
     </div>
 </div>
 
-<button onclick="closeKas()" class="w-full mt-4 bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl font-black text-[10px] uppercase tracking-wider transition-all shadow-lg shadow-red-900/20">
-        🔴 TUTUP KAS / CLOSE SHIFT
-    </button>
-</div>
-
 <script>
-// Tambahkan variabel global ini di atas (dekat let cart = {})
-let currentSaldoSistem = 0;
-
-// Update fungsi refreshFinance agar menyimpan saldo sistem
-async function refreshFinance() {
-    const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance&_=${Date.now()}`);
-    const d = await r.json();
-    
-    // Simpan nilai untuk keperluan Close Shift
-    currentSaldoSistem = d.cash || 0; 
-
-    document.getElementById('m-modal').innerText = "Rp " + (d.totalModal || 0).toLocaleString();
-    document.getElementById('m-cash').innerText = "Rp " + (d.totalCash || 0).toLocaleString();
-    document.getElementById('m-qris').innerText = "Rp " + (d.totalQris || 0).toLocaleString();
-    document.getElementById('m-out').innerText = "-Rp " + (d.totalOut || 0).toLocaleString();
-    document.getElementById('v-cash-header').innerText = "Rp " + (d.cash || 0).toLocaleString();
-}
-
-// Fungsi Close Shift
-async function closeKas() {
-  const fisik = prompt("MASUKKAN TOTAL UANG TUNAI DI LACI:");
-  if (fisik === null || fisik === "") return;
-
-  if(confirm("Yakin ingin menutup shift? Data kas akan di-reset untuk shift berikutnya.")) {
-    const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=closeShift&sys=${currentSaldoSistem}&fisik=${fisik}`);
-    const d = await r.json();
-
-    alert(`✅ SHIFT BERHASIL DITUTUP\n\n` +
-          `Sistem: Rp ${d.saldoSistem.toLocaleString()}\n` +
-          `Fisik : Rp ${d.fisik.toLocaleString()}\n` +
-          `---------------------------\n` +
-          `Selisih: Rp ${d.selisih.toLocaleString()}`);
-    
-    location.reload(); // Refresh untuk mulai shift baru dengan modal 0
-  }
-}
-
     const CONFIG = {
-        API: "https://script.google.com/macros/s/AKfycbxQExX61OI5sX5BOMFh-QcuDPtvphGBxhTEcNfnAiWNxpez2QKtv0_SZE2TL-qI70upYg/exec",
+        API: "https://script.google.com/macros/s/AKfycbwgE4TNuajMZy34ZOQKcHbUniCm6wU-a4rjGESFZC_1r6wUBVm_EwUZKvqchK-Pk6jL/exec",
         CSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv",
         TOKEN: "dyg-access-v2"
     };
