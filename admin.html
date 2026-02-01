@@ -13,36 +13,17 @@
         .menu-side { flex: 1; display: flex; flex-direction: column; background: #F8FAFC; border-right: 1px solid #e2e8f0; }
         /* Pastikan admin-side membagi ruang dengan benar */
 .admin-side { 
-    width: 360px; 
+    height: 100vh; /* Tinggi penuh layar */
     display: flex; 
     flex-direction: column; 
-    height: 100%; /* Paksa tinggi penuh */
-    background: white; 
-    border-left: 2px solid #cbd5e1; 
 }
-
-/* Area input & monitor yang bisa di-scroll */
-.admin-scroll-area {
-    flex: 1; /* Mengambil sisa ruang yang tersedia */
-    overflow-y: auto;
-    padding: 12px;
+.scroll-area { 
+    flex: 1; /* Area ini yang akan mengalah dan bisa discroll */
+    overflow-y: auto; 
 }
-
-/* Area pembayaran terkunci di bawah */
-.admin-footer-payment {
-    padding: 16px;
-    background: #f8fafc;
-    border-top: 2px solid #e2e8f0;
-    shrink-0; /* Jangan biarkan area ini mengecil */
-}
-
-/* Custom Scrollbar agar tidak makan tempat */
-.admin-scroll-area::-webkit-scrollbar { width: 4px; }
-.admin-scroll-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .monitor-table td { padding: 4px 8px; font-size: 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9; }
-        .scroll-custom::-webkit-scrollbar { width: 4px; }
-        .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    </style>
+.sticky-bottom { 
+    shrink: 0; /* Area bayar ini tidak boleh mengecil atau hilang */
+}    </style>
 </head>
 <body>
 
