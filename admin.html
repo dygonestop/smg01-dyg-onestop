@@ -121,35 +121,17 @@ document.getElementById("v-discount").innerText="- Rp "+discountMember.toLocaleS
 document.getElementById("v-total").innerText="Rp "+(sub-discountMember).toLocaleString();
 }
 
-// FUNGSI CETAK UTAMA (Mendukung Bluetooth via RawBT)
-// FUNGSI CETAK PERBAIKAN (Agar tidak muncul kode/tag)
-function fastPrint58mm(htmlContent){
-    const printerWidth = "58mm";
-    // Template minimalis tanpa tag berlebihan agar printer tidak bingung
-    const fullHtml = `<html>
-        <head>
-            <meta charset="UTF-8">
-            <style>
-                body { font-family: monospace; width: 58mm; padding: 0; margin: 0; font-size: 10px; }
-                .c { text-align: center; }
-                .r { text-align: right; }
-                .b { font-weight: bold; }
-                hr { border-top: 1px dashed #000; margin: 2px 0; }
-                table { width: 100%; border-collapse: collapse; }
-                td { vertical-align: top; }
             </style>
         </head>
         <body>${htmlContent}</body>
         </html>`;
 
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    if (isMobile) {
-        // PERBAIKAN DI SINI: Tambahkan parameter 'text/html' agar RawBT merender HTML-nya
-        // base64 harus diawali dengan format data URL yang dikenal RawBT
-        const base64Data = btoa(unescape(encodeURIComponent(fullHtml)));
-        window.location.href = "rawbt:data:text/html;base64," + base64Data;
+    // Khusus untuk MIT App Inventor
+    // Kita mengirim data HTML ke komponen WebViewer
+    if (window.AppInventor) {
+        window.AppInventor.setWebViewString(fullHtml);
     } else {
+        // Jika dibuka di browser biasa, tetap tampilkan preview print
         const iframe = document.createElement("iframe");
         iframe.style.position = "absolute"; iframe.style.width = "0px"; 
         iframe.style.height = "0px"; iframe.style.border = "none";
@@ -163,6 +145,7 @@ function fastPrint58mm(htmlContent){
         }, 500);
     }
 }
+
 async function submitOrder(){
     const subtotal = Object.values(cart).reduce((s,i)=>s+i.price*i.qty,0);
     const total = subtotal - discountMember;
@@ -173,41 +156,35 @@ async function submitOrder(){
     btn.disabled = true;
 
     try {
-        // Kirim ke Google Apps Script
+        // 1. Kirim data ke Google Sheets
         await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${total}`);
 
-        // Buat Konten Struk
-        let receiptHtml = `
-            <div class="c b">dyg++ POS SECURE</div>
-            <div class="c">${new Date().toLocaleString('id-ID')}</div>
-            <hr>
-            <table>
-        `;
+        // 2. Susun format teks murni untuk Printer
+        let esc = "\x1B\x40"; // Reset
+        esc += "\x1B\x61\x01"; // Center
+        esc += "dyg++ POS SECURE\n";
+        esc += new Date().toLocaleString('id-ID') + "\n";
+        esc += "--------------------------------\n";
+        esc += "\x1B\x61\x00"; // Left
 
         Object.keys(cart).forEach(n => {
-            receiptHtml += `
-                <tr>
-                    <td>${n} x${cart[n].qty}</td>
-                    <td class="r">${(cart[n].price * cart[n].qty).toLocaleString()}</td>
-                </tr>
-            `;
+            esc += `${n} x${cart[n].qty}\n`;
+            esc += `      Rp ${(cart[n].price * cart[n].qty).toLocaleString()}\n`;
         });
 
-        receiptHtml += `
-            </table>
-            <hr>
-            <table>
-                <tr class="b"><td>TOTAL</td><td class="r">Rp ${total.toLocaleString()}</td></tr>
-            </table>
-            <hr>
-            <div class="c">TERIMA KASIH</div>
-            <br><br>
-        `;
+        esc += "--------------------------------\n";
+        esc += `TOTAL    : Rp ${total.toLocaleString()}\n`;
+        esc += "--------------------------------\n";
+        esc += "\x1B\x61\x01"; // Center
+        esc += "TERIMA KASIH\n\n\n\n\n"; 
 
-        // Panggil fungsi cetak
-        fastPrint58mm(receiptHtml);
+        // 3. KIRIM KE MIT APP INVENTOR
+        if (window.AppInventor) {
+            // KITA TAMBAHKAN KATA "PRINT" DI DEPAN DATA STRUK
+            // Simbol "|" digunakan sebagai pemisah
+            window.AppInventor.setWebViewString("PRINT|" + esc);
+        }
 
-        // Reset & Reload
         alert("Transaksi Berhasil!");
         location.reload();
 
