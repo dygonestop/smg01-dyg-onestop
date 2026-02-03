@@ -135,7 +135,7 @@ function playVoiceNotif() {
 }
 /* ================= CONFIG FINAL ================= */
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbzdDveudrC9NNPX0XnAE784Cif5pFZLW-tulkKHhMGj41-8KCioaJuj76vjzeWRsoNYgg/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbxSrlSYP38mGUdRe_hGpaOW5HrNl8ZeXSSb7zuaJhnZTRJ129Zy3S6hRJjxnGxcJXMsGQ/exec",
   TOKEN: "dyg-access-v2",
   REFRESH: 8000
 };
@@ -186,30 +186,51 @@ function render(data){
     return;
   }
 
-  box.innerHTML = active.map(o=>`
-    <div class="card" id="c-${o.row}" data-row="${o.row}">
-      <div class="no">#${o.Antrean}</div>
-      <div class="name">${o.Nama}</div>
-      <div class="mode">
-        ${o.Mode} 
-        ${o.Meja ? `<span style="color:var(--danger)">[ MEJA ${o.Meja} ]</span>` : ''}
-      </div>
-      <div class="items">
-        ${o.Pesanan.split(',').map(i=>`• ${i.trim()}`).join("<br>")}
-      </div>
-      <button class="btn" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
-    </div>
-  `).join("");
+  box.innerHTML = active.map(o => {
+    // --- LOGIKA BARU UNTUK HANDLE JSON PESANAN ---
+    let daftarMenu = "";
+    try {
+      if (o.Pesanan.trim().startsWith('{')) {
+        const jsonPesanan = JSON.parse(o.Pesanan);
+        // Mengambil nama menu dari key JSON
+        daftarMenu = Object.keys(jsonPesanan).map(namaMenu => {
+          const detail = jsonPesanan[namaMenu];
+          return `• ${detail.qty}x ${namaMenu}`;
+        }).join("<br>");
+      } else {
+        // Fallback jika formatnya masih teks biasa (split koma)
+        daftarMenu = o.Pesanan.split(',').map(i => `• ${i.trim()}`).join("<br>");
+      }
+    } catch (e) {
+      daftarMenu = `• ${o.Pesanan}`; // Jika error, tampilkan apa adanya
+    }
 
-  // Inisialisasi Hammer setelah render
-  document.querySelectorAll(".card").forEach(card=>{
+    return `
+      <div class="card" id="c-${o.row}" data-row="${o.row}">
+        <div class="no">#${o.Antrean}</div>
+        <div class="name">${o.Nama || 'Tanpa Nama'}</div>
+        <div class="mode">
+          ${o.Mode} 
+          ${o.Meja ? `<span style="color:var(--danger)">[ MEJA ${o.Meja} ]</span>` : ''}
+        </div>
+        <div class="items">
+          ${daftarMenu}
+        </div>
+        <button class="btn" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
+      </div>
+    `;
+  }).join("");
+
+  // Re-inisialisasi Hammer (Swipe)
+  document.querySelectorAll(".card").forEach(card => {
     const mc = new Hammer(card);
-    mc.on("swipeleft",()=>{
-        // Pastikan Anda punya elemen overlay di dalam card jika ingin menggunakan swipe
-        alert("Swipe terdeteksi untuk row: " + card.dataset.row);
+    mc.on("swipeleft", () => {
+        const rowId = card.getAttribute("data-row");
+        alert("Swipe terdeteksi untuk row: " + rowId);
     });
   });
 }
+
 /* ================= ACTION ================= */
 function cancel(row){
   document.getElementById("ov-"+row).classList.remove("active");
