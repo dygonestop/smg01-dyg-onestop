@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CLOUDkitchen.dyg++ POS</title>
+    <title>dyg++ POS Compact</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
@@ -21,11 +21,6 @@
             align-content: start;
         }
 
-        @media (max-width: 1024px) {
-            .cart-panel { width: 280px !important; }
-            #total { font-size: 1.1rem; }
-        }
-
         @media (max-width: 640px) {
             .menu-grid { grid-template-columns: repeat(2, 1fr); }
             .main-container { flex-direction: column; overflow-y: auto; height: calc(100vh - 60px); }
@@ -35,7 +30,6 @@
         .menu-card { transition: transform 0.1s; border: 1px solid #e2e8f0; }
         .menu-card:active { transform: scale(0.96); }
         
-        /* Animasi Collapse */
         #voucherSection { transition: all 0.3s ease-in-out; max-height: 0; overflow: hidden; opacity: 0; }
         #voucherSection.open { max-height: 100px; opacity: 1; margin-top: 4px; }
     </style>
@@ -44,7 +38,7 @@
 
 <header class="h-[52px] bg-white border-b border-slate-200 px-4 flex justify-between items-center shrink-0">
     <div class="flex items-center gap-3">
-        <h1 class="text-lg font-extrabold text-blue-700 tracking-tighter">CLOUDkitchen.dyg++ <span class="text-slate-400 font-medium">POS</span></h1>
+        <h1 class="text-lg font-extrabold text-blue-700 tracking-tighter">dyg++ <span class="text-slate-400 font-medium">RETAIL</span></h1>
         <div id="memberInfo" class="hidden md:block text-[10px] text-slate-500 italic truncate max-w-[150px]">Cek member...</div>
     </div>
     <div class="flex items-center gap-2">
@@ -78,7 +72,7 @@
             </div>
         </div>
 
-        <div class="p-2 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div class="p-2 bg-white border-t border-slate-200">
             <div class="mb-1">
                 <button onclick="toggleVoucher()" class="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
                     <span>🏷️</span> VOUCHER <span id="vouchArrow">▼</span>
@@ -91,13 +85,13 @@
                 </div>
             </div>
             
-            <div class="flex justify-between items-center mb-2 px-1">
+            <div class="flex justify-between items-center mb-1 px-1">
                 <span class="font-bold text-slate-700 text-[11px]">TOTAL</span>
                 <span class="text-lg font-black text-blue-700 leading-none">Rp <span id="total">0</span></span>
             </div>
 
             <div class="space-y-1.5">
-                <select id="metode" onchange="renderCash()" class="w-full border border-slate-200 rounded-md p-1.5 text-[11px] font-bold bg-white">
+                <select id="metode" onchange="renderCash()" class="w-full border border-slate-200 rounded-md p-1.5 text-[11px] font-bold bg-white outline-none">
                     <option value="CASH">💵 TUNAI</option>
                     <option value="QRIS">📱 QRIS</option>
                     <option value="CARD">💳 KARTU</option>
@@ -105,7 +99,7 @@
 
                 <div id="cashBox" class="empty:hidden"></div>
 
-                <button onclick="submitOrder()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-[12px] shadow-sm transition active:scale-95 uppercase tracking-wide">
+                <button onclick="submitOrder()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-[12px] shadow-sm transition active:scale-95 uppercase">
                     Bayar & Cetak
                 </button>
             </div>
@@ -170,9 +164,7 @@ function renderMenu() {
                 </div>
                 <div class="flex justify-between items-center mt-1.5">
                     <div class="text-[10px] font-black text-slate-900">Rp${m.harga.toLocaleString()}</div>
-                    <div class="bg-blue-50 text-blue-600 rounded p-0.5">
-                        <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/></svg>
-                    </div>
+                    <div class="bg-blue-50 text-blue-600 rounded p-0.5"><svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/></svg></div>
                 </div>
                 <span id="badge-${i}" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full font-bold border-white border"></span>
             `;
@@ -241,25 +233,53 @@ function quickCash(v) { document.getElementById("bayar").value = v; hitungKembal
 document.addEventListener("input", e => { if (e.target.id === "bayar") hitungKembali(); });
 function hitungKembali() {
     const b = Number(document.getElementById("bayar")?.value || 0);
-    const t = Number(document.getElementById("total").innerText.replace(/,/g, '') || 0);
+    const raw = document.getElementById("total").innerText.replace(/,/g, '');
+    const t = Number(raw || 0);
     document.getElementById("kembali").innerText = (b - t).toLocaleString();
 }
 
+/* ================= LOGIC SUBMIT (DILENGKAPI) ================= */
 async function submitOrder() {
-    const t = Number(document.getElementById("total").innerText.replace(/,/g, '') || 0);
-    if (t <= 0 && Object.keys(cart).length === 0) return alert("Kosong");
-    const v = Number(document.getElementById("voucher").value || 0);
-    const m = document.getElementById("metode").value;
-    const n = document.getElementById("nohp").value || "";
-    const p = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
+    const rawTotal = document.getElementById("total").innerText.replace(/,/g, '');
+    const total = Number(rawTotal || 0);
+    if (total <= 0 && Object.keys(cart).length === 0) { alert("Keranjang kosong"); return; }
+
+    const voucher = Number(document.getElementById("voucher").value || 0);
+    const finalTotal = Math.max(0, total);
+    const metode = document.getElementById("metode").value;
+    const noWA = document.getElementById("nohp").value || "";
+    const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
+
     const btn = document.querySelector("button[onclick='submitOrder()']");
-    btn.innerText = "WAIT..."; btn.disabled = true;
+    btn.innerText = "PROSES..."; btn.disabled = true;
+
     try {
-        const r = await fetch(`${API_URL}?token=${TOKEN}&action=processPayment&total=${t}&noWA=${n}&redeemQty=0&voucher=${v}&method=${m}&pesanan=${encodeURIComponent(p)}`);
-        if (await r.text() === "SUCCESS") {
-            alert("Berhasil!"); location.reload();
-        } else { alert("Gagal"); btn.innerText = "BAYAR"; btn.disabled = false; }
-    } catch (e) { alert("Error"); btn.disabled = false; }
+        const url = `${API_URL}?token=${TOKEN}&action=processPayment&total=${finalTotal}&noWA=${noWA}&redeemQty=0&voucher=${voucher}&method=${metode}&pesanan=${encodeURIComponent(pesanan)}`;
+        const res = await fetch(url);
+        const txt = await res.text();
+
+        if (txt === "SUCCESS") {
+            // PERINTAH CETAK ESC/POS
+            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
+            esc += "Tgl: " + new Date().toLocaleString() + "\n--------------------------------\n\x1B\x61\x00";
+            Object.values(cart).forEach(i => {
+                esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`;
+            });
+            esc += "--------------------------------\nTOTAL: Rp " + finalTotal.toLocaleString() + "\n";
+            if (noWA) esc += "Member: " + noWA + "\n";
+            esc += "\nTERIMA KASIH\n\n\n\n";
+
+            if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
+            alert("Transaksi Berhasil!");
+            location.reload();
+        } else {
+            alert("Gagal menyimpan");
+            btn.innerText = "BAYAR & CETAK"; btn.disabled = false;
+        }
+    } catch (e) {
+        alert("Koneksi gagal");
+        btn.innerText = "BAYAR & CETAK"; btn.disabled = false;
+    }
 }
 
 loadMenu();
