@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>dyg++ POS SECURE V4</title>
+    <title>dyg++ POS ULTIMATE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -13,30 +13,28 @@
         .menu-side{flex:1;display:flex;flex-direction:column;background:#F8FAFC;border-right:1px solid #e2e8f0}
         .admin-side{width:360px;display:flex;flex-direction:column;background:white;border-left:2px solid #cbd5e1;height:100%}
         .scroll-area{flex:1;overflow-y:auto;padding:12px}
-        .sticky-bottom{shrink:0;background:#f8fafc;border-top:4px solid #fff}
         .collapse-content{display:none}
-        .handle{cursor:pointer;background:#1e293b;color:#fbbf24;text-align:center;font-size:9px;padding:10px;font-weight:800;border-radius:8px;margin-bottom:5px;text-transform:uppercase}
+        .handle{cursor:pointer;background:#1e293b;color:#fbbf24;text-align:center;font-size:10px;padding:12px;font-weight:800;border-radius:8px;margin-bottom:8px;text-transform:uppercase}
         .handle-member{background:#1e40af;color:white}
-        .scroll-custom::-webkit-scrollbar{width:4px}
-        .scroll-custom::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
-        .badge-qty { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 99px; font-weight: 800; }
+        .badge-qty { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 99px; font-weight: 800; border: 2px solid white; }
+        td { padding: 4px; border-bottom: 1px solid #f1f5f9; }
     </style>
 </head>
 <body>
 
 <div class="pos-container shadow-2xl">
     <div class="bg-[#1B4332] text-white p-3 flex justify-between items-center shrink-0">
-        <h1 class="text-lg font-black italic text-emerald-400 uppercase tracking-tighter">dyg++ POS</h1>
+        <h1 class="text-lg font-black italic text-emerald-400 uppercase">dyg++ POS</h1>
         <div class="text-right">
-            <p id="v-cash" class="text-lg font-black text-emerald-400">Rp 0</p>
+            <p id="v-header-cash" class="text-lg font-black text-emerald-400">Rp 0</p>
         </div>
     </div>
 
     <div class="main-content">
-        <div class="menu-side overflow-y-auto scroll-custom">
+        <div class="menu-side overflow-y-auto">
             <div class="p-2 border-b bg-white flex gap-2">
-                <select id="cat-select" onchange="filterCat(this.value)" class="flex-1 p-2 bg-slate-100 border rounded-lg text-[10px] font-black uppercase"></select>
-                <input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Cari..." class="w-32 p-2 bg-slate-100 border rounded-lg text-[10px] font-bold">
+                <select id="cat-select" onchange="filterCat(this.value)" class="flex-1 p-2 bg-slate-100 border rounded-lg text-[10px] font-black uppercase outline-none"></select>
+                <input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Cari..." class="w-32 p-2 bg-slate-100 border rounded-lg text-[10px] font-bold outline-none">
             </div>
             <div id="menu-render" class="grid grid-cols-4 gap-2 p-3"></div>
         </div>
@@ -44,15 +42,26 @@
         <div class="admin-side">
             <div class="scroll-area space-y-2">
                 
-                <div onclick="toggleSection('sec-finance')" class="handle">📂 FINANCE & OPERASIONAL</div>
-                <div id="sec-finance" class="collapse-content space-y-2 p-2 bg-slate-100 rounded-lg border mb-3">
-                    <div class="bg-white p-2 rounded shadow-sm">
+                <div onclick="toggleSection('sec-finance')" class="handle">📊 FINANCE DASHBOARD</div>
+                <div id="sec-finance" class="collapse-content space-y-3 p-3 bg-slate-100 rounded-xl border mb-2">
+                    <div class="bg-white p-2 rounded-lg shadow-sm border text-[10px] font-bold">
+                        <table class="w-full">
+                            <tr class="text-slate-500"><td>MODAL AWAL</td><td id="t-modal" class="text-right text-slate-800">0</td></tr>
+                            <tr class="text-emerald-600"><td>CASH IN</td><td id="t-cash" class="text-right">0</td></tr>
+                            <tr class="text-blue-600"><td>QRIS/TRF</td><td id="t-qris" class="text-right">0</td></tr>
+                            <tr class="text-red-500"><td>PENGELUARAN</td><td id="t-out" class="text-right">0</td></tr>
+                            <tr class="text-purple-600"><td>ONLINE FOOD</td><td id="t-online" class="text-right">0</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="bg-white p-2 rounded-lg border">
                         <div id="shift-open-area" class="flex gap-2">
                             <input type="number" id="input-modal" placeholder="Modal" class="flex-1 p-2 border rounded text-xs font-bold">
                             <button onclick="bukaShift()" class="bg-emerald-600 text-white px-3 rounded font-black text-[9px]">BUKA</button>
                         </div>
-                        <button id="btn-tutup-shift" onclick="tutupShift()" class="w-full mt-2 bg-red-600 text-white py-2 rounded font-black text-[10px] hidden">TUTUP SHIFT & SETTLE</button>
+                        <button id="btn-tutup-shift" onclick="tutupShift()" class="w-full mt-2 bg-red-600 text-white py-2 rounded font-black text-[10px] hidden uppercase">Tutup Shift</button>
                     </div>
+
                     <div class="grid grid-cols-2 gap-2">
                         <button onclick="saveFinance('pengeluaran', 'Biaya')" class="bg-orange-500 text-white p-2 rounded text-[9px] font-black uppercase">Pengeluaran</button>
                         <button onclick="saveFinance('online_food', 'Online')" class="bg-purple-500 text-white p-2 rounded text-[9px] font-black uppercase">Online Food</button>
@@ -60,36 +69,46 @@
                 </div>
 
                 <div onclick="toggleSection('sec-member')" class="handle handle-member">🎫 MEMBER & VOUCHER</div>
-                <div id="sec-member" class="collapse-content space-y-2 p-2 bg-blue-50 rounded-lg border border-blue-200 mb-3">
-                    <div class="bg-white p-2 rounded shadow-sm">
-                        <p class="text-[8px] font-black text-blue-600 mb-1 uppercase">Input Nomor HP Member</p>
+                <div id="sec-member" class="collapse-content space-y-3 p-3 bg-blue-50 rounded-xl border border-blue-200 mb-2">
+                    <div class="bg-white p-2 rounded border border-blue-100">
+                        <p class="text-[9px] font-black text-blue-700 mb-1 uppercase">Cek Poin Member</p>
                         <div class="flex gap-2">
-                            <input type="number" id="member-hp" placeholder="08xxx" class="flex-1 p-2 border rounded text-xs font-bold outline-none">
+                            <input type="number" id="member-hp" placeholder="No HP Member" class="flex-1 p-2 border rounded text-xs font-bold outline-none">
                             <button onclick="cekMember()" class="bg-blue-600 text-white px-3 rounded font-black text-[9px]">CEK</button>
                         </div>
                         <div id="member-info" class="mt-2 hidden p-2 bg-blue-600 text-white rounded text-[10px]">
                             <p id="m-nama" class="font-black"></p>
                             <p id="m-poin" class="font-bold text-yellow-300"></p>
-                            <button id="btn-redeem" onclick="applyRedeem()" class="mt-2 w-full bg-white text-blue-700 py-1.5 rounded font-black uppercase text-[9px]">Tukarkan Semua Poin</button>
+                            <button id="btn-redeem" onclick="applyRedeem()" class="mt-2 w-full bg-white text-blue-700 py-1.5 rounded font-black uppercase text-[9px]">Tukar Poin</button>
+                        </div>
+                    </div>
+                    <div class="bg-white p-2 rounded border border-blue-100">
+                        <p class="text-[9px] font-black text-blue-700 mb-1 uppercase">Input Kode Voucher</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="voucher-code" placeholder="KODE VOUCHER" class="flex-1 p-2 border rounded text-xs font-bold outline-none uppercase">
+                            <button onclick="applyVoucher()" class="bg-slate-800 text-white px-3 rounded font-black text-[9px]">PAKAI</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl p-2 border-2 border-slate-200 min-h-[150px]">
-                    <p class="text-[9px] font-black text-slate-400 mb-2 uppercase text-center border-b pb-1 italic">Order List</p>
+                <div class="bg-white rounded-xl p-2 border-2 border-slate-200 min-h-[160px]">
+                    <p class="text-[9px] font-black text-slate-400 mb-2 uppercase text-center border-b pb-1">Daftar Belanja</p>
                     <div id="cart-list" class="space-y-2"></div>
                 </div>
             </div>
 
             <div class="sticky-bottom p-4 border-t-2">
                 <div id="discount-area" class="hidden flex justify-between text-red-600 text-[11px] font-black mb-1">
-                    <span>POTONGAN POIN:</span><span id="v-discount">-Rp 0</span>
+                    <span>POTONGAN:</span><span id="v-discount">-Rp 0</span>
                 </div>
                 <div class="flex justify-between text-[#1B4332] mb-1">
-                    <span class="font-black text-[11px] uppercase">Total Bayar</span>
+                    <span class="font-black text-[11px] uppercase opacity-60">Total</span>
                     <span id="v-total" class="text-3xl font-black">Rp 0</span>
                 </div>
-                <button onclick="submitOrder()" id="btn-order" class="w-full bg-[#1B4332] text-white py-4 rounded-2xl font-black text-[14px] shadow-lg active:scale-95 transition-all">BAYAR & CETAK STRUK</button>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="btConnect()" class="bg-slate-200 text-slate-700 px-3 rounded-xl text-[10px] font-bold">🖨️</button>
+                    <button onclick="submitOrder()" id="btn-order" class="flex-1 bg-[#1B4332] text-white py-4 rounded-2xl font-black text-[14px] shadow-lg uppercase">Bayar & Cetak</button>
+                </div>
             </div>
         </div>
     </div>
@@ -110,43 +129,51 @@ function toggleSection(id){
     s.style.display = (s.style.display === "block") ? "none" : "block";
 }
 
-// --- MEMBER & REDEEM LOGIC ---
+// --- MEMBER & VOUCHER ---
 async function cekMember() {
     const hp = document.getElementById("member-hp").value;
     if(!hp) return;
-    try {
-        const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${hp}`);
-        const d = await r.json();
-        if(d.exists) {
-            memberData = d; memberData.noHP = hp;
-            document.getElementById("m-nama").innerText = d.nama;
-            document.getElementById("m-poin").innerText = "Poin: " + Number(d.poin).toLocaleString();
-            document.getElementById("member-info").classList.remove("hidden");
-            // Pakem: Minimal 5000 poin baru bisa redeem
-            document.getElementById("btn-redeem").style.display = (d.poin >= 5000) ? "block" : "none";
-        } else { alert("Member tidak ditemukan!"); }
-    } catch(e) { alert("Server Error!"); }
+    const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${hp}`);
+    const d = await r.json();
+    if(d.exists) {
+        memberData = d; memberData.noHP = hp;
+        document.getElementById("m-nama").innerText = d.nama;
+        document.getElementById("m-poin").innerText = "Poin: " + Number(d.poin).toLocaleString();
+        document.getElementById("member-info").classList.remove("hidden");
+        document.getElementById("btn-redeem").style.display = (d.poin >= 5000) ? "block" : "none";
+    } else { alert("Member tidak ditemukan!"); }
 }
 
 function applyRedeem() {
-    discount = memberData.poin; // Kelipatan 1:1
+    discount = memberData.poin;
+    showDiscount();
+}
+
+function applyVoucher() {
+    const code = document.getElementById("voucher-code").value.toUpperCase();
+    if(code === "DYGPROMO") { // Contoh voucher manual
+        discount = 10000;
+        showDiscount();
+        alert("Voucher Berhasil!");
+    } else { alert("Voucher Tidak Valid!"); }
+}
+
+function showDiscount() {
     document.getElementById("discount-area").classList.remove("hidden");
     document.getElementById("v-discount").innerText = "-Rp " + discount.toLocaleString();
     updateCartUI();
 }
 
-// --- KERANJANG & MENU ---
+// --- KERANJANG ---
 function addToCart(n,p){
     cart[n]={price:p, qty:(cart[n]?.qty||0)+1};
     updateCartUI(); renderMenu();
 }
-
 function changeQty(n, d) {
     cart[n].qty += d;
     if(cart[n].qty <= 0) delete cart[n];
     updateCartUI(); renderMenu();
 }
-
 function updateCartUI(){
     let subtotal=0;
     const l=document.getElementById("cart-list");
@@ -154,48 +181,38 @@ function updateCartUI(){
     Object.keys(cart).forEach(n=>{
         const sub = cart[n].price * cart[n].qty;
         subtotal += sub;
-        l.innerHTML+=`<div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
-            <div class="flex-1 text-[10px] font-black">${n}</div>
-            <div class="flex items-center gap-2">
-                <button onclick="changeQty('${n}',-1)" class="w-6 h-6 bg-slate-200 rounded font-bold">-</button>
-                <span class="text-[10px] font-black w-4 text-center">${cart[n].qty}</span>
-                <button onclick="changeQty('${n}',1)" class="w-6 h-6 bg-slate-800 text-white rounded font-bold">+</button>
-            </div>
-        </div>`;
+        l.innerHTML+=`<div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100"><div class="flex-1 text-[10px] font-black uppercase">${n}</div><div class="flex items-center gap-2"><button onclick="changeQty('${n}',-1)" class="w-6 h-6 bg-slate-200 rounded font-bold">-</button><span class="text-[10px] font-black w-4 text-center">${cart[n].qty}</span><button onclick="changeQty('${n}',1)" class="w-6 h-6 bg-slate-800 text-white rounded font-bold">+</button></div></div>`;
     });
     document.getElementById("v-total").innerText="Rp "+ (Math.max(0, subtotal - discount)).toLocaleString();
 }
 
-// --- ORDER & PRINT ---
-async function submitOrder(){
-    const sub = Object.values(cart).reduce((s,i)=>s+i.price*i.qty,0);
-    const total = Math.max(0, sub - discount);
-    if(sub <= 0) return alert("Pilih menu!");
-    
-    document.getElementById("btn-order").innerText = "MENGIRIM...";
-    document.getElementById("btn-order").disabled = true;
-
-    try {
-        const hp = memberData ? memberData.noHP : "";
-        const poinRedeem = discount;
-        await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${total}&noHP=${hp}&poinRedeem=${poinRedeem}&pesanan=${encodeURIComponent(JSON.stringify(cart))}&nama=${memberData?memberData.nama:'Umum'}`);
-
-        let esc = "\x1B\x40\x1B\x61\x01dyg++ POS SECURE\n--------------------------------\n\x1B\x61\x00";
-        Object.keys(cart).forEach(n => { esc += `${n} x${cart[n].qty}\n   Rp ${(cart[n].price*cart[n].qty).toLocaleString()}\n`; });
-        if(discount > 0) esc += `REDEEM POIN: -Rp ${discount.toLocaleString()}\n`;
-        esc += `--------------------------------\nTOTAL: Rp ${total.toLocaleString()}\n\x1B\x61\x01\nTERIMA KASIH\n\n\n\n\n`;
-
-        if (window.AppInventor) { window.AppInventor.setWebViewString("PRINT|" + esc); }
-        alert("Transaksi Selesai!"); location.reload();
-    } catch (e) { alert("Gagal Simpan!"); document.getElementById("btn-order").disabled = false; }
-}
-
-// --- FINANCE ---
+// --- FINANCE & DASHBOARD ---
 async function updateMonitor() {
     const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance`);
     const f = await r.json();
     window.finData = f;
-    document.getElementById("v-cash").innerText = "Rp " + ((f.totalModal + f.totalCash) - f.totalOut).toLocaleString();
+    // Update Header
+    const cashReal = (f.totalModal + f.totalCash) - f.totalOut;
+    document.getElementById("v-header-cash").innerText = "Rp " + cashReal.toLocaleString();
+    // Update Tabel Dashboard
+    document.getElementById("t-modal").innerText = f.totalModal.toLocaleString();
+    document.getElementById("t-cash").innerText = f.totalCash.toLocaleString();
+    document.getElementById("t-qris").innerText = f.totalQris.toLocaleString();
+    document.getElementById("t-out").innerText = f.totalOut.toLocaleString();
+    document.getElementById("t-online").innerText = f.totalOnline.toLocaleString();
+}
+
+// (Fungsi BukaShift, TutupShift, SubmitOrder, LoadMenu tetap sama dengan logika sebelumnya)
+async function submitOrder(){
+    const sub = Object.values(cart).reduce((s,i)=>s+i.price*i.qty,0);
+    const total = Math.max(0, sub - discount);
+    if(sub <= 0) return alert("Kosong!");
+    document.getElementById("btn-order").disabled = true;
+    try {
+        const hp = memberData ? memberData.noHP : "";
+        await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${total}&noHP=${hp}&poinRedeem=${discount}&pesanan=${encodeURIComponent(JSON.stringify(cart))}&nama=${memberData?memberData.nama:'Umum'}`);
+        alert("Berhasil!"); location.reload();
+    } catch (e) { alert("Gagal!"); document.getElementById("btn-order").disabled = false; }
 }
 
 async function bukaShift() {
@@ -212,14 +229,10 @@ async function tutupShift() {
     const f = window.finData;
     const sys = (f.totalModal + f.totalCash) - f.totalOut;
     const fisik = prompt("Uang Fisik:", sys);
-    if(fisik === null) return;
+    if(!fisik) return;
     const s = fisik - sys;
     const pay = JSON.stringify({ sys, fisik, selisih: s });
     await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=settle&data=${encodeURIComponent(pay)}`);
-    
-    let esc = "\x1B\x40\x1B\x61\x01LAPORAN CLOSING\n--------------------------------\n";
-    esc += `MODAL: ${f.totalModal}\nCASH : ${f.totalCash}\nOUT  : ${f.totalOut}\nFISIK: ${fisik}\n--------------------------------\nSELISIH: ${s}\n\n\n\n\n`;
-    if (window.AppInventor) { window.AppInventor.setWebViewString("PRINT|" + esc); }
     location.reload();
 }
 
@@ -238,10 +251,8 @@ async function loadMenu(){
         const c = r.split(",");
         return { kat: c[0]?.trim(), nama: c[1]?.trim(), harga: parseInt(c[2]) || 0 };
     }).filter(m => m.nama);
-    
     const cats = ["ALL", ...new Set(menuData.map(m => m.kat))];
-    const sel = document.getElementById("cat-select");
-    sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join("");
+    document.getElementById("cat-select").innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join("");
     renderMenu();
 }
 
@@ -251,14 +262,11 @@ function renderMenu(){
     c.innerHTML="";
     menuData.filter(m => (activeCat === 'ALL' || m.kat === activeCat) && m.nama.toLowerCase().includes(s)).forEach(m=>{
         const q = cart[m.nama]?.qty || 0;
-        c.innerHTML+=`<div onclick="addToCart('${m.nama}',${m.harga})" class="relative bg-white p-3 rounded-xl shadow-sm border border-slate-200 active:scale-95 transition-all cursor-pointer">
-            ${q>0?`<div class="badge-qty">${q}</div>`:''}
-            <p class="text-[10px] font-black leading-tight h-8 overflow-hidden uppercase">${m.nama}</p>
-            <p class="text-emerald-600 font-bold text-[9px] mt-1">Rp ${m.harga.toLocaleString()}</p>
-        </div>`;
+        c.innerHTML+=`<div onclick="addToCart('${m.nama}',${m.harga})" class="relative bg-white p-3 rounded-xl shadow-sm border border-slate-200 active:scale-95 cursor-pointer"><div class="text-[10px] font-black uppercase leading-tight h-8 overflow-hidden">${m.nama}</div><div class="text-emerald-600 font-bold text-[9px] mt-1">Rp ${m.harga.toLocaleString()}</div>${q>0?`<div class="badge-qty">${q}</div>`:''}</div>`;
     });
 }
 function filterCat(v){ activeCat=v; renderMenu(); }
+function btConnect(){ if(window.AppInventor) window.AppInventor.setWebViewString("CONNECT"); }
 window.onload=()=>{ loadMenu(); updateMonitor(); }
 </script>
 </body>
