@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DYG++ QUAD-INTELLIGENCE</title>
+    <title>DYG++ QUAD-INTELLIGENCE VS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -11,9 +11,9 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #010306; color: #f1f5f9; }
         .glass-card { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.05); border-radius: 1.5rem; }
-        .tab-btn { background: #1e293b; color: #94a3b8; font-size: 9px; padding: 4px 10px; border-radius: 8px; font-weight: 800; transition: 0.2s; }
-        .tab-btn.active { background: #10b981; color: #000; box-shadow: 0 0 10px #10b98155; }
-        .chart-box { height: 220px; position: relative; margin-top: 10px; }
+        .tab-btn { background: #1e293b; color: #94a3b8; font-size: 9px; padding: 4px 10px; border-radius: 8px; font-weight: 800; }
+        .tab-btn.active { background: #10b981; color: #000; }
+        .chart-box { height: 240px; position: relative; margin-top: 10px; }
     </style>
 </head>
 <body class="p-4 lg:p-8">
@@ -21,59 +21,54 @@
     <header class="flex justify-between items-center mb-6">
         <div>
             <h1 class="text-2xl font-black italic tracking-tighter uppercase text-emerald-500">DYG++ <span class="text-white">ULTIMATE</span></h1>
-            <p id="ai-text" class="text-[10px] font-bold text-slate-400 italic uppercase">Neural Matrix Active...</p>
+            <p id="ai-text" class="text-[10px] font-bold text-slate-400 italic uppercase">Double Data Layer Active...</p>
         </div>
         <button onclick="refreshData()" class="bg-white text-black text-[10px] font-black px-4 py-2 rounded-xl hover:bg-emerald-500 transition">REFRESH</button>
     </header>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div class="glass-card p-4">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="text-[11px] font-black uppercase text-emerald-500 italic">1. Revenue (Rp)</h3>
+            <div class="flex justify-between items-center mb-2 italic">
+                <h3 class="text-[11px] font-black uppercase text-emerald-500">1. Revenue VS (Rp)</h3>
                 <div class="flex gap-1" id="tabs-rev">
                     <button onclick="changePeriod('rev', 'hour')" class="tab-btn active">JAM</button>
-                    <button onclick="changePeriod('rev', 'month')" class="tab-btn">BULAN</button>
+                    <button onclick="changePeriod('rev', 'month')" class="tab-btn">BLN</button>
                 </div>
             </div>
             <div class="chart-box"><canvas id="chartRev"></canvas></div>
         </div>
 
         <div class="glass-card p-4">
-            <div class="flex justify-between items-center mb-2 text-blue-400">
-                <h3 class="text-[11px] font-black uppercase italic">2. Table Performance</h3>
+            <div class="flex justify-between items-center mb-2 italic text-blue-400">
+                <h3 class="text-[11px] font-black uppercase">2. Table Efficiency</h3>
                 <span class="text-[9px] font-bold uppercase">Avg/Hour</span>
             </div>
             <div class="chart-box"><canvas id="chartTable"></canvas></div>
         </div>
 
         <div class="glass-card p-4">
-            <div class="flex justify-between items-center mb-2 text-purple-400">
-                <h3 class="text-[11px] font-black uppercase italic">3. Member Visits</h3>
+            <div class="flex justify-between items-center mb-2 italic text-purple-400">
+                <h3 class="text-[11px] font-black uppercase">3. Member Visits</h3>
                 <span class="text-[9px] font-bold uppercase">Frequency</span>
             </div>
             <div class="chart-box"><canvas id="chartMem"></canvas></div>
         </div>
 
         <div class="glass-card p-4">
-            <div class="flex justify-between items-center mb-2 text-orange-400">
-                <h3 class="text-[11px] font-black uppercase italic">4. Growth Index</h3>
-                <span class="text-[9px] font-bold uppercase">Historical Trend</span>
+            <div class="flex justify-between items-center mb-2 italic text-orange-400">
+                <h3 class="text-[11px] font-black uppercase">4. Growth Index</h3>
+                <span class="text-[9px] font-bold uppercase">Trend</span>
             </div>
             <div class="chart-box"><canvas id="chartGrowth"></canvas></div>
         </div>
     </div>
 
     <div class="glass-card p-5 border-t-4 border-emerald-500">
-        <h3 class="text-[11px] font-black uppercase mb-4 tracking-widest text-emerald-500">Member Deep Insight</h3>
+        <h3 class="text-[11px] font-black uppercase mb-4 text-emerald-500">Member Deep Insight</h3>
         <div class="overflow-x-auto">
             <table class="w-full text-[11px] text-left">
-                <thead class="text-slate-500 uppercase border-b border-white/5 font-black">
-                    <tr>
-                        <th class="pb-2">Member</th>
-                        <th class="pb-2">Total Spend</th>
-                        <th class="pb-2">Visit/Bln</th>
-                        <th class="pb-2">Fav Menu</th>
-                    </tr>
+                <thead class="text-slate-500 uppercase border-b border-white/5 font-black italic">
+                    <tr><th>Member</th><th>Total Spend</th><th>Visit/Bln</th><th>Fav Menu</th></tr>
                 </thead>
                 <tbody id="member-body" class="font-bold"></tbody>
             </table>
@@ -81,12 +76,11 @@
     </div>
 
     <script>
-        const API = "https://script.google.com/macros/s/AKfycbz8-i7xL-dhiOB-wyyYzoKMjZfD1eauRuuCLVy9FXbGDDx5EcQ7zx4cF82KJ7VETVVz7Q/exec";
+        const API = "URL_GAS_ANDA"; 
         const TOKEN = "dyg-access-v2";
         let dashboardData = null;
         let chartObjects = {};
 
-        // Register plugin datalabels
         Chart.register(ChartDataLabels);
 
         function createChart(id, label, dataCur, dataPrev, labels, color) {
@@ -104,15 +98,13 @@
                             borderColor: color, 
                             borderWidth: 3, 
                             tension: 0.4, 
-                            pointRadius: 4, 
-                            fill: true, 
-                            backgroundColor: color+'11',
+                            pointRadius: 4,
                             datalabels: {
                                 display: true,
                                 align: 'top',
                                 anchor: 'end',
                                 color: color,
-                                font: { size: 9, weight: 'bold' },
+                                font: { size: 9, weight: '900' },
                                 formatter: (val) => val >= 1000 ? (val/1000).toFixed(0) + 'k' : val
                             }
                         },
@@ -121,37 +113,35 @@
                             data: dataPrev, 
                             borderColor: '#475569', 
                             borderDash: [4,4], 
-                            borderWidth: 1.5, 
+                            borderWidth: 2, 
                             tension: 0.4, 
-                            pointRadius: 0,
-                            datalabels: { display: false } // Hilangkan angka di garis pembanding agar tidak tumpang tindih
+                            pointRadius: 4,
+                            datalabels: {
+                                display: true,
+                                align: 'bottom', // Angka ditaruh di bawah agar tidak tabrakan
+                                anchor: 'start',
+                                color: '#64748b',
+                                font: { size: 8, weight: 'bold' },
+                                formatter: (val) => val >= 1000 ? (val/1000).toFixed(0) + 'k' : val
+                            }
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { top: 25 } }, // Ruang untuk angka di atas titik
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: { enabled: true }
-                    },
+                    layout: { padding: { top: 20, bottom: 20 } },
+                    plugins: { legend: { display: false } },
                     scales: { 
-                        y: { 
-                            grid: { color: 'rgba(255,255,255,0.02)' }, 
-                            ticks: { color: '#64748b', font: { size: 8 } } 
-                        },
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: { color: '#64748b', font: { size: 8 } } 
-                        }
+                        y: { display: true, grid: { color: '#ffffff05' }, ticks: { color: '#475569', font: { size: 8 } } },
+                        x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 8 } } }
                     }
                 }
             });
         }
 
         async function refreshData() {
-            document.getElementById('ai-text').innerText = "GENERATING ANALYTICS...";
+            document.getElementById('ai-text').innerText = "GENERATING DOUBLE-LAYER DATA...";
             try {
                 const resp = await fetch(`${API}?token=${TOKEN}&action=getDashboardData`);
                 dashboardData = await resp.json();
@@ -172,18 +162,18 @@
         function renderAll() {
             if(!dashboardData) return;
             
-            // 1. Chart Revenue
+            // 1. Revenue
             createChart('chartRev', 'REV', dashboardData.charts.hour.current, dashboardData.charts.hour.previous, dashboardData.charts.hour.labels, '#10b981');
 
-            // 2. Chart Table (Ambil Meja pertama sebagai sampel)
+            // 2. Table
             const firstTable = Object.keys(dashboardData.tablePerformance)[0];
             const tData = dashboardData.tablePerformance[firstTable];
             createChart('chartTable', 'TBL', tData.current, tData.prev, Array.from({length:24},(_,i)=>i+":00"), '#3b82f6');
 
-            // 3. Chart Member Traffic
-            createChart('chartMem', 'MEM', dashboardData.memberRanking.map(m => m.visit).reverse(), [2,4,6,3,5], ['W1','W2','W3','W4','W5'], '#a78bfa');
+            // 3. Member
+            createChart('chartMem', 'MEM', dashboardData.memberRanking.map(m => m.visit).reverse(), [5,3,4,6,2], ['T1','T2','T3','T4','T5'], '#a78bfa');
 
-            // 4. Chart Growth
+            // 4. Growth
             createChart('chartGrowth', 'GRO', dashboardData.charts.month.current, dashboardData.charts.month.previous, dashboardData.charts.month.labels, '#fb923c');
 
             // Table Member
