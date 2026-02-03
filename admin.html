@@ -119,7 +119,7 @@
 
 <script>
 const CONFIG={
-    API:"https://script.google.com/macros/s/AKfycbwgE4TNuajMZy34ZOQKcHbUniCm6wU-a4rjGESFZC_1r6wUBVm_EwUZKvqchK-Pk6jL/exec",
+    API:"https://script.google.com/macros/s/AKfycbxsaBgR1cZdYrsT1hxAShXWMOdUHXNppZvOJ0PlmT4X74rysSsSAWixFUa6Z6WJKLC2gQ/exec",
     CSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv",
     TOKEN:"dyg-access-v2"
 };
@@ -144,13 +144,19 @@ function checkShiftStatus() {
 }
 
 async function bukaShift() {
-    const val = document.getElementById("input-modal").value;
-    if(!val || val <= 0) return alert("Isi Modal!");
-    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=modal&data=${encodeURIComponent(JSON.stringify(["","Modal Awal",val]))}`);
-    localStorage.setItem("shiftActive", "true"); localStorage.setItem("modalValue", val);
-    location.reload();
+    const val = document.getElementById("input-modal").value;
+    if(!val || val <= 0) return alert("Isi Modal!");
+    
+    // Ini akan menambah baris baru di sheet 'modal' dengan jam SEKARANG
+    // Jam ini yang akan jadi patokan getFinance untuk menghitung transaksi ke depan
+    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=modal&data=${encodeURIComponent(JSON.stringify(["","Modal Awal",val]))}`);
+    
+    localStorage.setItem("shiftActive", "true"); 
+    localStorage.setItem("modalValue", val);
+    location.reload(); 
 }
 
+lalu ini sudah sesuai kan,,aku tinggal ganti saja yg lama dengan ini?
 async function tutupShift() {
     const f = window.finData;
     // Hitung saldo yang seharusnya ada di laci (Modal + Cash - Out)
