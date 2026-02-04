@@ -118,7 +118,7 @@ function kirimLaporanKeWA(pesan) {
     const urlWA = `https://api.whatsapp.com/send?phone=${NOMOR_WA_ADMIN}&text=${encodeURIComponent(pesan)}`;
     window.open(urlWA, '_blank');
 }
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTHsPnM-ISlu8woOFoGEbNvqnJ3AHyLGY1i5zU-C-WugzsM5uFH3gXMbSXAB0PXK22Jg/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzedVPYyKDbWAMzKhsr3I_-dgIhqDhYEAyFvnz9GOiaVVEoBqO0nD1JZO1pcq_0RegF2w/exec";
         const TOKEN = "dyg-access-v2";
         
         let state = {
@@ -197,17 +197,35 @@ function kirimLaporanKeWA(pesan) {
         }
 
         async function inputKeluar() {
-            const item = document.getElementById("item_out").value;
-            const price = document.getElementById("price_out").value;
-            if(!item || !price) return;
-            if(!confirm(`Input ${item} senilai Rp ${price}?`)) return;
+    const item = document.getElementById("item_out").value;
+    const price = document.getElementById("price_out").value;
+    
+    if(!item || !price) {
+        alert("Nama barang dan harga harus diisi!");
+        return;
+    }
+    
+    if(!confirm(`Yakin input ${item} seharga Rp ${Number(price).toLocaleString()}?`)) return;
 
-            // Kirim ke GAS (Buat action khusus input pengeluaran di GAS)
-            await fetch(`${SCRIPT_URL}?token=${TOKEN}&action=addExpense&item=${item}&price=${price}`);
+    // Tampilkan loading sederhana
+    document.getElementById("btn_input_keluar").innerText = "MENGIRIM...";
+    
+    try {
+        const url = `${SCRIPT_URL}?token=${TOKEN}&action=addExpense&item=${encodeURIComponent(item)}&price=${price}`;
+        const resp = await fetch(url);
+        if (resp.ok) {
             document.getElementById("item_out").value = "";
             document.getElementById("price_out").value = "";
-            sync();
+            document.getElementById("btn_input_keluar").innerText = "INPUT";
+            // Panggil sync() agar angka total pengeluaran & rincian langsung update
+            await sync(); 
+            alert("Pengeluaran berhasil dicatat!");
         }
+    } catch (e) {
+        alert("Gagal koneksi!");
+        document.getElementById("btn_input_keluar").innerText = "INPUT";
+    }
+}
 
         function modalLihatKeluar() {
             const list = document.getElementById("list_keluar");
