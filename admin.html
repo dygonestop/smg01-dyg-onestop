@@ -60,15 +60,21 @@
         <div class="p-2 bg-white border-t border-slate-200">
             <div class="mb-1">
                 <button onclick="toggleVoucher()" class="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                    <span>🏷️</span> VOUCHER <span id="vouchArrow">▼</span>
+                    <span>🏷️</span> KODE VOUCHER <span id="vouchArrow">▼</span>
                 </button>
                 <div id="voucherSection">
                     <div class="flex justify-between items-center py-1 px-1">
-                        <span class="text-[10px] text-slate-500 italic">Input nominal (Rp)</span>
-                        <input id="voucher" type="number" oninput="renderCart()" placeholder="0" class="w-20 text-right border-b border-blue-300 bg-transparent outline-none font-bold text-red-600 text-xs">
+                        <span class="text-[10px] text-slate-500 italic">Input Kode Unik</span>
+                        <input id="voucher" type="text" placeholder="Ketik Kode..." class="w-32 text-right border-b border-blue-300 bg-transparent outline-none font-bold text-blue-600 text-xs uppercase">
                     </div>
                 </div>
             </div>
+
+            <div id="pointDiscWrapper" class="hidden flex justify-between px-1 text-[10px] font-bold text-red-600 mb-1">
+                <span>POTONGAN POIN</span>
+                <span>- Rp <span id="pointDiscNominal">0</span></span>
+            </div>
+
             <div class="flex justify-between items-center mb-1 px-1">
                 <span class="font-bold text-slate-700 text-[11px]">TOTAL</span>
                 <span class="text-lg font-black text-blue-700 leading-none">Rp <span id="total">0</span></span>
@@ -87,11 +93,11 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbz-5cYb59PWIEsSwoitmTgU_zhAFA_Z2wI86s8EEQYOl5OslZ6vprtN58ZiFAV8AKqsdQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyvU5fQpE_UFq_mnfAMvhCNJ97f1SvVRpXv_qrZh96lj8IBPot8xRdQ34Iz1n-HVmiuzg/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
-let MENU = [], cart = {}, member = null, redeemQty = 0; // Tambah variabel redeemQty
+let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0;
 
 function toggleVoucher() {
     const v = document.getElementById('voucherSection');
@@ -159,9 +165,18 @@ function renderCart() {
         const item = cart[i]; t += item.qty * item.harga;
         h += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-md border border-slate-100"><div class="flex-1 min-w-0 pr-1"><div class="font-bold text-slate-800 text-[10px] truncate">${item.nama}</div></div><div class="flex items-center gap-1.5"><button onclick="removeItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">－</button><span class="font-bold text-[10px] w-3 text-center">${item.qty}</span><button onclick="addItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">＋</button></div></div>`;
     });
-    const v = Number(document.getElementById("voucher").value || 0);
-    const final = Math.max(0, t - v);
+    
+    const final = Math.max(0, t - pointDiscount);
     document.getElementById("total").innerText = final.toLocaleString();
+    
+    const pWrapper = document.getElementById("pointDiscWrapper");
+    if (pointDiscount > 0) {
+        pWrapper.classList.remove("hidden");
+        document.getElementById("pointDiscNominal").innerText = pointDiscount.toLocaleString();
+    } else {
+        pWrapper.classList.add("hidden");
+    }
+
     document.getElementById("cartList").innerHTML = h || `<div class="flex flex-col items-center justify-center h-full text-slate-300"><p class="text-[9px]">Kosong</p></div>`;
     updateBadges();
     if(document.getElementById("metode").value === "CASH") renderCash();
@@ -222,16 +237,21 @@ async function submitOrder() {
     if (total <= 0 && Object.keys(cart).length === 0) return alert("Kosong");
     const btn = document.querySelector("button[onclick='submitOrder()']");
     btn.innerText = "PROSES..."; btn.disabled = true;
+    
+    const kodeVoucher = document.getElementById("voucher").value;
+
     try {
         const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
-        // redeemQty dikirim secara dinamis
-        const res = await fetch(`${API_URL}?token=${TOKEN}&action=processPayment&total=${total}&noWA=${document.getElementById("nohp").value}&redeemQty=${redeemQty}&voucher=${document.getElementById("voucher").value || 0}&method=${document.getElementById("metode").value}&pesanan=${encodeURIComponent(pesanan)}`);
+        const res = await fetch(`${API_URL}?token=${TOKEN}&action=processPayment&total=${total}&noWA=${document.getElementById("nohp").value}&redeemQty=${redeemQty}&voucher=${encodeURIComponent(kodeVoucher)}&method=${document.getElementById("metode").value}&pesanan=${encodeURIComponent(pesanan)}`);
+        
         if (await res.text() === "SUCCESS") {
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
             esc += "Tgl: " + new Date().toLocaleString() + "\n--------------------------------\n\x1B\x61\x00";
             Object.values(cart).forEach(i => { esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`; });
-            esc += "--------------------------------\nTOTAL: Rp " + total.toLocaleString() + "\nMember: " + (document.getElementById("nohp").value || "-") + (redeemQty > 0 ? "\nRedeem: " + redeemQty : "") + "\n\nTERIMA KASIH\n\n\n\n";
+            esc += "--------------------------------\nTOTAL: Rp " + total.toLocaleString() + "\nMember: " + (document.getElementById("nohp").value || "-") + (redeemQty > 0 ? "\nRedeem: " + redeemQty + " Poin" : "") + (kodeVoucher ? "\nVoucher: " + kodeVoucher : "") + "\n\nTERIMA KASIH\n\n\n\n";
+            
             if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
+            
             alert("Berhasil!"); location.reload();
         } else { alert("Gagal"); btn.innerText = "Bayar & Cetak"; btn.disabled = false; }
     } catch (e) { alert("Error"); btn.disabled = false; }
@@ -246,23 +266,19 @@ function cekMember() {
                 member = d; 
                 document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin || 0} Poin)</span>`;
                 
-                // ATURAN BARU: Min 500 Poin untuk potongan 5000
                 if (d.poin >= 500) {
-                    // Hitung kelipatan 500 poin yang tersedia
                     let maxTukarPoin = Math.floor(d.poin / 500) * 500;
                     let nominalPotongan = (maxTukarPoin / 500) * 5000;
 
                     if (confirm(`Member memiliki ${d.poin} poin.\nTukarkan ${maxTukarPoin} poin untuk diskon Rp${nominalPotongan.toLocaleString()}?`)) {
-                        redeemQty = maxTukarPoin; // Ini yang dikirim ke GAS untuk kurangi poin
-                        document.getElementById("voucher").value = nominalPotongan; // Ini untuk potong tampilan total
+                        redeemQty = maxTukarPoin; 
+                        pointDiscount = nominalPotongan;
                         renderCart();
-                        alert(`Berhasil! ${maxTukarPoin} poin ditukar dengan diskon Rp${nominalPotongan.toLocaleString()}`);
+                        alert(`Berhasil! Poin ditukar diskon.`);
                     }
                 }
-            }
-            else { 
-                member = null; 
-                redeemQty = 0;
+            } else { 
+                member = null; redeemQty = 0; pointDiscount = 0; renderCart();
                 document.getElementById("memberInfo").innerHTML = `<span class="text-red-500 font-bold">❌ Bukan Member</span>`; 
             }
         });
