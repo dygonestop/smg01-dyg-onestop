@@ -5,64 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>dyg++ POS Compact</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
+<style>
+    /* 1. Animasi Berkedip Cepat (Diperbaiki agar lebih tegas) */
+    .pulse-fast {
+        animation: alert-blink 0.8s infinite;
+    }
 
-/* Efek Berkedip Halus */
-.animate-pulse-fast {
-    animation: pulse-alert 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
+    @keyframes alert-blink {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.03); }
+    }
 
-@keyframes pulse-alert {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.6; transform: scale(1.02); }
-}
+    /* 2. Styling Box Alert (Pill Shape) */
+    #shiftAlert {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 9999px; 
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
 
-/* Styling Box Alert */
-#shiftAlert {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: 9999px; /* Lonjong pill */
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: -0.025em;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
-}
+    /* 3. Warna Kuning (Gunakan class yang sama dengan JS: alert-kuning) */
+    .alert-kuning {
+        background-color: #fef08a !important;
+        color: #854d0e !important;
+        border-color: #eab308 !important;
+    }
 
-/* Warna Kuning (Peringatan Standar) */
-.alert-warning {
-    background-color: #fef08a;
-    color: #854d0e;
-    border-color: #eab308 !important;
-}
+    /* 4. Warna Merah (Gunakan class yang sama dengan JS: alert-merah) */
+    .alert-merah {
+        background-color: #fee2e2 !important;
+        color: #991b1b !important;
+        border-color: #ef4444 !important;
+    }
 
-/* Warna Merah (Sudah 2 Hari) */
-.alert-danger {
-    background-color: #ef4444;
-    color: #ffffff;
-    border-color: #b91c1c !important;
-}
-
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; overflow: hidden; background-color: #f1f5f9; }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .main-container { height: calc(100vh - 56px); display: flex; }
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; align-content: start; }
-        @media (max-width: 640px) {
-            .menu-grid { grid-template-columns: repeat(2, 1fr); }
-            .main-container { flex-direction: column; overflow-y: auto; height: calc(100vh - 60px); }
-            .cart-panel { width: 100% !important; height: auto !important; border-l: none; border-t: 2px solid #e2e8f0; }
-        }
-        .menu-card { transition: transform 0.1s; border: 1px solid #e2e8f0; }
-        .menu-card:active { transform: scale(0.96); }
-        #voucherSection { transition: all 0.3s ease-in-out; max-height: 0; overflow: hidden; opacity: 0; }
-        #voucherSection.open { max-height: 100px; opacity: 1; margin-top: 4px; }
-    </style>
+    /* --- CSS DASAR LAYOUT ANDA --- */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+    
+    body { font-family: 'Inter', sans-serif; overflow: hidden; background-color: #f1f5f9; }
+    
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    
+    .main-container { height: calc(100vh - 56px); display: flex; }
+    
+    .menu-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+        gap: 6px; 
+        align-content: start; 
+    }
+    
+    @media (max-width: 640px) {
+        .menu-grid { grid-template-columns: repeat(2, 1fr); }
+        .main-container { flex-direction: column; overflow-y: auto; height: calc(100vh - 60px); }
+        .cart-panel { width: 100% !important; height: auto !important; border-left: none; border-t: 2px solid #e2e8f0; }
+    }
+    
+    .menu-card { transition: transform 0.1s; border: 1px solid #e2e8f0; }
+    .menu-card:active { transform: scale(0.96); }
+    
+    #voucherSection { transition: all 0.3s ease-in-out; max-height: 0; overflow: hidden; opacity: 0; }
+    #voucherSection.open { max-height: 100px; opacity: 1; margin-top: 4px; }
+</style>
 </head>
 <body class="h-screen flex flex-col">
 
@@ -129,12 +141,13 @@
     </div>
 
 <div class="flex justify-between items-center mb-1 px-1 border-t border-slate-100 pt-1">
+    <span class="font-bold text-slate-500 text-[10px]">TOTAL BELANJA</span>
+    <span class="text-xs font-bold text-slate-700">Rp <span id="totalKotor">0</span></span>
+</div>
+
+<div class="flex justify-between items-center mb-1 px-1">
     <span class="font-bold text-slate-700 text-[11px]">TOTAL TAGIHAN</span>
     <span class="text-xl font-black text-blue-700 leading-none">Rp <span id="total">0</span></span>
-</div>
-<div class="flex justify-between items-center mb-1 px-1">
-    <span class="font-bold text-slate-700 text-[11px]">TOTAL</span>
-    <span class="text-lg font-black text-blue-700 leading-none">Rp <span id="total">0</span></span>
 </div>
 
     <div class="space-y-1.5">
@@ -161,125 +174,99 @@ function updateShiftWarning() {
     const alertIcon = document.getElementById("alertIcon");
     const btnClose = document.getElementById("btnCloseShift");
 
-    // Jika tombol Tutup Shift tersembunyi, berarti shift CLOSED
+    // 1. Jika tombol Tutup Shift tersembunyi (Shift CLOSED), sembunyikan total
     if (btnClose.classList.contains("hidden")) {
         alertBox.classList.add("hidden");
+        // Reset status pemicu agar besok sore saat buka shift tidak langsung muncul
+        localStorage.removeItem("pemicuClosing");
         return;
     }
 
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMin = now.getMinutes();
+    const jam = now.getHours();
 
-    // Logika Deteksi 2 Hari dari Nama Shift (Format: OPEN-6/2/2026)
-    // Kita simpan nama shift di localStorage saat buka shift
+    // 2. CEK LOGIKA 2 HARI (Peringatan Merah - Prioritas Utama)
     const savedShift = localStorage.getItem("activeShiftName") || "";
     let isExpired = false;
-
+    
     if (savedShift.includes("-")) {
         try {
-            const dateStr = savedShift.split("-")[1]; // ambil 6/2/2026
+            const dateStr = savedShift.split("-")[1]; // Mengambil bagian tanggal saja
             const p = dateStr.split("/");
+            // Format Date(tahun, bulan-1, tanggal)
             const shiftDate = new Date(p[2], p[1] - 1, p[0]);
-            const diffDays = (now - shiftDate) / (1000 * 60 * 60 * 24);
+            const diffInMs = now - shiftDate;
+            const diffDays = diffInMs / (1000 * 60 * 60 * 24);
+            
             if (diffDays >= 2) isExpired = true;
-        } catch(e) { isExpired = false; }
-    }
-
-    if (isExpired) {
-        // Mode Bahaya (Merah)
-        alertBox.classList.remove("hidden", "alert-kuning");
-        alertBox.classList.add("alert-merah");
-        alertIcon.innerText = "🚨";
-        alertText.innerText = "CLOSINGMU SUDAH MELAMPAUI BATAS KESALAHAN";
-    } 
-    else if ((currentHour === 3 && currentMin >= 30) || (currentHour >= 4 && currentHour < 6)) {
-        // Mode Pengingat (Kuning)
-        alertBox.classList.remove("hidden", "alert-merah");
-        alertBox.classList.add("alert-kuning");
-        alertIcon.innerText = "⚠️";
-        alertText.innerText = "JANGAN LUPA TUTUP SHIFT, SAAT AKAN CLOSING";
-    } 
-    else {
-        alertBox.classList.add("hidden");
-    }
-}
-
-// Pastikan dipanggil setiap menit
-setInterval(updateShiftWarning, 60000);
-
-// Tambahkan ini di dalam fungsi manageShift('open') saat sukses:
-// localStorage.setItem("activeShiftName", result);
-// Global variabel untuk menyimpan tanggal buka shift
-let shiftOpenedDate = null;
-
-async function checkShiftAlert() {
-    const alertBox = document.getElementById("shiftAlert");
-    const alertText = document.getElementById("alertText");
-    const status = document.getElementById("btnCloseShift").classList.contains("hidden") ? "CLOSED" : "OPEN";
-
-    // Jika shift sedang tutup, sembunyikan alert
-    if (status === "CLOSED") {
-        alertBox.classList.add("hidden");
-        return;
-    }
-
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-
-    // 1. Ambil info kapan shift dibuka (kita asumsikan dari ID shift atau data server)
-    // Untuk akurasi, kita bandingkan tanggal sekarang dengan tanggal buka shift
-    // (Misal: shiftOpenedDate diset saat checkShiftStatus)
-    
-    if (shiftOpenedDate) {
-        const diffTime = Math.abs(now - shiftOpenedDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        // LOGIKA 1: Melebihi 2 Hari
-        if (diffDays > 2) {
-            alertBox.classList.remove("hidden");
-            alertText.innerText = "CLOSINGMU SUDAH MELAMPAUI BATAS KESALAHAN";
-            return;
+        } catch(e) { 
+            console.error("Error parsing date:", e);
+            isExpired = false; 
         }
     }
 
-    // LOGIKA 2: Jam 03:30 (Pagi)
-    // Sesuai jam operasional Anda yang sampai jam 5 pagi
-    if (currentHour === 3 && currentMinute >= 30 || currentHour > 3 && currentHour < 6) {
-        alertBox.classList.remove("hidden");
+    // TAMPILAN JIKA EXPIRED (MERAH)
+    if (isExpired) {
+        alertBox.classList.remove("hidden", "alert-kuning");
+        alertBox.classList.add("alert-merah", "pulse-fast");
+        alertIcon.innerText = "🚨";
+        alertText.innerText = "CLOSINGMU SUDAH MELAMPAUI BATAS KESALAHAN";
+        return; // Berhenti di sini jika sudah expired
+    }
+
+    // 3. LOGIKA JAM 3 PAGI (Peringatan Kuning)
+    // Syarat: Jam antara 03:00 - 09:00 (Pemicu awal)
+    // ATAU sudah pernah terpicu hari ini (Terkunci di memori)
+    const pemicuAktif = (jam >= 3 && jam <= 9); 
+    const sudahPernahTerpicu = localStorage.getItem("pemicuClosing") === "true";
+
+    if (pemicuAktif || sudahPernahTerpicu) {
+        // Simpan ke memori agar kalau jam sudah lewat jam 9 pagi, alert TIDAK hilang
+        localStorage.setItem("pemicuClosing", "true");
+
+        alertBox.classList.remove("hidden", "alert-merah");
+        alertBox.classList.add("alert-kuning", "pulse-fast");
+        alertIcon.innerText = "⚠️";
         alertText.innerText = "JANGAN LUPA TUTUP SHIFT, SAAT AKAN CLOSING";
     } else {
+        // Jika masih sore/malam (sebelum jam 3 pagi) dan belum pernah terpicu
         alertBox.classList.add("hidden");
     }
 }
 
-// Update fungsi checkShiftStatus yang sudah ada agar menyimpan tanggal buka
+// Jalankan setiap 1 menit
+setInterval(updateShiftWarning, 60000);
+// Global variabel untuk menyimpan tanggal buka shift
+let shiftOpenedDate = null;
+
+// VERSI BERSIH (Ganti baris 212-230 dengan ini)
 async function checkShiftStatus() {
     try {
         const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftStatus`);
         const status = await res.text();
         
-        // Asumsi: Kita butuh tanggal buka shift. 
-        // Anda bisa memodifikasi backend untuk mengirimkan "OPEN|2026-02-06"
-        if (status.includes("OPEN")) {
-            // Kita simpan tanggal hari ini sebagai patokan awal jika server tidak kirim tanggal
-            if(!shiftOpenedDate) shiftOpenedDate = new Date(); 
-            
-            document.getElementById("btnOpenShift").classList.add("hidden");
-            document.getElementById("btnCloseShift").classList.remove("hidden");
+        const btnOpen = document.getElementById("btnOpenShift");
+        const btnClose = document.getElementById("btnCloseShift");
+        const btnSubmit = document.getElementById("btnSubmitOrder");
+
+        if (status === "OPEN") {
+            btnOpen.classList.add("hidden");
+            btnClose.classList.remove("hidden");
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "Bayar & Cetak";
+            btnSubmit.classList.remove("opacity-50", "grayscale");
         } else {
-            shiftOpenedDate = null;
-            document.getElementById("btnOpenShift").classList.remove("hidden");
-            document.getElementById("btnCloseShift").classList.add("hidden");
+            btnOpen.classList.remove("hidden");
+            btnClose.classList.add("hidden");
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "BUKA SHIFT DULU";
+            btnSubmit.classList.add("opacity-50", "grayscale");
         }
-        checkShiftAlert(); // Jalankan cek alert
-    } catch (e) { console.error(e); }
+        
+        // Panggil fungsi alert yang baru kita buat
+        updateShiftWarning(); 
+    } catch (e) { console.error("Gagal cek shift", e); }
 }
-
-// Jalankan pengecekan setiap 1 menit
-setInterval(checkShiftAlert, 60000);
-
 let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0;
 
 function toggleVoucher() {
@@ -343,15 +330,35 @@ function updateBadges() {
 }
 
 function renderCart() {
-    let h = ""; let t = 0;
+    let h = ""; 
+    let t = 0; // t adalah Total Belanja (Kotor)
+
     Object.keys(cart).forEach(i => {
-        const item = cart[i]; t += item.qty * item.harga;
-        h += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-md border border-slate-100"><div class="flex-1 min-w-0 pr-1"><div class="font-bold text-slate-800 text-[10px] truncate">${item.nama}</div></div><div class="flex items-center gap-1.5"><button onclick="removeItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">－</button><span class="font-bold text-[10px] w-3 text-center">${item.qty}</span><button onclick="addItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">＋</button></div></div>`;
+        const item = cart[i]; 
+        t += item.qty * item.harga;
+        h += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-md border border-slate-100">
+                <div class="flex-1 min-w-0 pr-1">
+                    <div class="font-bold text-slate-800 text-[10px] truncate">${item.nama}</div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="removeItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">－</button>
+                    <span class="font-bold text-[10px] w-3 text-center">${item.qty}</span>
+                    <button onclick="addItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">＋</button>
+                </div>
+              </div>`;
     });
     
+    // Hitung Total Tagihan (Bersih setelah diskon)
     const final = Math.max(0, t - pointDiscount);
+    
+    // Update ke Tampilan Layar
+    // Gunakan ID yang berbeda agar tidak bentrok
+    if(document.getElementById("totalKotor")) {
+        document.getElementById("totalKotor").innerText = t.toLocaleString();
+    }
     document.getElementById("total").innerText = final.toLocaleString();
     
+    // Logika Tampilan Diskon Poin (Pemicu Pulse)
     const pWrapper = document.getElementById("pointDiscWrapper");
     if (pointDiscount > 0) {
         pWrapper.classList.remove("hidden");
@@ -360,11 +367,14 @@ function renderCart() {
         pWrapper.classList.add("hidden");
     }
 
+    // Update Daftar Item di Keranjang
     document.getElementById("cartList").innerHTML = h || `<div class="flex flex-col items-center justify-center h-full text-slate-300"><p class="text-[9px]">Kosong</p></div>`;
-    updateBadges();
+    
+    updateBadges(); // Update angka merah di menu
+    
+    // Jika metode bayar CASH, hitung ulang kembaliannya
     if(document.getElementById("metode").value === "CASH") renderCash();
 }
-
 function renderCash() {
     const m = document.getElementById("metode").value;
     const b = document.getElementById("cashBox");
@@ -615,7 +625,12 @@ async function manageShift(type) {
         if (!confirm("Buka shift sekarang?")) return;
         const res = await fetch(`${API_URL}?token=${TOKEN}&action=openShift`);
         const result = await res.text();
-        if (result) { alert("Shift Dimulai!"); location.reload(); }
+        if (result) {
+            // SIMPAN DATA KE MEMORI BROWSER
+            localStorage.setItem("activeShiftName", result);
+            alert("Shift Dimulai!"); 
+            location.reload(); 
+        }
     } else {
         if (!confirm("Tutup shift dan CETAK LAPORAN?")) return;
 
@@ -649,11 +664,15 @@ async function manageShift(type) {
         esc += "--------------------------------\n";
         esc += "\n\n\n\n";
 
+        // --- PENTING: HAPUS MEMORI ALERT SEBELUM RELOAD ---
+        localStorage.removeItem("activeShiftName");
+        localStorage.removeItem("pemicuClosing");
+        // ------------------------------------------------
+
         // 3. Kirim ke Printer via App Inventor
         if (window.AppInventor) {
             window.AppInventor.setWebViewString("PRINT|" + esc);
             
-            // Beri jeda 2 detik agar printer sempat memproses sebelum shift ditutup & reload
             setTimeout(async () => {
                 await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`);
                 alert("Laporan Dicetak & Shift Ditutup!");
