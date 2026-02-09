@@ -708,7 +708,7 @@ async function apiCekMember() {
 // Tambahkan 'antrean = 0' di deretan variabel global
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxsXUiyX-JBk4agHl0du-mS2Ew_lEAQR4JsdFuCSkYE-HA7Odwoazcnl55uabyygSogIw/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxiaPYYqwQy971Eo7RZi7zm4b8M_iLBLJSu0GanwrolSvuor9D6B_j8ArOzsCV9YI3DKQ/exec',
  	MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1061,11 +1061,11 @@ async function submitOrder() {
         btnKirim.style.pointerEvents = "none";
     }
 
-    // --- 4. KIRIM KE GOOGLE SHEETS (MONITOR DAPUR) ---
+   // --- 4. KIRIM KE GOOGLE SHEETS ---
     const params = new URLSearchParams({
         token: CONFIG.TOKEN,
         action: "simpanPesanan",
-        antrean: noAntrean, // Mengirim angka murni (misal: 4)
+        antrean: noAntrean, 
         nama: nI.value,
         mode: currentMode,
         pesanan: Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join('\n'),
@@ -1074,15 +1074,22 @@ async function submitOrder() {
     });
 
     try {
-        // Fetch background
-        await fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
-        console.log("Data pesanan berhasil dikirim ke database.");
+        // HAPUS 'no-cors' agar kita tahu kapan data SELESAI disimpan
+        const response = await fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`);
+        const resText = await response.text();
+        
+        if (resText.includes("Success")) {
+            console.log("Data tercatat di database.");
+            // Update nomor antrean untuk pembeli berikutnya SETELAH data sukses tersimpan
+            if (typeof fetchCurrentQueue === 'function') await fetchCurrentQueue();
+        }
     } catch (e) {
-        console.error("Gagal mengirim ke database dapur:", e);
+        console.error("Gagal kirim ke database:", e);
     }
 
     // --- 5. SUSUN PESAN WHATSAPP ---
-    let msg = `Halo cloudkitchen.dyg++!\n\n`;
+    let msg = `Halo cloudkitchen.dyg++!\n\n`;url
+
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
     msg += `🔢 *ANTREAN: #${noAntrean}*\n`; // Menampilkan tanda # hanya di teks WA agar keren
