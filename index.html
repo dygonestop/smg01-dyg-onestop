@@ -1248,15 +1248,22 @@ function changeMode(m, el) {
 
     async function syncQueue() {
     try {
-        const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
+        // GANTI waitQueue=true MENJADI action=getNextAntrean
+        const resp = await fetch(CONFIG.WEB_APP_URL + `?action=getNextAntrean&token=${CONFIG.TOKEN}`);
         const num = await resp.text();
-        if (num) {
-            antrean = num; 
+        
+        // Pastikan responnya angka, bukan pesan error "Action Not Found" atau "Unauthorized"
+        if (num && !isNaN(num)) {
             const el = document.getElementById('noAntrean');
             if(el) el.innerText = "#" + num;
+        } else {
+            console.error("Respon Server Bukan Angka:", num);
         }
-    } catch(e) { console.error("Queue error:", e); }
-    setTimeout(syncQueue, 20000); // Cek antrean tiap 20 detik
+    } catch(e) { 
+        console.error("Queue error:", e); 
+    }
+    // Cek setiap 20 detik
+    setTimeout(syncQueue, 20000); 
 }
 
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
