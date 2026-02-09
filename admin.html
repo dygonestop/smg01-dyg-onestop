@@ -1,639 +1,281 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>dyg++ POS Compact</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>dyg++ POS FINAL</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
 <style>
-    /* 1. Animasi Berkedip Cepat (Diperbaiki agar lebih tegas) */
-    .pulse-fast {
-        animation: alert-blink 0.8s infinite;
-    }
-
-    @keyframes alert-blink {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.5; transform: scale(1.03); }
-    }
-
-    /* 2. Styling Box Alert (Pill Shape) */
-    #shiftAlert {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 12px;
-        border-radius: 9999px; 
-        font-size: 10px;
-        font-weight: 800;
-        letter-spacing: -0.025em;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 2px solid transparent;
-        transition: all 0.3s ease;
-    }
-
-    /* 3. Warna Kuning (Gunakan class yang sama dengan JS: alert-kuning) */
-    .alert-kuning {
-        background-color: #fef08a !important;
-        color: #854d0e !important;
-        border-color: #eab308 !important;
-    }
-
-    /* 4. Warna Merah (Gunakan class yang sama dengan JS: alert-merah) */
-    .alert-merah {
-        background-color: #fee2e2 !important;
-        color: #991b1b !important;
-        border-color: #ef4444 !important;
-    }
-
-    /* --- CSS DASAR LAYOUT ANDA --- */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-    
-    body { font-family: 'Inter', sans-serif; overflow: hidden; background-color: #f1f5f9; }
-    
-    .custom-scroll::-webkit-scrollbar { width: 4px; }
-    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    
-    .main-container { height: calc(100vh - 56px); display: flex; }
-    
-    .menu-grid { 
-        display: grid; 
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
-        gap: 6px; 
-        align-content: start; 
-    }
-    
-    @media (max-width: 640px) {
-        .menu-grid { grid-template-columns: repeat(2, 1fr); }
-        .main-container { flex-direction: column; overflow-y: auto; height: calc(100vh - 60px); }
-        .cart-panel { width: 100% !important; height: auto !important; border-left: none; border-t: 2px solid #e2e8f0; }
-    }
-    
-    .menu-card { transition: transform 0.1s; border: 1px solid #e2e8f0; }
-    .menu-card:active { transform: scale(0.96); }
-    
-    #voucherSection { transition: all 0.3s ease-in-out; max-height: 0; overflow: hidden; opacity: 0; }
-    #voucherSection.open { max-height: 100px; opacity: 1; margin-top: 4px; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+body{font-family:'Inter',sans-serif;background:#f1f5f9;overflow:hidden}
+.custom-scroll::-webkit-scrollbar{width:4px}
+.custom-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+.menu-card{border:1px solid #e2e8f0}
+.menu-card:active{transform:scale(.96)}
+input,select{outline:none}
 </style>
 </head>
+
 <body class="h-screen flex flex-col">
 
-<header class="h-[52px] bg-white border-b border-slate-200 px-4 flex justify-between items-center shrink-0">
-    <div class="flex items-center gap-3">
-        <h1 class="text-lg font-extrabold text-blue-700 tracking-tighter">CLOUDkitchen.dyg++ <span class="text-slate-400 font-medium">RETAIL</span></h1>
-        <div id="memberInfo" class="hidden md:block text-[10px] text-slate-500 italic truncate max-w-[150px]">Cek member...</div>
-    </div>
-    
-  <div class="flex items-center gap-3">
-    <div id="shiftArea" class="flex items-center gap-2">
-        <div id="shiftAlert" class="hidden"></div>
-
-        <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold transition">BUKA SHIFT</button>
-        <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold transition hidden">TUTUP SHIFT</button>
-    </div>
-    
-    <div class="flex items-center gap-1 border-l border-slate-200 pl-3">
-        <input id="nohp" type="text" placeholder="No WA" class="bg-slate-100 border-none rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none w-24 md:w-36">
-        <button onclick="cekMember()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold transition">Cek</button>
-    </div>
+<header class="h-[52px] bg-white border-b px-4 flex justify-between items-center">
+<h1 class="font-extrabold text-blue-700">CLOUDkitchen.dyg++</h1>
+<div class="flex gap-2 items-center">
+<span id="shiftAlert" class="text-[10px] text-red-600 font-bold hidden">SHIFT TUTUP</span>
+<button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px]">BUKA</button>
+<button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[10px] hidden">TUTUP</button>
 </div>
 </header>
 
-<main class="flex flex-1 overflow-hidden main-container">
-    <section class="flex-1 flex flex-col bg-slate-50 overflow-hidden">
-        <div class="p-2 flex gap-2 bg-white border-b border-slate-200">
-            <input type="text" id="searchInput" oninput="filterMenu()" placeholder="Cari menu..." class="flex-1 px-3 py-1.5 bg-slate-100 border-none rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500">
-            <select id="categoryFilter" onchange="filterMenu()" class="bg-slate-100 border-none rounded-lg px-2 py-1.5 text-xs font-semibold outline-none w-28">
-                <option value="ALL">Semua</option>
-            </select>
-        </div>
-        <div id="menuList" class="menu-grid p-2 overflow-y-auto custom-scroll flex-1"></div>
-    </section>
+<main class="flex flex-1 overflow-hidden">
 
-    <section class="cart-panel w-[310px] flex flex-col bg-white border-l border-slate-200 shrink-0">
-        <div class="p-2 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <h2 class="font-bold text-slate-700 text-[10px] uppercase tracking-widest flex items-center gap-1"><span>🛒</span> KERANJANG</h2>
-            <button onclick="location.reload()" class="text-[9px] text-red-500 font-bold hover:underline">RESET</button>
-        </div>
-        <div id="cartList" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1.5">
-            <div class="flex flex-col items-center justify-center h-full text-slate-300"><p class="text-[10px]">Kosong</p></div>
-        </div>
+<!-- MENU -->
+<section class="flex-1 flex flex-col bg-slate-50">
+<div class="p-2 bg-white border-b flex gap-2">
+<input id="searchInput" oninput="renderMenu()" placeholder="Cari menu..."
+class="flex-1 bg-slate-100 rounded px-2 text-xs">
+<select id="categoryFilter" onchange="renderMenu()"
+class="bg-slate-100 rounded px-2 text-xs font-bold">
+<option value="ALL">SEMUA</option>
+</select>
+</div>
+<div id="menuList" class="menu-grid p-2 overflow-y-auto custom-scroll"></div>
+</section>
 
-        <div class="p-2 bg-white border-t border-slate-200">
-    <div class="mb-1">
-        <button onclick="toggleVoucher()" class="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-            <span>🏷️</span> KODE UNIK VOUCHER <span id="vouchArrow">▼</span>
-        </button>
-        <div id="voucherSection">
-            <div class="flex flex-col py-1 px-1">
-                <label class="text-[9px] text-slate-500 font-bold mb-1 uppercase tracking-tighter">Masukkan Kode Unik:</label>
-                <input id="voucher" type="text" placeholder="CONTOH: PROMO10K" class="w-full border-b-2 border-blue-400 bg-blue-50/50 px-2 py-1 outline-none font-bold text-blue-700 text-sm placeholder:text-slate-300 placeholder:font-normal uppercase">
-            </div>
-        </div>
-    </div>
+<!-- KERANJANG -->
+<section class="w-[340px] bg-white border-l flex flex-col">
+<div class="p-2 border-b font-bold text-xs">KERANJANG</div>
 
-    <div id="pointDiscWrapper" class="hidden flex justify-between px-1 text-[10px] font-bold text-red-600 mb-1 animate-pulse">
-        <span>PROMO POIN MEMBER</span>
-        <span>- Rp <span id="pointDiscNominal">0</span></span>
-    </div>
-
-<div class="flex justify-between items-center mb-1 px-1 border-t border-slate-100 pt-1">
-    <span class="font-bold text-slate-500 text-[10px]">TOTAL BELANJA</span>
-    <span class="text-xs font-bold text-slate-700">Rp <span id="totalKotor">0</span></span>
+<div id="cartList"
+class="flex-1 p-2 overflow-y-auto custom-scroll text-xs text-slate-400 text-center">
+Kosong
 </div>
 
-<div class="flex justify-between items-center mb-1 px-1">
-    <span class="font-bold text-slate-700 text-[11px]">TOTAL TAGIHAN</span>
-    <span class="text-xl font-black text-blue-700 leading-none">Rp <span id="total">0</span></span>
+<!-- MEMBER -->
+<div class="p-2 border-t space-y-1 text-xs">
+<input id="memberInput" placeholder="No WA / ID Member"
+class="w-full bg-slate-100 rounded px-2 py-1">
+<div class="text-[10px] text-slate-500">
+Poin tersedia: <span id="memberPoint">0</span>
+</div>
 </div>
 
-    <div class="space-y-1.5">
-        <select id="metode" onchange="renderCash()" class="w-full border border-slate-200 rounded-md p-1.5 text-[11px] font-bold bg-white outline-none">
-            <option value="CASH">💵 TUNAI</option>
-            <option value="QRIS">📱 QRIS</option>
-            <option value="CARD">💳 KARTU</option>
-        </select>
-        <div id="cashBox" class="empty:hidden"></div>
-        <button id="btnSubmitOrder" onclick="submitOrder()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-[12px] shadow-sm transition active:scale-95 uppercase">Bayar & Cetak</button>
-    </div>
-        </div>
-    </section>
+<!-- DISKON -->
+<div class="p-2 border-t space-y-2 text-xs">
+<input id="pointInput" type="number" min="0"
+placeholder="Redeem poin (min 500, kelipatan 500)"
+class="w-full bg-slate-100 rounded px-2 py-1">
+
+<button onclick="applyPoint()"
+class="w-full bg-slate-700 text-white py-1 rounded font-bold">
+Gunakan Poin
+</button>
+
+<div class="flex justify-between font-bold">
+<span>SUBTOTAL</span>
+<span>Rp <span id="subTotal">0</span></span>
+</div>
+<div class="flex justify-between text-emerald-600 font-bold">
+<span>POTONGAN</span>
+<span>- Rp <span id="discount">0</span></span>
+</div>
+<div class="flex justify-between font-black">
+<span>TOTAL</span>
+<span>Rp <span id="total">0</span></span>
+</div>
+</div>
+
+<!-- PEMBAYARAN -->
+<div class="p-2 border-t text-xs space-y-2">
+<input id="cashInput" type="number"
+placeholder="Uang diterima"
+oninput="calcChange()"
+class="w-full bg-slate-100 rounded px-2 py-1">
+
+<div class="flex justify-between font-bold">
+<span>KEMBALI</span>
+<span>Rp <span id="change">0</span></span>
+</div>
+
+<button id="btnSubmit" onclick="submitOrder()"
+class="w-full bg-blue-600 text-white py-2 rounded font-bold">
+Bayar & Cetak
+</button>
+</div>
+
+</section>
 </main>
 
 <script>
+/* ================= CONFIG ================= */
 const API_URL = "https://script.google.com/macros/s/AKfycbwTo5_KeeT_HN7T1zMJG8EEQV1B4GoUic3he6eFQtUk4KAR3NSMb0Ml9x2IvBJ7_TEnIA/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
-// Global variabel untuk menyimpan tanggal buka shift
-let shiftOpenedDate = null;
-
-// VERSI BERSIH (Ganti baris 212-230 dengan ini)
-async function checkShiftStatus() {
-    try {
-        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftStatus`);
-        const status = await res.text();
-        
-        const btnOpen = document.getElementById("btnOpenShift");
-        const btnClose = document.getElementById("btnCloseShift");
-        const btnSubmit = document.getElementById("btnSubmitOrder");
-        const alertBox = document.getElementById("shiftAlert");
-
-        // Sembunyikan segitiga kuning selamanya sesuai permintaan Anda
-        if (alertBox) alertBox.style.display = "none";
-
-        if (status === "OPEN") {
-            // Jika Shift Terbuka
-            btnOpen.classList.add("hidden");
-            btnClose.classList.remove("hidden");
-            
-            // Aktifkan tombol bayar
-            btnSubmit.disabled = false;
-            btnSubmit.innerText = "Bayar & Cetak";
-            btnSubmit.classList.remove("opacity-50", "grayscale", "cursor-not-allowed");
-        } else {
-            // Jika Shift Tertutup
-            btnOpen.classList.remove("hidden");
-            btnClose.classList.add("hidden");
-            
-            // Kunci tombol bayar secara total
-            btnSubmit.disabled = true;
-            btnSubmit.innerText = "BUKA SHIFT DULU";
-            btnSubmit.classList.add("opacity-50", "grayscale", "cursor-not-allowed");
-            
-            // Bersihkan data lokal jika server bilang sudah tutup
-            localStorage.removeItem("activeShiftName");
-        }
-    } catch (e) { 
-        console.error("Gagal cek shift", e); 
-    }
-}
-
-let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0;
-
-function toggleVoucher() {
-    const v = document.getElementById('voucherSection');
-    const a = document.getElementById('vouchArrow');
-    v.classList.toggle('open');
-    a.innerText = v.classList.contains('open') ? '▲' : '▼';
-}
-
-async function loadMenu() {
-    try {
-        const response = await fetch(CSV_URL);
-        const data = await response.text();
-        const rows = data.split("\n").slice(1);
-        MENU = rows.map(row => {
-            const cols = row.split(",");
-            return { kategori: cols[0]?.trim() || "Lainnya", nama: cols[1]?.trim(), harga: parseInt(cols[2]?.trim()) || 0 };
-        }).filter(m => m.nama);
-        populateCategories();
-        renderMenu();
-    } catch (e) { console.error(e); }
-}
-
-function populateCategories() {
-    const cats = [...new Set(MENU.map(m => m.kategori))];
-    const select = document.getElementById("categoryFilter");
-    cats.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c; opt.innerText = c;
-        select.appendChild(opt);
-    });
-}
-
-function renderMenu() {
-    const list = document.getElementById("menuList");
-    const search = document.getElementById("searchInput").value.toLowerCase();
-    const filter = document.getElementById("categoryFilter").value;
-    list.innerHTML = "";
-    MENU.forEach((m, i) => {
-        if ((filter === "ALL" || m.kategori === filter) && (m.nama.toLowerCase().includes(search))) {
-            const el = document.createElement("div");
-            el.className = "menu-card bg-white p-2 rounded-lg shadow-sm flex flex-col justify-between cursor-pointer relative";
-            el.onclick = () => addItem(i);
-            el.innerHTML = `<div><div class="text-[7px] font-bold text-blue-500 uppercase">${m.kategori}</div><div class="font-bold text-slate-800 text-[10px] leading-tight line-clamp-2">${m.nama}</div></div>
-                <div class="flex justify-between items-center mt-1.5"><div class="text-[10px] font-black text-slate-900">Rp${m.harga.toLocaleString()}</div><div class="bg-blue-50 text-blue-600 rounded p-0.5"><svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/></svg></div></div>
-                <span id="badge-${i}" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full font-bold border-white border"></span>`;
-            list.appendChild(el);
-        }
-    });
-    updateBadges();
-}
-
-function filterMenu() { renderMenu(); }
-function addItem(i) { if (!cart[i]) cart[i] = { qty: 0, ...MENU[i] }; cart[i].qty++; renderCart(); }
-function removeItem(i) { cart[i].qty--; if (cart[i].qty <= 0) delete cart[i]; renderCart(); }
-function updateBadges() {
-    MENU.forEach((_, i) => {
-        const b = document.getElementById("badge-" + i);
-        if (b) { if (cart[i]) { b.innerText = cart[i].qty; b.classList.remove("hidden"); } else { b.classList.add("hidden"); } }
-    });
-}
-
-function renderCart() {
-    let h = ""; 
-    let t = 0; // t adalah Total Belanja (Kotor)
-
-    Object.keys(cart).forEach(i => {
-        const item = cart[i]; 
-        t += item.qty * item.harga;
-        h += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-md border border-slate-100">
-                <div class="flex-1 min-w-0 pr-1">
-                    <div class="font-bold text-slate-800 text-[10px] truncate">${item.nama}</div>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <button onclick="removeItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">－</button>
-                    <span class="font-bold text-[10px] w-3 text-center">${item.qty}</span>
-                    <button onclick="addItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">＋</button>
-                </div>
-              </div>`;
-    });
-    
-    // Hitung Total Tagihan (Bersih setelah diskon)
-    const final = Math.max(0, t - pointDiscount);
-    
-    // Update ke Tampilan Layar
-    // Gunakan ID yang berbeda agar tidak bentrok
-    if(document.getElementById("totalKotor")) {
-        document.getElementById("totalKotor").innerText = t.toLocaleString();
-    }
-    document.getElementById("total").innerText = final.toLocaleString();
-    
-    // Logika Tampilan Diskon Poin (Pemicu Pulse)
-    const pWrapper = document.getElementById("pointDiscWrapper");
-    if (pointDiscount > 0) {
-        pWrapper.classList.remove("hidden");
-        document.getElementById("pointDiscNominal").innerText = pointDiscount.toLocaleString();
-    } else {
-        pWrapper.classList.add("hidden");
-    }
-
-    // Update Daftar Item di Keranjang
-    document.getElementById("cartList").innerHTML = h || `<div class="flex flex-col items-center justify-center h-full text-slate-300"><p class="text-[9px]">Kosong</p></div>`;
-    
-    updateBadges(); // Update angka merah di menu
-    
-    // Jika metode bayar CASH, hitung ulang kembaliannya
-    if(document.getElementById("metode").value === "CASH") renderCash();
-}
-function renderCash() {
-    const m = document.getElementById("metode").value;
-    const b = document.getElementById("cashBox");
-    if (m !== "CASH") { b.innerHTML = ""; return; }
-    const currentTotal = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
-    const denoms = [1000, 2000, 5000, 10000, 20000, 50000, 100000];
-    let btns = `<button onclick="quickCash(${currentTotal})" class="flex-1 bg-blue-600 text-white border py-0.5 rounded text-[8px] font-bold">Uang Pas</button>`;
-    denoms.forEach(v => { 
-        if (v > currentTotal) btns += `<button onclick="quickCash(${v})" class="flex-1 bg-white border py-0.5 rounded text-[8px] font-bold hover:bg-blue-600 hover:text-white">${v/1000}K</button>`; 
-    });
-    b.innerHTML = `<div class="bg-blue-50 p-1.5 rounded-md border border-blue-100 space-y-1">
-        <div class="flex justify-between items-center px-1">
-            <label class="text-[8px] font-bold text-blue-700">TUNAI</label>
-            <input id="bayar" type="number" oninput="hitungKembali()" placeholder="0" class="w-24 bg-white border border-blue-300 rounded px-1 text-right text-[11px] font-black outline-none focus:ring-1 focus:ring-blue-500">
-        </div>
-        <div class="flex flex-wrap gap-1">${btns}</div>
-        <div id="kembaliWrapper" class="flex justify-between items-center text-[9px] font-bold px-1 text-blue-700">
-            <span>KEMBALI</span>
-            <span>Rp <span id="kembali">0</span></span>
-        </div>
-    </div>`;
-}
-
-function quickCash(v) { 
-    const input = document.getElementById("bayar");
-    if(input) { 
-        input.value = v; 
-        hitungKembali(); 
-    }
-}
-
-function hitungKembali() {
-    const inputBayar = document.getElementById("bayar");
-    const displayKembali = document.getElementById("kembali");
-    const wrapper = document.getElementById("kembaliWrapper");
-    if (!inputBayar || !displayKembali) return;
-    const t = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
-    const b = Number(inputBayar.value || 0);
-    const s = b - t;
-    if (s < 0) { 
-        displayKembali.innerText = "Kurang " + Math.abs(s).toLocaleString(); 
-        wrapper.classList.remove("text-blue-700");
-        wrapper.classList.add("text-red-600");
-    } else { 
-        displayKembali.innerText = s.toLocaleString(); 
-        wrapper.classList.remove("text-red-600");
-        wrapper.classList.add("text-blue-700");
-    }
-}
-
-// Simpan variabel ini di luar fungsi agar bisa diakses oleh prosesSimpanKeCloud
+/* ================= STATE ================= */
+let MENU = [], cart = {}, shiftOpen = false, printing = false;
+let pointDiscount = 0;
 let pendingOrder = null;
 
-async function submitOrder() {
-    // PROTEKSI TAMBAHAN
-    const activeShift = localStorage.getItem("activeShiftName");
-    if (!activeShift) {
-        alert("Peringatan: Anda belum membuka shift! Transaksi ditolak.");
-        return;
-    }
-    
-    // 1. Ambil total tagihan
-    const total = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
-    
-    // 2. Validasi keranjang
-    if (total <= 0 && Object.keys(cart).length === 0) {
-        return alert("Keranjang masih kosong!");
-    }
-
-    const btn = document.querySelector("button[onclick='submitOrder()']");
-    btn.innerText = "MENCETAK..."; 
-    btn.disabled = true;
-
-    // 3. Siapkan Data Transaksi
-    const now = new Date();
-    const trxId = "TRX-" + now.getHours() + now.getMinutes() + now.getSeconds() + "-" + Math.floor(Math.random() * 100);
-    const noWA = document.getElementById("nohp").value || "-";
-    const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
-    const kodeVoucher = document.getElementById("voucher").value;
-    const metode = document.getElementById("metode").value;
-
-    pendingOrder = { 
-        total, 
-        noWA, 
-        pesanan, 
-        kodeVoucher, 
-        metode, 
-        trxId 
-    };
-
-    // --- LOGIKA POIN & MEMBER UNTUK STRUK ---
-    // Mengambil data dari variabel 'member' yang diisi saat fungsi cekMember() dijalankan
-    const namaMemberStruk = (member && member.nama) ? member.nama : "-";
-    
-    // Hitung poin yang BARU didapat dari transaksi ini (Contoh: tiap 20rb dapat 100 poin)
-    const poinBaru = (namaMemberStruk !== "-") ? Math.floor(total / 20000) * 100 : 0;
-    
-    // Ambil saldo poin LAMA dari database member
-    const poinLama = (member && member.poin) ? Number(member.poin) : 0;
-    
-    // Hitung TOTAL poin akhir (Saldo Lama + Baru - Saldo yang ditukar/Redeem)
-    const totalPoinAkhir = (namaMemberStruk !== "-") ? (poinLama + poinBaru - redeemQty) : 0;
-
-    // 4. Susun Format Struk untuk Printer
-    let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10CLOUDkitchendyg++\x1B\x21\x00\n";
-    esc += "ID: " + trxId + "\n";
-    esc += "Tgl: " + now.toLocaleString('id-ID') + "\n";
-    esc += "--------------------------------\n\x1B\x61\x00";
-    
-    Object.values(cart).forEach(item => { 
-        esc += `${item.nama}\n${item.qty} x ${item.harga.toLocaleString()} = ${(item.qty * item.harga).toLocaleString()}\n`; 
-    });
-    
-    esc += "--------------------------------\n";
-    esc += "TOTAL     : Rp " + total.toLocaleString() + "\n";
-    esc += "METODE    : " + metode + "\n";
-    
-    // Tampilan Poin (Tetap muncul walau bukan member)
-    esc += "MEMBER    : " + namaMemberStruk + "\n";
-    esc += "DAPAT POIN: " + poinBaru + "\n";
-    esc += "TOTAL POIN: " + totalPoinAkhir + "\n";
-
-    if (redeemQty > 0) esc += "REDEEM    : " + redeemQty + " Poin\n";
-    if (kodeVoucher)   esc += "VOUCHER   : " + kodeVoucher + "\n";
-    
-    esc += "--------------------------------\n";
-    esc += "\x1B\x61\x01TERIMA KASIH\x1B\x61\x00\n";
-    esc += "\x1B\x61\x01powered by cloudkitchendyg++\x1B\x61\x00\n\n\n\n\n";
-
-    // 5. KIRIM PERINTAH KE APP INVENTOR
-    if (window.AppInventor) {
-        window.AppInventor.setWebViewString("PRINT|" + esc);
-    } else {
-        // Jika buka di browser biasa (untuk testing)
-        console.log("Simulasi Cetak:\n" + esc);
-        setTimeout(() => { onPrintSuccess_Mock(); }, 1000); 
-    }
+/* ================= SHIFT ================= */
+async function checkShift(){
+  const r = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftStatus`);
+  shiftOpen = (await r.text()) === "OPEN";
+  btnOpenShift.classList.toggle("hidden", shiftOpen);
+  btnCloseShift.classList.toggle("hidden", !shiftOpen);
+  shiftAlert.classList.toggle("hidden", shiftOpen);
+  btnSubmit.disabled = !shiftOpen;
 }
 
-// Fungsi simulasi jika tidak pakai App Inventor (hanya untuk tes di laptop)
-function onPrintSuccess_Mock() {
-    if(confirm("Simulasi: Apakah cetak berhasil?")) {
-        prosesSimpanKeCloud();
-    } else {
-        const btn = document.querySelector("button[onclick='submitOrder()']");
-        btn.innerText = "Bayar & Cetak";
-        btn.disabled = false;
-    }
-}
-function cekMember() {
-    const no = document.getElementById("nohp").value.trim(); if (!no) return;
-    document.getElementById("memberInfo").innerText = "Mengecek...";
-    fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`)
-        .then(r => r.json()).then(d => {
-            if (d.exists) { 
-                member = d; 
-                document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin || 0} Poin)</span>`;
-                
-                if (d.poin >= 500) {
-                    let maxTukarPoin = Math.floor(d.poin / 500) * 500;
-                    let nominalPotongan = (maxTukarPoin / 500) * 5000;
-
-                    if (confirm(`Member memiliki ${d.poin} poin.\nTukarkan ${maxTukarPoin} poin untuk diskon Rp${nominalPotongan.toLocaleString()}?`)) {
-                        redeemQty = maxTukarPoin; 
-                        pointDiscount = nominalPotongan;
-                        renderCart();
-                        alert(`Berhasil! Poin ditukar diskon.`);
-                    }
-                }
-            } else { 
-                member = null; redeemQty = 0; pointDiscount = 0; renderCart();
-                document.getElementById("memberInfo").innerHTML = `<span class="text-red-500 font-bold">❌ Bukan Member</span>`; 
-            }
-        });
-}
-// Pantau laporan dari App Inventor setiap 1 detik
-setInterval(function() {
-    if (window.AppInventor) {
-        let laporan = window.AppInventor.getWebViewString();
-        
-        if (laporan === "SUCCESS") {
-            window.AppInventor.setWebViewString(""); // Reset agar tidak kirim data berulang
-            prosesSimpanKeCloud(); // Panggil fungsi kirim data ke Google Sheets
-        } 
-        else if (laporan === "FAILED") {
-            window.AppInventor.setWebViewString(""); // Reset
-            alert("⚠️ GAGAL CETAK: Bluetooth printer tidak terhubung!");
-            
-            // Aktifkan kembali tombol agar kasir bisa coba lagi
-            const btn = document.querySelector("button[onclick='submitOrder()']");
-            if(btn) { btn.innerText = "Bayar & Cetak"; btn.disabled = false; }
-        }
-    }
-}, 1000);
-
-async function prosesSimpanKeCloud() {
-    if (!pendingOrder) return;
-
-    const btn = document.querySelector("button[onclick='submitOrder()']");
-    const rQty = (typeof redeemQty !== 'undefined') ? Number(redeemQty) : 0;
-
-    const params = new URLSearchParams({
-        token: TOKEN,
-        action: "processPayment",
-        total: pendingOrder.total,     // Kolom C
-        pesanan: pendingOrder.pesanan, // Kolom B
-        method: pendingOrder.metode,   // Kolom E
-        trxId: pendingOrder.trxId,     // Kolom F
-        noWA: pendingOrder.noWA,       // Kolom H
-        redeemQty: rQty                // Kolom D
-    });
-
-    try {
-        // Gunakan mode no-cors untuk kirim data agar tidak macet di "MENCETAK..."
-        fetch(`${API_URL}?${params.toString()}`, { mode: 'no-cors' });
-        
-        // Karena mode no-cors, kita anggap sukses setelah fetch dikirim
-        alert("✅ Transaksi Berhasil Dicatat!");
-        cart = {};
-        pendingOrder = null;
-        location.reload(); 
-
-    } catch (err) {
-        console.error("Cloud Error:", err);
-        alert("❌ Gagal terhubung ke Database!");
-        if(btn) { btn.innerText = "Bayar & Cetak"; btn.disabled = false; }
-    }
+async function manageShift(type){
+  const action = type === 'open' ? 'openShift' : 'closeShift';
+  if(!confirm(type === 'open' ? "Buka shift?" : "Tutup shift?")) return;
+  await fetch(`${API_URL}?token=${TOKEN}&action=${action}`, {mode:'no-cors'});
+  location.reload();
 }
 
-async function manageShift(type) {
-    if (type === 'open') {
-        if (!confirm("Buka shift sekarang?")) return;
-        try {
-            // Tambahkan mode no-cors agar tidak terblokir browser saat 'Buka Shift'
-            const res = await fetch(`${API_URL}?token=${TOKEN}&action=openShift`, { mode: 'no-cors' });
-            
-            // Karena no-cors tidak bisa membaca text respon, kita beri jeda lalu ambil status terbaru
-            setTimeout(async () => {
-                const checkStatus = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftStatus`);
-                const statusText = await checkStatus.text();
-                
-                if (statusText === "OPEN") {
-                    localStorage.setItem("activeShiftName", "SHIFT-" + new Date().toLocaleDateString());
-                    alert("Shift Dimulai!"); 
-                    location.reload(); 
-                } else {
-                    alert("Gagal mengaktifkan shift di server. Coba lagi.");
-                }
-            }, 1000);
-
-        } catch (e) { 
-            alert("Gagal koneksi server!"); 
-            console.error(e);
-        }
-    } else {
-        if (!confirm("Tutup shift dan CETAK LAPORAN?")) return;
-
-        try {
-            const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
-            const r = await res.json();
-
-            if (r === "NO_ACTIVE_SHIFT") {
-                localStorage.removeItem("activeShiftName");
-                location.reload();
-                return;
-            }
-
-            // Susun Teks Printer (ESC/POS) - TIDAK ADA YANG DIUBAH
-            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
-            esc += (r.shiftName || "Shift") + "\n";
-            esc += "--------------------------------\n\x1B\x61\x00";
-            esc += "Total Trx       : " + r.totalTrx + "\n";
-            esc += "Total Pemasukan : Rp " + (r.totalPemasukan || 0).toLocaleString() + "\n";
-            esc += "  - CASH        : Rp " + (r.cash || 0).toLocaleString() + "\n";
-            esc += "  - QRIS        : Rp " + (r.qris || 0).toLocaleString() + "\n";
-            esc += "--------------------------------\n";
-            esc += "INFO MEMBER & POIN:\n";
-            const memberList = Object.keys(r.members || {});
-            esc += "Total Member    : " + memberList.length + " Orang\n";
-            esc += "Poin Didapat    : " + (r.totalPoinDapat || 0) + "\n";
-            esc += "Poin Ditukar    : " + (r.totalPoinRedeem || 0) + "\n";
-            esc += "--------------------------------\n";
-
-            if (memberList.length > 0) {
-                esc += "RINCIAN POIN MEMBER:\\n";
-                memberList.forEach(m => {
-                    esc += "- " + m + ": +" + r.members[m] + "\n";
-                });
-                esc += "--------------------------------\n";
-            }
-            esc += "\n\n\n\n\n";
-
-            if (window.AppInventor) {
-                window.AppInventor.setWebViewString("PRINT|" + esc);
-                setTimeout(async () => {
-                    await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`, { mode: 'no-cors' });
-                    localStorage.removeItem("activeShiftName");
-                    alert("Shift Ditutup!");
-                    location.reload();
-                }, 2000);
-            } else {
-                await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`, { mode: 'no-cors' });
-                localStorage.removeItem("activeShiftName");
-                location.reload();
-            }
-        } catch (e) {
-            alert("Gagal koneksi! Klik Oke untuk paksa reset lokal.");
-            localStorage.removeItem("activeShiftName");
-            location.reload();
-        }
-    }
+/* ================= MENU ================= */
+async function loadMenu(){
+  const t = await fetch(CSV_URL).then(r=>r.text());
+  const rows = t.trim().split("\n").slice(1);
+  MENU = rows.map(r=>{
+    const c = r.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
+    return {kategori:c[0], nama:c[1], harga:Number(c[2])||0};
+  });
+categoryFilter.innerHTML = '<option value="ALL">SEMUA</option>';
+[...new Set(MENU.map(m=>m.kategori))].forEach(k=>{
+     categoryFilter.innerHTML += `<option>${k}</option>`;
+  });
+  renderMenu();
 }
-// Tambahkan checkShiftStatus() ke dalam window.onload Anda yang sudah ada
-window.onload = () => {
-    loadMenu();
-    checkShiftStatus();
-};
+
+function renderMenu(){
+  menuList.innerHTML="";
+  const q = searchInput.value.toLowerCase();
+  const f = categoryFilter.value;
+  MENU.forEach((m,i)=>{
+    if((f==="ALL"||m.kategori===f)&&m.nama.toLowerCase().includes(q)){
+      menuList.innerHTML+=`
+      <div class="menu-card bg-white p-2 rounded cursor-pointer" onclick="addItem(${i})">
+        <div class="text-[9px] text-blue-600 font-bold">${m.kategori}</div>
+        <div class="font-bold text-xs">${m.nama}</div>
+        <div class="font-black text-xs">Rp ${m.harga.toLocaleString()}</div>
+      </div>`;
+    }
+  });
+}
+
+/* ================= CART ================= */
+function addItem(i){
+  cart[i]=(cart[i]||{...MENU[i],qty:0});
+  cart[i].qty++;
+  renderCart();
+}
+
+function renderCart(){
+  let sub=0, html="";
+  Object.values(cart).forEach(i=>{
+    sub+=i.qty*i.harga;
+    html+=`<div class="flex justify-between">
+      <span>${i.nama} x${i.qty}</span>
+      <span>${(i.qty*i.harga).toLocaleString()}</span>
+    </div>`;
+  });
+  cartList.innerHTML = html || "Kosong";
+  subTotal.textContent = sub.toLocaleString();
+  recalcTotal();
+}
+
+/* ================= POIN ================= */
+function applyPoint(){
+  pointDiscount = 0;
+  const sub = parseInt(subTotal.textContent.replace(/\D/g,""))||0;
+  let p = Number(pointInput.value)||0;
+  if(p < 500){ alert("Minimal 500 poin"); return; }
+  const valid = Math.floor(p/500)*500;
+  const value = valid * 100;
+  if(value >= sub){ alert("Poin melebihi subtotal"); return; }
+  pointDiscount = value;
+  pointInput.value = valid;
+  discount.textContent = value.toLocaleString();
+  recalcTotal();
+}
+
+function recalcTotal(){
+  const sub = parseInt(subTotal.textContent.replace(/\D/g,""))||0;
+  total.textContent = Math.max(sub-pointDiscount,0).toLocaleString();
+  calcChange();
+}
+
+function calcChange(){
+  const cash = Number(cashInput.value)||0;
+  const t = parseInt(total.textContent.replace(/\D/g,""))||0;
+  change.textContent = Math.max(cash-t,0).toLocaleString();
+}
+
+/* ================= SUBMIT & CLOUD ================= */
+function submitOrder(){
+  if(!shiftOpen||printing) return;
+  if(!Object.keys(cart).length) return alert("Keranjang kosong");
+
+  printing=true;
+  btnSubmit.textContent="MENCETAK...";
+  btnSubmit.disabled=true;
+
+  const totalBayar = parseInt(total.textContent.replace(/\D/g,""))||0;
+  const sub = parseInt(subTotal.textContent.replace(/\D/g,""))||0;
+  const pesanan = Object.values(cart).map(i=>`${i.nama} x${i.qty}`).join(", ");
+
+  pendingOrder = {
+    total: totalBayar,
+    pesanan,
+    metode:"CASH",
+    trxId:"TRX-"+Date.now(),
+    noWA: memberInput.value||"-"
+  };
+
+  const earn = Math.floor(totalBayar/20000)*100;
+
+  const esc =
+    "\x1B\x40\x1B\x61\x01dyg++ CLOUD KITCHEN\n" +
+    "------------------------------\n\x1B\x61\x00" +
+    pesanan.replace(/, /g,"\n")+"\n" +
+    "SUBTOTAL: Rp "+sub+"\n" +
+    "POTONGAN: Rp "+pointDiscount+"\n" +
+    "TOTAL   : Rp "+totalBayar+"\n" +
+    "POIN +  : "+earn+"\n\n";
+
+  if(window.AppInventor){
+    window.AppInventor.setWebViewString("PRINT|"+esc);
+    setTimeout(prosesSimpanKeCloud,1500);
+  }else{
+    console.log(esc);
+    prosesSimpanKeCloud();
+  }
+}
+
+async function prosesSimpanKeCloud(){
+  const rQty = pointDiscount/100;
+  const p = new URLSearchParams({
+    token:TOKEN,
+    action:"processPayment",
+    total:pendingOrder.total,
+    pesanan:pendingOrder.pesanan,
+    method:pendingOrder.metode,
+    trxId:pendingOrder.trxId,
+    noWA:pendingOrder.noWA,
+    redeemQty:rQty
+  });
+  await fetch(`${API_URL}?${p.toString()}`,{mode:'no-cors'});
+  alert("✅ Transaksi tercatat");
+  location.reload();
+}
+
+/* ================= INIT ================= */
+window.onload=()=>{loadMenu();checkShift();}
 </script>
+
 </body>
 </html>
