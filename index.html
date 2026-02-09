@@ -708,7 +708,7 @@ async function apiCekMember() {
 // Tambahkan 'antrean = 0' di deretan variabel global
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwfnr3syLjgo0jINxnpBByzuYktmBcvUXdhpa-P4rb6I9kbZE-2lVfIgeVdjtki7hPY7w/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzIXuQDmOx820PbMHb_m0dumgPhtxT2HGzjpj0QDDML9CtL88jsT_ziid7hqSCIOYpwcA/exec',
  	MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1071,35 +1071,40 @@ async function submitOrder() {
     msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
     msg += `Terimakasih!`;
 
-    // --- 5. FETCH KE BACKEND (INI YANG DIPERBAIKI) ---
-    const btnKirim = document.querySelector('#modalConfirm button:last-child');
-    if (btnKirim) {
-        btnKirim.innerHTML = "⌛ Menghubungkan...";
-        btnKirim.style.opacity = "0.7";
-        btnKirim.style.pointerEvents = "none";
-    }
+   // --- 5. FETCH KE BACKEND (ANTI-BATAL) ---
+const btnKirim = document.querySelector('#modalConfirm button:last-child');
+if (btnKirim) {
+    btnKirim.innerHTML = "⌛ Menyimpan & Mengalihkan...";
+    btnKirim.style.opacity = "0.7";
+    btnKirim.style.pointerEvents = "none";
+}
 
-    const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, '');
-    const pesananJSON = JSON.stringify(summary); // ✅ FORMAT AMAN UNTUK DAPUR
+const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, '');
+const pesananJSON = JSON.stringify(summary); 
 
-    const dbUrl =
-        `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=simpanPesanan` +
-        `&antrean=${encodeURIComponent(noAntrean)}` +
-        `&nama=${encodeURIComponent(nI.value)}` +
-        `&mode=${encodeURIComponent(currentMode)}` +
-        `&pesanan=${encodeURIComponent(pesananJSON)}` +
-        `&total=${finalTotal}` +
-        `&meja=${encodeURIComponent(tI?.value || '')}`;
+const dbUrl = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=simpanPesanan` +
+    `&antrean=${encodeURIComponent(noAntrean)}` +
+    `&nama=${encodeURIComponent(nI.value)}` +
+    `&mode=${encodeURIComponent(currentMode)}` +
+    `&pesanan=${encodeURIComponent(pesananJSON)}` +
+    `&total=${finalTotal}` +
+    `&meja=${encodeURIComponent(tI?.value || '')}`;
 
-    fetch(dbUrl).then(() => console.log("✔ Masuk logantrean"));
+try {
+    // WAJIB PAKAI AWAIT: Tunggu sampai Google Apps Script menjawab "Success/OK"
+    // mode: 'no-cors' digunakan untuk menghindari blokir kebijakan browser
+    await fetch(dbUrl, { method: "GET", mode: "no-cors", cache: "no-store" });
+    console.log("✔ Data berhasil diamankan di logantrean");
+} catch (e) {
+    console.error("❌ Gagal simpan ke dapur, tapi tetap lanjut ke WA", e);
+}
 
-    // --- WA TETAP ---
-    const wa = currentMode === 'DELIVERY'
-        ? CONFIG.WA_NUMBERS.DELIVERY
-        : CONFIG.WA_NUMBERS.DINE_IN;
+// --- 6. REDIRECT KE WA (Hanya jalan SETELAH fetch selesai) ---
+const wa = currentMode === 'DELIVERY'
+    ? CONFIG.WA_NUMBERS.DELIVERY
+    : CONFIG.WA_NUMBERS.DINE_IN;
 
-    window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-
+window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
     // --- 6. RESET (Tetap Utuh) ---
     setTimeout(() => {
         cart = [];
