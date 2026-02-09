@@ -1006,9 +1006,9 @@ async function submitOrder() {
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
     
-    // --- AMBIL NOMOR ANTREAN DARI HEADER ---
+    // AMBIL NOMOR ANTREAN DARI HEADER
     const noAntreanFull = document.getElementById('noAntrean').innerText; 
-    const noAntrean = noAntreanFull.replace('#', ''); // Pastikan hanya angka yang dikirim ke DB
+    const noAntrean = noAntreanFull.replace('#', '').trim();
     
     const tglK = document.getElementById('tglKatering')?.value || '';
 
@@ -1035,6 +1035,7 @@ async function submitOrder() {
     const summary = {};
     cart.forEach(c => {
         let label = c.nama;
+        // MENYEMPURNAKAN VARIAN (vN, vM, vR, vS) agar tidak hilang
         let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
         if(tags) label += ` [${tags}]`;
         const itemKey = label;
@@ -1050,8 +1051,8 @@ async function submitOrder() {
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPriceText = document.getElementById('miniPrice').innerText;
-    const finalPriceNumeric = finalPriceText.replace(/[^0-9]/g, ''); // Angka murni untuk DB
-    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
+    const finalPriceNumeric = finalPriceText.replace(/[^0-9]/g, ''); 
+    const userLocationUrl = `http://googleusercontent.com/maps.google.com/maps?q=${window.userLat},${window.userLng}`;
 
     // --- 3. Animasi Tombol Loading ---
     const btnKirim = document.querySelector('#modalConfirm button:last-child');
@@ -1061,11 +1062,11 @@ async function submitOrder() {
         btnKirim.style.pointerEvents = "none";
     }
 
-   // --- 4. KIRIM KE GOOGLE SHEETS ---
+    // --- 4. KIRIM KE GOOGLE SHEETS (BACKGROUND) ---
     const params = new URLSearchParams({
         token: CONFIG.TOKEN,
         action: "simpanPesanan",
-        antrean: noAntrean, 
+        antrean: noAntrean,
         nama: nI.value,
         mode: currentMode,
         pesanan: Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join('\n'),
@@ -1073,26 +1074,14 @@ async function submitOrder() {
         meja: (currentMode === 'DINE IN' ? tI.value : (currentMode === 'DELIVERY' ? "DELIVERY" : "TAKEAWAY"))
     });
 
-    try {
-        // HAPUS 'no-cors' agar kita tahu kapan data SELESAI disimpan
-        const response = await fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`);
-        const resText = await response.text();
-        
-        if (resText.includes("Success")) {
-            console.log("Data tercatat di database.");
-            // Update nomor antrean untuk pembeli berikutnya SETELAH data sukses tersimpan
-            if (typeof fetchCurrentQueue === 'function') await fetchCurrentQueue();
-        }
-    } catch (e) {
-        console.error("Gagal kirim ke database:", e);
-    }
+    // Gunakan no-cors agar flow tidak terhenti oleh kebijakan browser
+    fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
 
-    // --- 5. SUSUN PESAN WHATSAPP ---
-    let msg = `Halo cloudkitchen.dyg++!\n\n`;url
-
+    // --- 5. SUSUN PESAN WHATSAPP (Sesuai Format Asli) ---
+    let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
-    msg += `🔢 *ANTREAN: #${noAntrean}*\n`; // Menampilkan tanda # hanya di teks WA agar keren
+    msg += `🔢 *ANTREAN: #${noAntrean}*\n`;
     msg += `━━━━━━━━━━━━━━\n`;
 
     if (currentMode === 'DINE IN') {
@@ -1115,15 +1104,19 @@ async function submitOrder() {
 
     // --- 6. EKSEKUSI PINDAH KE WHATSAPP ---
     const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-    window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+    
+    // Kasih jeda 500ms agar fetch database punya waktu bernafas sebelum halaman berganti
+    setTimeout(() => {
+        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+    }, 500);
 
-    // --- 7. RESET TAMPILAN WEB & REFRESH ANTREAN ---
+    // --- 7. RESET TAMPILAN WEB (Setelah jeda) ---
     setTimeout(() => {
         cart = [];
         if (typeof refreshUI === 'function') refreshUI();
         closeModal();
         
-        // AMBIL NOMOR ANTREAN BARU DARI SERVER UNTUK PESANAN BERIKUTNYA
+        // PENTING: Update nomor antrean untuk pembeli berikutnya
         if (typeof fetchCurrentQueue === 'function') fetchCurrentQueue();
 
         const welcome = document.getElementById('welcome-overlay'); 
@@ -1148,7 +1141,7 @@ async function submitOrder() {
         if(tI) tI.value = '';
         if(aI) aI.value = '';
         document.getElementById('orderNote').value = '';
-    }, 1500);
+    }, 2500);
 }
 
     function toggleSummary(open) {
