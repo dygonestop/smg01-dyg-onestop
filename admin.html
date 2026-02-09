@@ -512,42 +512,43 @@ setInterval(function() {
     }
 }, 1000);
 
-// Fungsi utama untuk kirim data ke Google Sheets
 async function prosesSimpanKeCloud() {
     if (!pendingOrder) return;
 
     const btn = document.querySelector("button[onclick='submitOrder()']");
     const rQty = (typeof redeemQty !== 'undefined') ? Number(redeemQty) : 0;
 
-    // Menyiapkan parameter agar sinkron dengan urutan Kolom A-J di Google Sheets
+    // Menyiapkan parameter yang dikirim ke URL
     const params = new URLSearchParams({
-        token: TOKEN,                // Menggunakan variabel TOKEN yang sudah ada
+        token: TOKEN,                // Sesuai baris 114: "dyg-access-v2"
         action: "processPayment",
-        total: pendingOrder.total,     // Masuk ke Kolom C: Jumlah Bayar
-        pesanan: pendingOrder.pesanan, // Masuk ke Kolom B: Pesanan
-        method: pendingOrder.metode,   // Masuk ke Kolom E: Mode Pembayaran
-        trxId: pendingOrder.trxId,     // Masuk ke Kolom F: ID Transaksi
-        noWA: pendingOrder.noWA,       // Masuk ke Kolom H: HP
-        redeemQty: rQty                // Masuk ke Kolom D: Potongan
+        total: pendingOrder.total,     // Masuk ke Kolom C
+        pesanan: pendingOrder.pesanan, // Masuk ke Kolom B
+        method: pendingOrder.metode,   // Masuk ke Kolom E
+        trxId: pendingOrder.trxId,     // Masuk ke Kolom F
+        noWA: pendingOrder.noWA,       // Masuk ke Kolom H
+        redeemQty: rQty                // Masuk ke Kolom D
     });
 
     try {
-        // PERBAIKAN: Menggunakan API_URL (bukan CONFIG.API_URL yang tidak terdefinisi)
+        // Menggunakan API_URL (baris 112) bukan CONFIG.API_URL
         const response = await fetch(`${API_URL}?${params.toString()}`);
         const result = await response.text();
 
         if (result.includes("Success")) {
-            alert("✅ Transaksi Berhasil Dicatat ke Cloud!");
+            alert("✅ Transaksi Berhasil Disimpan!");
+            // Reset Data
             cart = {};
-            location.reload(); // Refresh halaman agar state kembali bersih
+            pendingOrder = null;
+            location.reload(); 
         } else {
-            alert("⚠️ Printer Berhasil, tapi Database Gagal: " + result);
+            alert("⚠️ Database Menolak: " + result);
             btn.innerText = "Bayar & Cetak";
             btn.disabled = false;
         }
     } catch (err) {
         console.error("Fetch Error:", err);
-        alert("❌ Koneksi Terputus atau Script Error!");
+        alert("❌ Gagal Terhubung ke Database! Periksa Internet.");
         btn.innerText = "Bayar & Cetak";
         btn.disabled = false;
     }
