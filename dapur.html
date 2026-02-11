@@ -34,7 +34,7 @@
 /* ================= CONFIG ================= */
 const CONFIG = {
     // URL Deployment GAS Anda
-    API_URL: "https://script.google.com/macros/s/AKfycbwTo5_KeeT_HN7T1zMJG8EEQV1B4GoUic3he6eFQtUk4KAR3NSMb0Ml9x2IvBJ7_TEnIA/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbyx2M_GF_uz-ScFcefbbYyqHka8jG_52nMyIuRcEbY02iOjprO85Wm0qPmr2QY2pWZsYg/exec",
     TOKEN: "dyg-access-v2",
     REFRESH: 8000 // Sinkronisasi setiap 8 detik
 };
@@ -96,12 +96,10 @@ function render(active){
     box.innerHTML = active.map(o => {
         let daftarMenu = "";
         try {
-            // Cek apakah data berupa JSON string atau teks biasa
             if (o.Pesanan && o.Pesanan.trim().startsWith('{')) {
                 const jsonPesanan = JSON.parse(o.Pesanan);
                 daftarMenu = Object.keys(jsonPesanan).map(menu => `• ${jsonPesanan[menu].qty}x ${menu}`).join("<br>");
             } else {
-                // Mendukung pemisah koma atau baris baru
                 daftarMenu = o.Pesanan.split(/,|\n/).map(i => `• ${i.trim()}`).filter(i => i !== "•").join("<br>");
             }
         } catch (e) {
@@ -114,7 +112,14 @@ function render(active){
                 <div class="name">${o.Nama || 'Tanpa Nama'}</div>
                 <div class="mode">${o.Mode} ${o.Meja ? `<span style="color:var(--danger)">[ MEJA ${o.Meja} ]</span>` : ''}</div>
                 <div class="items">${daftarMenu}</div>
-                <button class="btn" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
+                
+                ${o.Catatan ? `
+                <div style="background:#FFF9C4; padding:10px; border-left:5px solid #FBC02D; margin-top:12px; border-radius:8px; font-size:13px; color:#5D4037; line-height:1.4;">
+                    <strong style="display:block; margin-bottom:2px;">⚠️ CATATAN:</strong>
+                    ${o.Catatan}
+                </div>` : ''}
+
+                <button class="btn" onclick="finish(${o.row})" style="margin-top:15px;">✔ SELESAI & CETAK</button>
             </div>
         `;
     }).join("");
@@ -128,7 +133,6 @@ function render(active){
         });
     });
 }
-
 /* ================= ACTION ================= */
 function finish(row) {
     const orderData = currentOrders.find(o => o.row == row);
@@ -174,6 +178,13 @@ function printOrder(order) {
     txt += `Waktu   : ${new Date().toLocaleTimeString()}\n`;
     txt += `--------------------------------\n`;
     txt += `PESANAN:\n${order.Pesanan}\n`;
+    
+    // TAMBAHKAN CATATAN DI SINI JIKA ADA (DARI KOLOM I)
+    if (order.Catatan && order.Catatan.trim() !== "") {
+        txt += `--------------------------------\n`;
+        txt += `CATATAN:\n${order.Catatan}\n`;
+    }
+    
     txt += `--------------------------------\n\n\n\n`; 
 
     // Encode ke Base64 untuk dikirim ke aplikasi RawBT

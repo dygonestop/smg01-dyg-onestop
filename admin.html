@@ -15,6 +15,8 @@
         .menu-card { transition: all 0.1s; border: 1px solid #e2e8f0; position: relative; height: 82px; }
         .menu-card:active { transform: scale(0.97); }
         input, select { outline: none; }
+        /* Style untuk tombol disabled */
+        button:disabled { background-color: #cbd5e1 !important; cursor: not-allowed; opacity: 0.7; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -25,8 +27,8 @@
         <div id="memberInfo" class="text-[8px] text-slate-400 italic truncate max-w-[100px]">Ready</div>
     </div>
     <div class="flex items-center gap-2">
-        <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[9px] font-bold">BUKA</button>
-        <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP</button>
+        <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">BUKA SHIFT</button>
+        <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
         <div class="flex items-center gap-1 border-l pl-2">
             <input id="nohp" type="text" placeholder="No WA" class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
             <button onclick="cekMember()" class="bg-blue-600 text-white px-2 py-1 rounded text-[9px] font-bold">Cek</button>
@@ -69,30 +71,38 @@
                     <option value="CARD">💳 KARTU / EDC</option>
                 </select>
                 <div id="cashBox" class="space-y-1"></div>
-                <button id="btnSubmitOrder" onclick="submitOrder()" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-[10px] uppercase shadow-sm">Bayar & Cetak</button>
+                <button id="btnSubmitOrder" disabled onclick="submitOrder()" class="w-full bg-slate-400 text-white py-2 rounded font-bold text-[10px] uppercase shadow-sm transition-all">Mengecek Shift...</button>
             </div>
         </div>
     </section>
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwTo5_KeeT_HN7T1zMJG8EEQV1B4GoUic3he6eFQtUk4KAR3NSMb0Ml9x2IvBJ7_TEnIA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyx2M_GF_uz-ScFcefbbYyqHka8jG_52nMyIuRcEbY02iOjprO85Wm0qPmr2QY2pWZsYg/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
 let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null;
 
+// FUNGSI LOAD AWAL
 async function checkShiftStatus() {
+    const btnSubmit = document.getElementById("btnSubmitOrder");
     try {
         const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftStatus`);
         const status = await res.text();
         shiftOpen = (status === "OPEN");
         document.getElementById("btnOpenShift").classList.toggle("hidden", shiftOpen);
         document.getElementById("btnCloseShift").classList.toggle("hidden", !shiftOpen);
-        const btnSubmit = document.getElementById("btnSubmitOrder");
-        btnSubmit.disabled = !shiftOpen;
-        if (!shiftOpen) btnSubmit.innerText = "SHIFT TUTUP";
-    } catch (e) { console.error(e); }
+        if (shiftOpen) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "BAYAR & CETAK";
+            btnSubmit.className = "w-full bg-blue-600 text-white py-2 rounded font-bold text-[10px] uppercase shadow-sm";
+        } else {
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "BUKA SHIFT DULU";
+            btnSubmit.className = "w-full bg-rose-500 text-white py-2 rounded font-bold text-[10px] uppercase shadow-sm";
+        }
+    } catch (e) { btnSubmit.innerText = "ERROR KONEKSI"; }
 }
 
 async function loadMenu() {
@@ -110,51 +120,69 @@ async function loadMenu() {
     renderMenu();
 }
 
+// RENDER MENU (OPTIMIZED)
 function renderMenu() {
     const list = document.getElementById("menuList");
     const search = document.getElementById("searchInput").value.toLowerCase();
     const filter = document.getElementById("categoryFilter").value;
-    list.innerHTML = "";
+    let html = "";
     MENU.forEach((m, i) => {
         if ((filter === "ALL" || m.kategori === filter) && m.nama.toLowerCase().includes(search)) {
             const qty = cart[i] ? cart[i].qty : 0;
-            list.innerHTML += `
+            html += `
             <div class="menu-card bg-white p-2 rounded shadow-sm flex flex-col justify-between">
                 <div onclick="addItem(${i})" class="cursor-pointer">
                     <div class="text-[6px] font-bold text-blue-500 uppercase">${m.kategori}</div>
                     <div class="font-bold text-slate-800 text-[9px] leading-tight line-clamp-2">${m.nama}</div>
-                    ${qty > 0 ? `<div class="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-bold border border-white animate-bounce">${qty}</div>` : ''}
+                    ${qty > 0 ? `<div class="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-bold border border-white">${qty}</div>` : ''}
                 </div>
                 <div class="flex justify-between items-center mt-1">
                     <div class="text-[9px] font-black text-slate-900">Rp${m.harga.toLocaleString()}</div>
                     <div class="flex items-center gap-1">
-                        ${qty > 0 ? `<button onclick="removeItem(${i})" class="w-4 h-4 bg-slate-100 rounded text-[10px] font-bold border border-slate-300">-</button>` : ''}
-                        <button onclick="addItem(${i})" class="w-4 h-4 bg-blue-600 text-white rounded text-[10px] font-bold">+</button>
+                        ${qty > 0 ? `<button onclick="event.stopPropagation(); removeItem(${i})" class="w-4 h-4 bg-slate-100 rounded text-[10px] font-bold border border-slate-300">-</button>` : ''}
+                        <button onclick="event.stopPropagation(); addItem(${i})" class="w-4 h-4 bg-blue-600 text-white rounded text-[10px] font-bold">+</button>
                     </div>
                 </div>
             </div>`;
         }
     });
+    list.innerHTML = html;
 }
 
+// LOGIKA KERANJANG (SUPER FAST)
 function addItem(i) {
     if (!cart[i]) cart[i] = { ...MENU[i], qty: 0 };
     cart[i].qty++;
-    renderCart();
-    renderMenu();
+    updateUI(i);
 }
 
 function removeItem(i) {
     if(!cart[i]) return;
     cart[i].qty--;
     if (cart[i].qty <= 0) delete cart[i];
+    updateUI(i);
+}
+
+// Fungsi Central untuk Update Tampilan tanpa Reload Seluruh Page
+function updateUI(index) {
     renderCart();
-    renderMenu();
+    renderMenu(); // Update badge di menu
 }
 
 function renderCart() {
+    const list = document.getElementById("cartList");
     let html = "", total = 0;
-    Object.keys(cart).forEach(i => {
+    
+    const items = Object.keys(cart);
+    if (items.length === 0) {
+        list.innerHTML = '<div class="text-center text-slate-300 text-[10px] mt-10">Kosong</div>';
+        document.getElementById("total").innerText = "0";
+        document.getElementById("pointDiscWrapper").classList.add("hidden");
+        document.getElementById("cashBox").innerHTML = "";
+        return;
+    }
+
+    items.forEach(i => {
         const item = cart[i];
         total += item.qty * item.harga;
         html += `
@@ -164,35 +192,42 @@ function renderCart() {
                 <span class="text-[8px] text-slate-500">@${item.harga.toLocaleString()}</span>
             </div>
             <div class="flex items-center gap-1.5">
-                <button onclick="removeItem(${i})" class="w-4 h-4 bg-white border rounded text-[9px] flex items-center justify-center">－</button>
-                <span class="font-bold text-[9px] min-w-[10px] text-center">${item.qty}</span>
-                <button onclick="addItem(${i})" class="w-4 h-4 bg-white border rounded text-[9px] flex items-center justify-center">＋</button>
+                <button onclick="removeItem(${i})" class="w-4 h-4 bg-white border rounded text-[9px]">－</button>
+                <span class="font-bold text-[9px]">${item.qty}</span>
+                <button onclick="addItem(${i})" class="w-4 h-4 bg-white border rounded text-[9px]">＋</button>
             </div>
         </div>`;
     });
+
     const bersih = Math.max(0, total - pointDiscount);
     document.getElementById("total").innerText = bersih.toLocaleString();
-    document.getElementById("cartList").innerHTML = html || '<div class="text-center text-slate-300 text-[10px] mt-10">Kosong</div>';
+    list.innerHTML = html;
     document.getElementById("pointDiscWrapper").classList.toggle("hidden", pointDiscount <= 0);
     document.getElementById("pointDiscNominal").innerText = pointDiscount.toLocaleString();
-    renderCash();
+    
+    // Hanya render cash box jika metode tunai dipilih
+    if (document.getElementById("metode").value === "CASH") renderCash();
 }
 
 function renderCash() {
     const box = document.getElementById("cashBox");
-    const total = Number(document.getElementById("total").innerText.replace(/\D/g,''));
-    if (document.getElementById("metode").value !== "CASH" || total <= 0) { box.innerHTML = ""; return; }
+    const totalText = document.getElementById("total").innerText.replace(/\D/g,'');
+    const total = Number(totalText);
+    
+    if (total <= 0) { box.innerHTML = ""; return; }
+    
     const denoms = [2000, 5000, 10000, 20000, 50000, 100000];
-    let btns = `<button onclick="quickCash(${total})" class="flex-1 bg-blue-600 text-white p-1 rounded text-[8px] font-bold uppercase">Pas</button>`;
+    let btns = `<button onclick="quickCash(${total})" class="flex-1 bg-blue-600 text-white p-1 rounded text-[8px] font-bold">PAS</button>`;
     denoms.forEach(d => { if(d > total) btns += `<button onclick="quickCash(${d})" class="flex-1 bg-white border border-blue-200 p-1 rounded text-[8px] font-bold text-blue-700">${d/1000}K</button>`; });
+
     box.innerHTML = `
-    <div class="bg-blue-50 p-1.5 rounded space-y-1.5">
+    <div class="bg-blue-50 p-1.5 rounded space-y-1">
         <div class="flex gap-1 flex-wrap">${btns}</div>
         <div class="flex justify-between items-center">
-            <span class="text-[9px] font-bold text-blue-700 uppercase">Bayar:</span>
-            <input id="bayar" type="number" oninput="hitungKembali()" class="w-24 bg-white border border-blue-300 rounded px-1 py-0.5 text-right text-[11px] font-black outline-none">
+            <span class="text-[9px] font-bold text-blue-700">BAYAR:</span>
+            <input id="bayar" type="number" oninput="hitungKembali()" class="w-24 bg-white border border-blue-300 rounded px-1 py-0.5 text-right text-[11px] font-black">
         </div>
-        <div class="flex justify-between text-[9px] font-black text-blue-800 bg-white p-1 rounded border border-blue-100">
+        <div class="flex justify-between text-[9px] font-black text-blue-800 bg-white p-1 rounded">
             <span>KEMBALI</span><span>Rp <span id="kembali">0</span></span>
         </div>
     </div>`;
@@ -215,7 +250,7 @@ function cekMember() {
             document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin} P)</span>`;
             if (d.poin >= 500) {
                 let maxTukar = Math.floor(d.poin / 500) * 500;
-                if (confirm(`Tukarkan ${maxTukar} poin untuk diskon Rp${(maxTukar * 10).toLocaleString()}?`)) {
+                if (confirm(`Tukarkan ${maxTukar} poin (Rp${(maxTukar * 10).toLocaleString()})?`)) {
                     redeemQty = maxTukar; pointDiscount = maxTukar * 10; renderCart();
                 }
             }
@@ -224,46 +259,31 @@ function cekMember() {
 }
 
 async function submitOrder() {
-    if (!shiftOpen) return alert("Buka shift dulu!");
-    const total = Number(document.getElementById("total").innerText.replace(/\D/g,''));
-    if (total <= 0) return alert("Keranjang kosong!");
-
     const btn = document.getElementById("btnSubmitOrder");
-    const oriText = btn.innerText;
+    const total = Number(document.getElementById("total").innerText.replace(/\D/g,''));
     btn.innerText = "MENGIRIM..."; btn.disabled = true;
 
     const trxId = "TRX-" + Date.now();
     const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
     pendingOrder = { total, noWA: document.getElementById("nohp").value || "-", pesanan, metode: document.getElementById("metode").value, trxId };
 
-    const earn = (member) ? Math.floor(total / 20000) * 100 : 0;
-    const totalPoinAkhir = (member) ? (Number(member.poin) + earn - redeemQty) : 0;
-
-    // VALIDASI CLOUD DULU (Agar Rekapan Aman)
     try {
         const isSaved = await prosesSimpanKeCloud();
         if (isSaved) {
-            // CETAK STRUK
+            const earn = (member) ? Math.floor(total / 20000) * 100 : 0;
+            const totalPoinAkhir = (member) ? (Number(member.poin) + earn - redeemQty) : 0;
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
             esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
             Object.values(cart).forEach(i => esc += `${i.nama}\n${i.qty} x ${i.harga} = ${i.qty * i.harga}\n`);
-            esc += "--------------------------------\n";
-            esc += "TOTAL   : Rp " + total.toLocaleString() + "\n";
-            esc += "METODE  : " + pendingOrder.metode + "\n";
-            esc += "MEMBER  : " + (member ? member.nama : "-") + "\n";
-            esc += "SISA POIN: " + totalPoinAkhir + "\n";
-            esc += "--------------------------------\n\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
+            esc += "--------------------------------\nTOTAL   : Rp " + total.toLocaleString() + "\n";
+            esc += "METODE  : " + pendingOrder.metode + "\n--------------------------------\n\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
 
             if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-            
-            // REFRESH INSTAN
             location.reload();
-        } else {
-            throw new Error();
-        }
+        } else { throw new Error(); }
     } catch (e) {
-        alert("KONEKSI ERROR! Data gagal masuk rekapan. Coba lagi.");
-        btn.innerText = oriText; btn.disabled = false;
+        alert("Gagal simpan rekapan!");
+        btn.innerText = "BAYAR & CETAK"; btn.disabled = false;
     }
 }
 
@@ -284,31 +304,19 @@ async function manageShift(type) {
     if (type === 'open') {
         if (!confirm("Buka shift?")) return;
         await fetch(`${API_URL}?token=${TOKEN}&action=openShift`, { mode: 'no-cors' });
-        setTimeout(() => location.reload(), 1000);
+        location.reload();
     } else {
         if (!confirm("Tutup shift & Cetak Laporan?")) return;
         const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
         const r = await res.json();
-        let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
-        esc += (r.shiftName || "Shift") + "\n--------------------------------\n\x1B\x61\x00";
-        esc += "Total Trx       : " + r.totalTrx + "\n";
-        esc += "Total Pemasukan : Rp " + (r.totalPemasukan || 0).toLocaleString() + "\n";
-        esc += "  - CASH        : Rp " + (r.cash || 0).toLocaleString() + "\n";
-        esc += "  - QRIS        : Rp " + (r.qris || 0).toLocaleString() + "\n";
-        esc += "--------------------------------\n";
-        const memberList = Object.keys(r.members || {});
-        if (memberList.length > 0) {
-            esc += "RINCIAN POIN MEMBER:\n";
-            memberList.forEach(m => esc += `- ${m}: +${r.members[m]}\n`);
-        }
-        esc += "\n\n\n\n\n";
+        let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\n" + (r.shiftName || "") + "\n--------------------------------\n";
+        esc += "Total Trx : " + r.totalTrx + "\nTotal : Rp " + (r.totalPemasukan || 0).toLocaleString() + "\n\n\n\n\n";
         if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-        setTimeout(async () => {
-            await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`, { mode: 'no-cors' });
-            location.reload();
-        }, 1500);
+        await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`, { mode: 'no-cors' });
+        location.reload();
     }
 }
+
 window.onload = () => { loadMenu(); checkShiftStatus(); };
 </script>
 </body>

@@ -491,13 +491,36 @@ mark {
         <input type="text" id="custName" placeholder="Masukkan nama...">
     </div>
     
-    <div id="boxMeja"><div id="wrapMeja" class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="Contoh: 08"></div></div>
-    <div id="boxAlamat" style="display:none;"><div id="wrapAddr" class="input-card"><label>Alamat Pengiriman</label><textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea></div></div>
-<div id="boxKateringInfo" style="display: none; margin-bottom: 15px;">
-    <div class="input-card">
-        <label style="font-size: 11px; font-weight: 800; color: var(--muted); margin-bottom: 5px; display: block;">TANGGAL PENGIRIMAN (Minimal Besok)</label>
-        <input type="date" id="tglKatering" class="input-field" style="width: 100%;">
+    <div id="boxMeja">
+        <div id="wrapMeja" class="input-card">
+            <label>Nomor Meja</label>
+            <input type="number" id="tableNo" placeholder="Contoh: 08">
+        </div>
     </div>
+    <div id="boxAlamat" style="display:none;">
+        <div id="wrapAddr" class="input-card">
+            <label>Alamat Pengiriman</label>
+            <textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea>
+        </div>
+    </div>
+
+    <div id="boxKateringInfo" style="display: none; margin-bottom: 15px;">
+        <div class="input-card">
+            <label style="font-size: 11px; font-weight: 800; color: var(--muted); margin-bottom: 5px; display: block;">TANGGAL PENGIRIMAN (Minimal Besok)</label>
+            <input type="date" id="tglKatering" class="input-field" style="width: 100%;">
+        </div>
+    </div>
+
+    <div id="wrapNote" class="input-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+        <label style="margin-bottom: 0;">Catatan Tambahan</label>
+        <span style="font-size: 10px; color: var(--muted); font-weight: normal;">(Opsional)</span>
+    </div>
+    <textarea id="orderNote" 
+              placeholder="Contoh: Pedas sedang, tanpa timun..." 
+              rows="1" 
+              style="min-height: 40px; resize: none; overflow: hidden; line-height: 1.5; border: none; width: 100%; padding: 0; font-family: inherit;" 
+              oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
 </div>
 
     <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Pilih Menu</div>
@@ -509,10 +532,7 @@ mark {
     <div class="category-tabs" id="cat-tabs"></div>
     <div class="menu-grid" id="menu-container">Memuat menu...</div>
 
-    <div style="font-weight: 800; font-size: 14px; margin: 20px 0 10px;">Catatan Tambahan</div>
-    <div class="input-card"><textarea id="orderNote" placeholder="Contoh: Pedas sedang, tanpa timun..." rows="2"></textarea></div>
-</div>
-
+    </div>
 <div id="summaryOverlay" onclick="toggleSummary(false)"></div>
 <div id="orderSummaryPanel" class="order-summary-mini">
     <div class="sheet-header" onclick="toggleSummary(false)">
@@ -708,7 +728,7 @@ async function apiCekMember() {
 // Tambahkan 'antrean = 0' di deretan variabel global
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwTo5_KeeT_HN7T1zMJG8EEQV1B4GoUic3he6eFQtUk4KAR3NSMb0Ml9x2IvBJ7_TEnIA/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyx2M_GF_uz-ScFcefbbYyqHka8jG_52nMyIuRcEbY02iOjprO85Wm0qPmr2QY2pWZsYg/exec',
  	MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1005,6 +1025,7 @@ async function submitOrder() {
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
+    const oN = document.getElementById('orderNote'); // Input Catatan
     
     // AMBIL NOMOR ANTREAN DARI HEADER
     const noAntreanFull = document.getElementById('noAntrean').innerText; 
@@ -1035,7 +1056,6 @@ async function submitOrder() {
     const summary = {};
     cart.forEach(c => {
         let label = c.nama;
-        // MENYEMPURNAKAN VARIAN (vN, vM, vR, vS) agar tidak hilang
         let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
         if(tags) label += ` [${tags}]`;
         const itemKey = label;
@@ -1063,6 +1083,8 @@ async function submitOrder() {
     }
 
     // --- 4. KIRIM KE GOOGLE SHEETS (BACKGROUND) ---
+    const catatanValue = oN ? oN.value : '-'; // Ambil nilai catatan untuk database
+
     const params = new URLSearchParams({
         token: CONFIG.TOKEN,
         action: "simpanPesanan",
@@ -1071,13 +1093,13 @@ async function submitOrder() {
         mode: currentMode,
         pesanan: Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join('\n'),
         total: finalPriceNumeric,
-        meja: (currentMode === 'DINE IN' ? tI.value : (currentMode === 'DELIVERY' ? "DELIVERY" : "TAKEAWAY"))
+        meja: (currentMode === 'DINE IN' ? tI.value : (currentMode === 'DELIVERY' ? "DELIVERY" : "TAKEAWAY")),
+        catatan: catatanValue // Dikirim ke Kolom I
     });
 
-    // Gunakan no-cors agar flow tidak terhenti oleh kebijakan browser
     fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
 
-    // --- 5. SUSUN PESAN WHATSAPP (Sesuai Format Asli) ---
+    // --- 5. SUSUN PESAN WHATSAPP ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
@@ -1094,8 +1116,7 @@ async function submitOrder() {
     }
 
     msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
-    const catatan = document.getElementById('orderNote').value || '-';
-    msg += `\n*CATATAN:* ${catatan}\n`;
+    msg += `\n*CATATAN:* ${catatanValue || '-'}\n`;
     msg += `*TOTAL BAYAR: Rp ${finalPriceText}*\n\n`;
     msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
     msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
@@ -1105,7 +1126,6 @@ async function submitOrder() {
     // --- 6. EKSEKUSI PINDAH KE WHATSAPP ---
     const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
     
-    // Kasih jeda 500ms agar fetch database punya waktu bernafas sebelum halaman berganti
     setTimeout(() => {
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
     }, 500);
@@ -1116,7 +1136,6 @@ async function submitOrder() {
         if (typeof refreshUI === 'function') refreshUI();
         closeModal();
         
-        // PENTING: Update nomor antrean untuk pembeli berikutnya
         if (typeof fetchCurrentQueue === 'function') fetchCurrentQueue();
 
         const welcome = document.getElementById('welcome-overlay'); 
@@ -1140,7 +1159,10 @@ async function submitOrder() {
         nI.value = '';
         if(tI) tI.value = '';
         if(aI) aI.value = '';
-        document.getElementById('orderNote').value = '';
+        if(oN) {
+            oN.value = '';
+            oN.style.height = '40px'; // Kembalikan ke tinggi semula (ramping)
+        }
     }, 2500);
 }
 
