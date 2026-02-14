@@ -6,6 +6,14 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
+#modalConfirm {
+    z-index: 10001; /* Pastikan di bawah welcome-overlay (20000) tapi di atas konten lain */
+    display: none; 
+}
+
+#welcome-overlay {
+    z-index: 20000 !important;
+}
         :root { 
             --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
             --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
@@ -395,7 +403,7 @@ mark {
 </head>
 <body>
 
-<div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
+<div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:20000; display:flex; align-items:center; justify-content:center; padding:30px;">
     <div style="text-align: center; width: 100%; max-width: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
         
         <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
@@ -412,9 +420,9 @@ mark {
                 Klik mulai sekarang untuk pengalaman berbelanjamu disini.
             </p>
             
-            <button onclick="startApp()" class="order-btn" style="width: 100%; padding: 18px; font-weight: 800; border-radius: 12px; font-size: 16px;">
-                MULAI SEKARANG
-            </button>
+            <button onclick="closeWelcome()" class="order-btn" style="width: 100%; padding: 18px; font-weight: 800; border-radius: 12px; font-size: 16px;">
+        MULAI SEKARANG
+    </button>
         </div>
 
         <div style="font-size: 10px; color: #999; letter-spacing: 1px; margin-top: 30px;">
@@ -577,8 +585,22 @@ mark {
         </div>
     </div>
 </div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+function closeWelcome() {
+    // Gunakan ID yang benar: 'welcome-overlay'
+    const welcome = document.getElementById('welcome-overlay');
+    if (welcome) {
+        welcome.style.transition = 'opacity 0.5s ease';
+        welcome.style.opacity = '0';
+        setTimeout(() => {
+            welcome.style.display = 'none';
+            // Panggil inisialisasi aplikasi jika diperlukan (seperti Leaflet map)
+            if(typeof initMap === 'function') initMap(); 
+        }, 500);
+    }
+}
 
 function openConfirmModal() {
     // 1. CEK VALIDASI DATA PEMESAN
