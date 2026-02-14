@@ -582,19 +582,21 @@ mark {
 <script>
 
 function openConfirmModal() {
-    // 1. CEK VALIDASI DATA PEMESAN
+    // 1. CEK VALIDASI DATA PEMESAN (Membaca input yang ada di UI)
     const name = document.getElementById("custName");
     const table = document.getElementById("tableNo");
     const service = document.getElementById("serviceMode").value;
     const address = document.getElementById("addressDetail");
 
+    // Validasi Nama
     if (!name.value.trim()) {
         name.classList.add("shake");
         setTimeout(() => name.classList.remove("shake"), 500);
         name.focus();
-        return; 
+        return; // Berhenti di sini, modal rincian tidak muncul
     }
 
+    // Validasi Meja (Jika Dine In)
     if (service === "Dine In" && !table.value.trim()) {
         table.classList.add("shake");
         setTimeout(() => table.classList.remove("shake"), 500);
@@ -602,6 +604,7 @@ function openConfirmModal() {
         return;
     }
 
+    // Validasi Alamat (Jika Delivery)
     if (service === "Delivery" && !address.value.trim()) {
         address.classList.add("shake");
         setTimeout(() => address.classList.remove("shake"), 500);
@@ -609,21 +612,17 @@ function openConfirmModal() {
         return;
     }
 
-    // 2. BACA DATA MENU DARI LAYAR
+    // 2. JIKA VALIDASI LOLOS, BACA ULANG MENU (PREVIEW)
     const listEl = document.getElementById("modalOrderList");
     const totalEl = document.getElementById("modalTotal");
     listEl.innerHTML = "";
     let total = 0;
-    let hasItem = false;
 
     document.querySelectorAll(".menu-card").forEach(card => {
         const qty = parseInt(card.querySelector(".qty")?.innerText || 0);
         if (qty > 0) {
-            hasItem = true;
             const nama = card.querySelector(".menu-name")?.innerText || "";
             const harga = parseInt(card.dataset.harga || 0);
-            const note = card.querySelector(".item-note")?.value || ""; // Mengambil catatan
-            
             const variants = [...card.querySelectorAll("select")]
                 .map(s => s.value)
                 .filter(v => v && v !== "-");
@@ -639,25 +638,61 @@ function openConfirmModal() {
                     </div>
                     <div style="font-size:11px; color:#666; margin-top:2px;">
                         ${variants.join(" • ") || "Original"}
-                        ${note ? `<br><b style="color:var(--accent);">Note: ${note}</b>` : ""}
                     </div>
                 </div>`;
         }
     });
 
-    // 3. TAMPILKAN MODAL JIKA ADA PESANAN
-    if (hasItem) {
-        totalEl.innerText = total.toLocaleString("id-ID");
-        document.getElementById("modalConfirm").style.display = "flex";
-    } else {
-        alert("Pilih menu terlebih dahulu ya!");
-    }
+    // 3. TAMPILKAN MODAL
+    totalEl.innerText = total.toLocaleString("id-ID");
+    document.getElementById("modalConfirm").style.display = "flex";
 }
 
 function closeModal() {
     document.getElementById("modalConfirm").style.display = "none";
 }
 
+function previewOrderFromUI() {
+    const listEl = document.getElementById("modalOrderList");
+    const totalEl = document.getElementById("modalTotal");
+    listEl.innerHTML = "";
+    let total = 0;
+    let hasItem = false;
+
+    document.querySelectorAll(".menu-card").forEach(card => {
+        const qty = parseInt(card.querySelector(".qty")?.innerText || 0);
+        if (qty > 0) {
+            hasItem = true;
+            const nama = card.querySelector(".menu-name")?.innerText || "";
+            const harga = parseInt(card.dataset.harga || 0);
+            const variants = [...card.querySelectorAll("select")]
+                .map(s => s.value)
+                .filter(v => v && v !== "-");
+
+            const subtotal = qty * harga;
+            total += subtotal;
+
+            listEl.innerHTML += `
+                <div style="padding:10px 0; border-bottom:1px dashed #eee;">
+                    <div style="display:flex; justify-content:space-between; font-weight:800; font-size:13px;">
+                        <span>${qty}x ${nama}</span>
+                        <span>Rp ${subtotal.toLocaleString("id-ID")}</span>
+                    </div>
+                    <div style="font-size:11px; color:#666; margin-top:2px;">
+                        ${variants.join(" • ") || "Original"}
+                    </div>
+                </div>`;
+        }
+    });
+
+    if (!hasItem) {
+        alert("Anda belum memilih menu!");
+        return false;
+    }
+
+    totalEl.innerText = total.toLocaleString("id-ID");
+    return true;
+}
 
 let generatedOTP = null;
 
