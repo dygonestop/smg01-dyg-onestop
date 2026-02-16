@@ -227,6 +227,15 @@ mark {
     display: inline-block;
 }
 
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+.shake-ani {
+    animation: shake 0.2s ease-in-out 0s 3;
+}
+
         .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 8px; padding: 4px; margin-top: 8px; }
         .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
@@ -1023,39 +1032,46 @@ function updateCart(id, change) {
 
 // Fungsi baru untuk menangani klik pada tombol varian (Chip)
 function setVariant(id, type, val, extra = 0, event) {
-    // 1. Cari item TERAKHIR yang baru ditambahkan (porsi paling baru)
-    let lastIdx = cart.findLastIndex(c => c.id === id);
-    
-    if (lastIdx !== -1) {
-        // Simpan data varian
-        if (type === 'n') { cart[lastIdx].vN = val; cart[lastIdx].ex = extra; }
-        if (type === 'm') cart[lastIdx].vM = val;
-        if (type === 'r') cart[lastIdx].vR = val;
-        if (type === 's') cart[lastIdx].vS = val;
+    // Cari porsi dari menu ini yang variannya masih kosong (untuk tipe tersebut)
+    // Jika semua sudah terisi, ambil yang terakhir
+    let targetIdx = cart.findIndex(c => c.id === id && (
+        (type === 'n' && !c.vN) || 
+        (type === 'm' && !c.vM) || 
+        (type === 'r' && !c.vR) || 
+        (type === 's' && !c.vS)
+    ));
 
-        // 2. UI Feedback: Tandai tombol yang diklik
+    if (targetIdx === -1) {
+        targetIdx = cart.findLastIndex(c => c.id === id);
+    }
+    
+    if (targetIdx !== -1) {
+        if (type === 'n') { cart[targetIdx].vN = val; cart[targetIdx].ex = extra; }
+        if (type === 'm') cart[targetIdx].vM = val;
+        if (type === 'r') cart[targetIdx].vR = val;
+        if (type === 's') cart[targetIdx].vS = val;
+
+        // UI Feedback (Warna & Badge)
         const container = event.target.closest('.chips-area');
-        
-        // Hapus status 'selected' dan hapus badge lama di grup ini
         container.querySelectorAll('.chip').forEach(btn => {
             btn.classList.remove('selected');
             const oldBadge = btn.querySelector('.variant-badge');
             if(oldBadge) oldBadge.remove();
         });
 
-        // Tambahkan class selected ke tombol yang baru diklik
-        event.target.classList.add('selected');
+        const clickedBtn = event.target.closest('.chip');
+        clickedBtn.classList.add('selected');
 
-        // 3. Tambahkan Badge Angka (Menandakan porsi keberapa)
-        const currentQty = cart.filter(c => c.id === id).length;
         const badge = document.createElement('span');
         badge.className = 'variant-badge';
-        badge.innerText = currentQty; // Menampilkan angka porsi (misal: porsi ke-2)
-        event.target.appendChild(badge);
+        // Menampilkan porsi ke-berapa yang baru saja disetel
+        badge.innerText = (targetIdx - cart.findIndex(c => c.id === id) + 1); 
+        clickedBtn.appendChild(badge);
 
         refreshUI();
     }
 }
+
 function refreshUI() {
         let subtotal = 0; 
         const counts = {};
@@ -1148,7 +1164,7 @@ function refreshUI() {
     }
 
 async function submitOrder() {
-    // 1. VALIDASI LAYANAN
+    // 1. VALIDASI LAYANAN (Dine In, dll)
     if (!currentMode) {
         closeModal();
         alert("Mohon pilih layanan terlebih dahulu (Dine In, Take Away, Delivery, atau Katering)");
@@ -1164,16 +1180,49 @@ async function submitOrder() {
         return; 
     }
 
+    // --- BARU: VALIDASI VARIAN SETIAP ITEM DI KERANJANG ---
+    const noSuhuList = ["Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", "Float Mangga", "Float Stoberi", "Nescafe Blue", "Kopi Kapal Api", "Kopi ABC Susu", "Nutrisari Jeruk", "Extra Joss", "Kukubima"];
+
+    for (let i = 0; i < cart.length; i++) {
+        const c = cart[i];
+        const nl = c.nama.toLowerCase();
+        const kl = c.kat.toLowerCase();
+
+        // Cek kebutuhan varian berdasarkan kriteria menu
+        const needsNasi = (kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"))) && !nl.includes("mie lik");
+        const needsMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik") && !nl.includes("mie lik");
+        const needsMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
+        const needsSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(c.nama);
+
+        // Validasi: Jika butuh tapi belum dipilih (null/empty)
+        if ((needsNasi && !c.vN) || (needsMieG && !c.vM) || (needsMieR && !c.vR) || (needsSuhu && !c.vS)) {
+            closeModal();
+            alert(`⚠️ Mohon pilih varian untuk porsi ke-${i + 1} pada menu: ${c.nama}`);
+            
+            const targetGrid = document.getElementById(`variant-display-${c.id}`);
+            if (targetGrid) {
+                targetGrid.style.display = 'block'; // Pastikan terbuka
+                targetGrid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                targetGrid.classList.add('shake-ani');
+                targetGrid.style.border = "2px solid var(--danger)";
+                setTimeout(() => {
+                    targetGrid.classList.remove('shake-ani');
+                    targetGrid.style.border = "1px dashed var(--primary)";
+                }, 2000);
+            }
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            return; // Hentikan proses jika ada varian kosong
+        }
+    }
+
     if (navigator.vibrate) navigator.vibrate(50);
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
-    const oN = document.getElementById('orderNote'); // Input Catatan
+    const oN = document.getElementById('orderNote'); 
     
-    // AMBIL NOMOR ANTREAN DARI HEADER
     const noAntreanFull = document.getElementById('noAntrean').innerText; 
     const noAntrean = noAntreanFull.replace('#', '').trim();
-    
     const tglK = document.getElementById('tglKatering')?.value || '';
 
     // Validasi input (Nama, Meja, Alamat)
@@ -1225,9 +1274,8 @@ async function submitOrder() {
         btnKirim.style.pointerEvents = "none";
     }
 
-    // --- 4. KIRIM KE GOOGLE SHEETS (BACKGROUND) ---
-    const catatanValue = oN ? oN.value : '-'; // Ambil nilai catatan untuk database
-
+    // --- 4. KIRIM KE GOOGLE SHEETS ---
+    const catatanValue = oN ? oN.value : '-';
     const params = new URLSearchParams({
         token: CONFIG.TOKEN,
         action: "simpanPesanan",
@@ -1237,7 +1285,7 @@ async function submitOrder() {
         pesanan: Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join('\n'),
         total: finalPriceNumeric,
         meja: (currentMode === 'DINE IN' ? tI.value : (currentMode === 'DELIVERY' ? "DELIVERY" : "TAKEAWAY")),
-        catatan: catatanValue // Dikirim ke Kolom I
+        catatan: catatanValue 
     });
 
     fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
@@ -1273,12 +1321,11 @@ async function submitOrder() {
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
     }, 500);
 
-    // --- 7. RESET TAMPILAN WEB (Setelah jeda) ---
+    // --- 7. RESET TAMPILAN WEB ---
     setTimeout(() => {
         cart = [];
         if (typeof refreshUI === 'function') refreshUI();
         closeModal();
-        
         if (typeof fetchCurrentQueue === 'function') fetchCurrentQueue();
 
         const welcome = document.getElementById('welcome-overlay'); 
@@ -1298,13 +1345,12 @@ async function submitOrder() {
             btnKirim.style.pointerEvents = "auto";
         }
         
-        // Reset form
         nI.value = '';
         if(tI) tI.value = '';
         if(aI) aI.value = '';
         if(oN) {
             oN.value = '';
-            oN.style.height = '40px'; // Kembalikan ke tinggi semula (ramping)
+            oN.style.height = '40px'; 
         }
     }, 2500);
 }
