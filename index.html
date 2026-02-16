@@ -198,14 +198,6 @@ mark {
     transition: all 0.2s;
 }
 
-/* Warna saat tombol ditekan/aktif */
-.chip.selected {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-    box-shadow: 0 4px 8px rgba(27, 67, 50, 0.2);
-}
-
 /* Efek saat ditekan sebentar */
 .chip:active {
     transform: scale(0.95);
@@ -216,6 +208,25 @@ mark {
     from { opacity: 0; transform: translateY(-5px); }
     to { opacity: 1; transform: translateY(0); }
 }
+/* Gaya tombol (Chip) saat dipilih */
+.chip.selected {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+}
+
+/* Badge angka di samping teks varian */
+.variant-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 50%;
+    margin-left: 5px;
+    vertical-align: middle;
+    display: inline-block;
+}
+
         .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 8px; padding: 4px; margin-top: 8px; }
         .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
@@ -905,13 +916,24 @@ function renderMenu(filterKat = 'ALL') {
     const counts = {}; 
     cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
 
-    const noSuhuList = ["Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", "Float Mangga", "Float Stoberi", "Nescafe Blue", "Kopi Kapal Api", "Kopi ABC Susu", "Nutrisari Jeruk", "Extra Joss", "Kukubima"];
+    // Daftar menu tanpa pilihan suhu sesuai instruksi Anda
+    const noSuhuList = [
+        "Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", 
+        "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", 
+        "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", 
+        "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", 
+        "Float Mangga", "Float Stoberi", "Nescafe Blue", "Kopi Kapal Api", "Kopi ABC Susu", 
+        "Nutrisari Jeruk", "Extra Joss", "Kukubima"
+    ];
 
     document.getElementById('menu-container').innerHTML = items.map(m => {
         const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
+        
         const isNasi = (kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"))) && !nl.includes("mie lik");
         const isMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik") && !nl.includes("mie lik");
         const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
+        
+        // Logika Suhu: Muncul jika kategori drink/sachetan/paket hemat, KECUALI ada di noSuhuList
         const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(m.nama);
 
         return `
@@ -920,15 +942,44 @@ function renderMenu(filterKat = 'ALL') {
                 <h4 data-name="${m.nama}">${m.nama}</h4>
                 <div class="price">Rp ${m.harga.toLocaleString()}</div>
                 
-                <div id="variant-display-${m.id}" class="variant-grid" style="display:none; margin-top:10px;">
-                    ${isNasi ? `<div class="variant-group"><span>Pilih Nasi:</span><div class="chips-area">${VARIAN_NASI.map(v => `<button class="chip" onclick="setVariant('${m.id}', 'n', '${v.n}', ${v.e})">${v.n}</button>`).join('')}</div></div>` : ''}
-                    ${isMieG ? `<div class="variant-group"><span>Pilih Rasa:</span><div class="chips-area">${VARIAN_MIE_GORENG.map(v => `<button class="chip" onclick="setVariant('${m.id}', 'm', '${v.n}', 0)">${v.n}</button>`).join('')}</div></div>` : ''}
-                    ${isMieR ? `<div class="variant-group"><span>Pilih Rasa:</span><div class="chips-area">${VARIAN_MIE_REBUS.map(v => `<button class="chip" onclick="setVariant('${m.id}', 'r', '${v.n}', 0)">${v.n}</button>`).join('')}</div></div>` : ''}
-                    ${isSuhu ? `<div class="variant-group"><span>Suhu:</span><div class="chips-area">${VARIAN_SUHU.map(v => `<button class="chip" onclick="setVariant('${m.id}', 's', '${v.n}', 0)">${v.n}</button>`).join('')}</div></div>` : ''}
+                <div id="variant-display-${m.id}" class="variant-grid" style="${counts[m.id] > 0 ? 'display:block' : 'display:none'}; margin-top:10px;">
+                    
+                    ${isNasi ? `
+                    <div class="variant-group">
+                        <span>Pilih Nasi:</span>
+                        <div class="chips-area">
+                            ${VARIAN_NASI.map(v => `<button class="chip" onclick="setVariant('${m.id}', 'n', '${v.n}', ${v.e}, event)">${v.n}</button>`).join('')}
+                        </div>
+                    </div>` : ''}
+                    
+                    ${isMieG ? `
+                    <div class="variant-group">
+                        <span>Pilih Rasa:</span>
+                        <div class="chips-area">
+                            ${VARIAN_MIE_GORENG.map(v => `<button class="chip" onclick="setVariant('${m.id}', 'm', '${v.n}', 0, event)">${v.n}</button>`).join('')}
+                        </div>
+                    </div>` : ''}
+                    
+                    ${isMieR ? `
+                    <div class="variant-group">
+                        <span>Pilih Rasa:</span>
+                        <div class="chips-area">
+                            ${VARIAN_MIE_REBUS.map(v => `<button class="chip" onclick="setVariant('${m.id}', 'r', '${v.n}', 0, event)">${v.n}</button>`).join('')}
+                        </div>
+                    </div>` : ''}
+                    
+                    ${isSuhu ? `
+                    <div class="variant-group">
+                        <span>Suhu:</span>
+                        <div class="chips-area">
+                            ${VARIAN_SUHU.map(v => `<button class="chip" onclick="setVariant('${m.id}', 's', '${v.n}', 0, event)">${v.n}</button>`).join('')}
+                        </div>
+                    </div>` : ''}
+
                 </div>
             </div>
             <div class="qty-box">
-                <button class="qty-btn" onclick="updateCart('${m.id}', -1)">−</button>
+                <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
                 <span id="qty-${m.id}">${counts[m.id] || 0}</span>
                 <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
             </div>
@@ -971,21 +1022,40 @@ function updateCart(id, change) {
 }
 
 // Fungsi baru untuk menangani klik pada tombol varian (Chip)
-function setVariant(id, type, val, extra = 0) {
+function setVariant(id, type, val, extra = 0, event) {
+    // 1. Cari item TERAKHIR yang baru ditambahkan (porsi paling baru)
     let lastIdx = cart.findLastIndex(c => c.id === id);
+    
     if (lastIdx !== -1) {
+        // Simpan data varian
         if (type === 'n') { cart[lastIdx].vN = val; cart[lastIdx].ex = extra; }
         if (type === 'm') cart[lastIdx].vM = val;
         if (type === 'r') cart[lastIdx].vR = val;
         if (type === 's') cart[lastIdx].vS = val;
+
+        // 2. UI Feedback: Tandai tombol yang diklik
+        const container = event.target.closest('.chips-area');
         
-        // Efek visual: beri warna hijau pada tombol yang dipilih
-        // (Bisa dikembangkan dengan menambahkan class .active pada tombol)
-        console.log(`Varian ${val} terpilih untuk ${id}`);
+        // Hapus status 'selected' dan hapus badge lama di grup ini
+        container.querySelectorAll('.chip').forEach(btn => {
+            btn.classList.remove('selected');
+            const oldBadge = btn.querySelector('.variant-badge');
+            if(oldBadge) oldBadge.remove();
+        });
+
+        // Tambahkan class selected ke tombol yang baru diklik
+        event.target.classList.add('selected');
+
+        // 3. Tambahkan Badge Angka (Menandakan porsi keberapa)
+        const currentQty = cart.filter(c => c.id === id).length;
+        const badge = document.createElement('span');
+        badge.className = 'variant-badge';
+        badge.innerText = currentQty; // Menampilkan angka porsi (misal: porsi ke-2)
+        event.target.appendChild(badge);
+
         refreshUI();
     }
 }
-
 function refreshUI() {
         let subtotal = 0; 
         const counts = {};
