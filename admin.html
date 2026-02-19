@@ -304,23 +304,60 @@ function cekMember() {
 
 async function submitOrder() {
     const btn = document.getElementById("btnSubmitOrder");
-    const total = Number(document.getElementById("total").innerText.replace(/\D/g,''));
+    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
+    const diskon = pointDiscount; // pointDiscount didapat dari redeem poin
+    const totalBersih = totalKotor - diskon;
+    
     btn.innerText = "MENGIRIM..."; btn.disabled = true;
 
     const trxId = "TRX-" + Date.now();
     const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
-    pendingOrder = { total, noWA: document.getElementById("nohp").value || "-", pesanan, metode: document.getElementById("metode").value, trxId };
+    pendingOrder = { 
+        total: totalBersih, 
+        noWA: document.getElementById("nohp").value || "-", 
+        pesanan, 
+        metode: document.getElementById("metode").value, 
+        trxId 
+    };
 
     try {
         const isSaved = await prosesSimpanKeCloud();
         if (isSaved) {
-            const earn = (member) ? Math.floor(total / 20000) * 100 : 0;
-            const totalPoinAkhir = (member) ? (Number(member.poin) + earn - redeemQty) : 0;
+            // --- LOGIKA STRUK DETAIL ---
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
             esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
-            Object.values(cart).forEach(i => esc += `${i.nama}\n${i.qty} x ${i.harga} = ${i.qty * i.harga}\n`);
-            esc += "--------------------------------\nTOTAL   : Rp " + total.toLocaleString() + "\n";
-            esc += "METODE  : " + pendingOrder.metode + "\n--------------------------------\n\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
+            
+            // List Produk
+            Object.values(cart).forEach(i => {
+                esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
+            });
+            
+            esc += "--------------------------------\n";
+            esc += "Total Kotor   : Rp " + totalKotor.toLocaleString() + "\n";
+            esc += "Metode        : " + pendingOrder.metode + "\n";
+            
+            // Data Member & Poin
+            if (member) {
+                const poinDapat = Math.floor(totalBersih / 20000) * 100;
+                const poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
+                
+                esc += "Nama Member   : " + member.nama + "\n";
+                esc += "Poin Didapat  : +" + poinDapat + "\n";
+                esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
+                
+                if (redeemQty > 0) {
+                    esc += "Poin Digunakan: " + redeemQty + "\n";
+                }
+            }
+
+            // Voucher & Diskon
+            // (Jika kamu punya input voucher, ganti "0" dengan variabel vouchermu)
+            esc += "Voucher       : Rp 0\n"; 
+            esc += "Diskon        : Rp " + diskon.toLocaleString() + "\n";
+            esc += "--------------------------------\n";
+            esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersih.toLocaleString() + "\x1B\x21\x00\n";
+            esc += "--------------------------------\n";
+            esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
 
             if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
             location.reload();
