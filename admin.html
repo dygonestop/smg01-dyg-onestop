@@ -82,7 +82,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzJxja2FCGlzlAXhfNemp1gwhnKEooX3oULR2z6dk9OaYBys6QPrqkOLN3VI4R-U6HGYg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxqnYKLMnjSSSUAKNm3FLI8S--bzwllrnBXIxCjFbkuyAMQ5pkOvLX9guYswHSnEmj-eg/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
@@ -104,30 +104,35 @@ async function cekPemasukan() {
             return;
         }
 
+        // --- PENYESUAIAN VARIABEL AGAR SINKRON DENGAN BACKEND ---
         const rincian = `
 === REAL-TIME REPORT ===
-Shift : ${r.shiftName}
-Trx   : ${r.totalTrx}
+Shift  : ${r.shiftName}
+Trx    : ${r.totalTrx}
+Member : ${r.totalMemberTrx || 0}
 -----------------------
-CASH  : Rp ${(r.cash || 0).toLocaleString()}
-QRIS  : Rp ${(r.qris || 0).toLocaleString()}
-CARD  : Rp ${(r.card || 0).toLocaleString()}
+KOTOR  : Rp ${(r.pemasukanKotor || 0).toLocaleString()}
+DISKON : Rp ${(r.totalDiskon || 0).toLocaleString()}
 -----------------------
-TOTAL : Rp ${(r.totalPemasukan || 0).toLocaleString()}
+CASH   : Rp ${(r.cash || 0).toLocaleString()}
+QRIS   : Rp ${(r.qris || 0).toLocaleString()}
+CARD   : Rp ${(r.card || 0).toLocaleString()}
+-----------------------
+BERSIH : Rp ${(r.pemasukanBersih || 0).toLocaleString()}
 
-Poin Baru : ${r.totalPoinDapat}
-Poin Cair : ${r.totalPoinRedeem}
+Poin Baru : ${r.totalPoinDapat || 0}
+Poin Cair : ${r.totalPoinRedeem || 0}
         `;
 
-        alert(rincian);
+        alert(rincian.trim());
     } catch (e) {
         alert("Gagal memuat data.");
+        console.error(e);
     } finally {
         btn.innerText = originalText;
         btn.disabled = false;
     }
 }
-
 // FUNGSI LOAD AWAL
 async function checkShiftStatus() {
     const btnSubmit = document.getElementById("btnSubmitOrder");
