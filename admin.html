@@ -402,19 +402,20 @@ async function manageShift(type) {
             esc += (r.shiftName || "No Name") + "\n";
             esc += "--------------------------------\n\x1B\x61\x00";
             
-            esc += "Total Transaksi   : " + r.totalTrx + "\n";
-            esc += "Total Member Trx  : " + r.totalMemberTrx + "\n";
-            esc += "--------------------------------\n";
-            esc += "Pemasukan Kotor   : Rp " + r.pemasukanKotor.toLocaleString() + "\n";
-            esc += "Total Diskon      : Rp " + r.totalDiskon.toLocaleString() + "\n";
-            esc += "--------------------------------\n";
-            esc += "TOTAL CASH        : Rp " + r.cash.toLocaleString() + "\n";
-            esc += "TOTAL QRIS        : Rp " + r.qris.toLocaleString() + "\n";
-            esc += "TOTAL CARD        : Rp " + r.card.toLocaleString() + "\n";
-            esc += "--------------------------------\n";
-            esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + r.pemasukanBersih.toLocaleString() + "\x1B\x21\x00\n";
-            esc += "--------------------------------\n\n\x1B\x61\x01";
-            esc += "Waktu Cetak: " + new Date().toLocaleString() + "\n\n\n\n\n";
+            // Cari bagian ini di manageShift() dalam admin.html
+		esc += "Total Transaksi   : " + r.totalTrx + "\n";
+		esc += "Total Member Trx  : " + (r.totalMemberTrx || 0) + "\n"; // Sesuai Backend
+           	esc += "--------------------------------\n";
+            	esc += "Pemasukan Kotor   : Rp " + r.pemasukanKotor.toLocaleString() + "\n";
+            	esc += "Total Diskon      : Rp " + r.totalDiskon.toLocaleString() + "\n";
+            	esc += "--------------------------------\n";
+            	esc += "TOTAL CASH        : Rp " + r.cash.toLocaleString() + "\n";
+            	esc += "TOTAL QRIS        : Rp " + r.qris.toLocaleString() + "\n";
+            	esc += "TOTAL CARD        : Rp " + r.card.toLocaleString() + "\n";
+            	esc += "--------------------------------\n";
+            	esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + r.pemasukanBersih.toLocaleString() + "\x1B\x21\x00\n";
+            	esc += "--------------------------------\n\n\x1B\x61\x01";
+            	esc += "Waktu Cetak: " + new Date().toLocaleString() + "\n\n\n\n\n";
 
             // Kirim ke Printer
             if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
