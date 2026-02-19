@@ -69,11 +69,12 @@
                 <span class="text-blue-700 text-base">Rp <span id="total">0</span></span>
             </div>
             <div class="space-y-1.5">
-                <select id="metode" onchange="renderCash()" class="w-full border rounded p-1 text-[10px] font-bold bg-white">
-                    <option value="CASH">💵 TUNAI</option>
-                    <option value="QRIS">📱 QRIS</option>
-                    <option value="CARD">💳 KARTU / EDC</option>
-                </select>
+                <select id="metode" onchange="handleMetodeChange()" class="w-full border rounded p-1 text-[10px] font-bold bg-white">
+    <option value="">-- PILIH METODE --</option>
+    <option value="CASH">💵 TUNAI</option>
+    <option value="QRIS">📱 QRIS</option>
+    <option value="CARD">💳 KARTU / EDC</option>
+</select>
                 <div id="cashBox" class="space-y-1"></div>
                 <button id="btnSubmitOrder" disabled onclick="submitOrder()" class="w-full bg-slate-400 text-white py-2 rounded font-bold text-[10px] uppercase shadow-sm transition-all">Mengecek Shift...</button>
             </div>
@@ -88,52 +89,151 @@ const TOKEN = "dyg-access-v2";
 
 let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null;
 
+// ==========================================
+// 1. FUNGSI KONTROL MODAL & METODE (NEW)
+// ==========================================
+function openModalMetode() {
+    const m = document.getElementById("modalMetode");
+    m.classList.remove("hidden");
+    m.classList.add("flex");
+}
+
+function closeModalMetode() {
+    const m = document.getElementById("modalMetode");
+    m.classList.add("hidden");
+    m.classList.remove("flex");
+}
+
+function handleMetodeChange() {
+    const m = document.getElementById("metode").value;
+    if (m === "CASH") {
+        renderCash();
+    } else {
+        document.getElementById("cashBox").innerHTML = "";
+    }
+}
+
+function pilihMetodeManual(val) {
+    document.getElementById("metode").value = val;
+    closeModalMetode();
+    handleMetodeChange();
+    // Jika bukan CASH, langsung eksekusi submitOrder
+    if (val !== "CASH") {
+        submitOrder(); 
+    } else {
+        // Jika CASH, fokuskan ke input nominal uang
+        setTimeout(() => {
+            const bInp = document.getElementById("bayar");
+            if(bInp) bInp.focus();
+        }, 300);
+    }
+}
+
+// ==========================================
+// 2. LOGIKA TRANSAKSI UTAMA
+// ==========================================
+async function submitOrder() {
+    const m = document.getElementById("metode").value;
+    
+    // VALIDASI: Jika metode masih kosong, munculkan MODAL (Bukan Alert)
+    if (!m) {
+        openModalMetode();
+        return;
+    }
+
+    // Validasi tambahan khusus CASH
+    if (m === "CASH") {
+        const bayarInput = document.getElementById("bayar");
+        if (!bayarInput || !bayarInput.value || Number(bayarInput.value) <= 0) {
+            alert("Silakan masukkan nominal uang bayar!");
+            if(bayarInput) bayarInput.focus();
+            return;
+        }
+    }
+
+    const btn = document.getElementById("btnSubmitOrder");
+    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
+    const diskon = pointDiscount;
+    const totalBersih = totalKotor - diskon;
+    
+    btn.innerText = "MENGIRIM..."; btn.disabled = true;
+
+    const trxId = "TRX-" + Date.now();
+    const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
+    
+    pendingOrder = { 
+        total: totalBersih, 
+        noWA: document.getElementById("nohp").value || "-", 
+        pesanan, 
+        metode: m, 
+        trxId 
+    };
+
+    try {
+        const isSaved = await prosesSimpanKeCloud();
+        if (isSaved) {
+            // STRUK TETAP SESUAI FORMAT ASLI
+            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
+            esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
+            
+            Object.values(cart).forEach(i => {
+                esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
+            });
+            
+            esc += "--------------------------------\n";
+            esc += "Total Kotor   : Rp " + totalKotor.toLocaleString() + "\n";
+            esc += "Metode        : " + pendingOrder.metode + "\n";
+            
+            if (member) {
+                const poinDapat = Math.floor(totalBersih / 20000) * 100;
+                const poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
+                esc += "Nama Member   : " + member.nama + "\n";
+                esc += "Poin Didapat  : +" + poinDapat + "\n";
+                esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
+                if (redeemQty > 0) esc += "Poin Digunakan: " + redeemQty + "\n";
+            }
+
+            esc += "Voucher       : Rp 0\n"; 
+            esc += "Diskon        : Rp " + diskon.toLocaleString() + "\n";
+            esc += "--------------------------------\n";
+            esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersih.toLocaleString() + "\x1B\x21\x00\n";
+            
+            // Detail Cash jika metode Tunai
+            if (m === "CASH") {
+                const bVal = Number(document.getElementById("bayar").value);
+                esc += "Bayar         : Rp " + bVal.toLocaleString() + "\n";
+                esc += "Kembali       : Rp " + (bVal - totalBersih).toLocaleString() + "\n";
+            }
+
+            esc += "--------------------------------\n";
+            esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
+
+            // Fungsi AppInventor (Bluetooth Printer)
+            if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
+            location.reload();
+        } else { throw new Error(); }
+    } catch (e) {
+        alert("Gagal simpan rekapan!");
+        btn.innerText = "BAYAR & CETAK"; btn.disabled = false;
+    }
+}
+
+// ==========================================
+// 3. FUNGSI PENDUKUNG (TIDAK BERUBAH)
+// ==========================================
 async function cekPemasukan() {
     const btn = document.getElementById("btnCekPemasukan");
     const originalText = btn.innerText;
-
     try {
-        btn.innerText = "..."; 
-        btn.disabled = true;
-
+        btn.innerText = "..."; btn.disabled = true;
         const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
         const r = await res.json();
-
-        if (r.status === "NO_ACTIVE_SHIFT") {
-            alert("Belum ada shift yang dibuka!");
-            return;
-        }
-
-        // --- PENYESUAIAN VARIABEL AGAR SINKRON DENGAN BACKEND ---
-        const rincian = `
-=== REAL-TIME REPORT ===
-Shift  : ${r.shiftName}
-Trx    : ${r.totalTrx}
-Member : ${r.totalMemberTrx || 0}
------------------------
-KOTOR  : Rp ${(r.pemasukanKotor || 0).toLocaleString()}
-DISKON : Rp ${(r.totalDiskon || 0).toLocaleString()}
------------------------
-CASH   : Rp ${(r.cash || 0).toLocaleString()}
-QRIS   : Rp ${(r.qris || 0).toLocaleString()}
-CARD   : Rp ${(r.card || 0).toLocaleString()}
------------------------
-BERSIH : Rp ${(r.pemasukanBersih || 0).toLocaleString()}
-
-Poin Baru : ${r.totalPoinDapat || 0}
-Poin Cair : ${r.totalPoinRedeem || 0}
-        `;
-
-        alert(rincian.trim());
-    } catch (e) {
-        alert("Gagal memuat data.");
-        console.error(e);
-    } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }
+        if (r.status === "NO_ACTIVE_SHIFT") { alert("Belum ada shift!"); return; }
+        const rincian = `=== REAL-TIME REPORT ===\nShift  : ${r.shiftName}\nTrx    : ${r.totalTrx}\nMember : ${r.totalMemberTrx || 0}\n-----------------------\nKOTOR  : Rp ${(r.pemasukanKotor || 0).toLocaleString()}\nDISKON : Rp ${(r.totalDiskon || 0).toLocaleString()}\n-----------------------\nCASH   : Rp ${(r.cash || 0).toLocaleString()}\nQRIS   : Rp ${(r.qris || 0).toLocaleString()}\nCARD   : Rp ${(r.card || 0).toLocaleString()}\n-----------------------\nBERSIH : Rp ${(r.pemasukanBersih || 0).toLocaleString()}\n\nPoin Baru : ${r.totalPoinDapat || 0}\nPoin Cair : ${r.totalPoinRedeem || 0}`;
+        alert(rincian);
+    } catch (e) { alert("Gagal!"); } finally { btn.innerText = originalText; btn.disabled = false; }
 }
-// FUNGSI LOAD AWAL
+
 async function checkShiftStatus() {
     const btnSubmit = document.getElementById("btnSubmitOrder");
     try {
@@ -169,7 +269,6 @@ async function loadMenu() {
     renderMenu();
 }
 
-// RENDER MENU (OPTIMIZED)
 function renderMenu() {
     const list = document.getElementById("menuList");
     const search = document.getElementById("searchInput").value.toLowerCase();
@@ -198,30 +297,27 @@ function renderMenu() {
     list.innerHTML = html;
 }
 
-// LOGIKA KERANJANG (SUPER FAST)
 function addItem(i) {
     if (!cart[i]) cart[i] = { ...MENU[i], qty: 0 };
     cart[i].qty++;
-    updateUI(i);
+    updateUI();
 }
 
 function removeItem(i) {
     if(!cart[i]) return;
     cart[i].qty--;
     if (cart[i].qty <= 0) delete cart[i];
-    updateUI(i);
+    updateUI();
 }
 
-// Fungsi Central untuk Update Tampilan tanpa Reload Seluruh Page
-function updateUI(index) {
+function updateUI() {
     renderCart();
-    renderMenu(); // Update badge di menu
+    renderMenu();
 }
 
 function renderCart() {
     const list = document.getElementById("cartList");
     let html = "", total = 0;
-    
     const items = Object.keys(cart);
     if (items.length === 0) {
         list.innerHTML = '<div class="text-center text-slate-300 text-[10px] mt-10">Kosong</div>';
@@ -230,12 +326,10 @@ function renderCart() {
         document.getElementById("cashBox").innerHTML = "";
         return;
     }
-
     items.forEach(i => {
         const item = cart[i];
         total += item.qty * item.harga;
-        html += `
-        <div class="flex justify-between items-center bg-slate-50 p-1.5 rounded border border-slate-100">
+        html += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded border border-slate-100">
             <div class="flex flex-col flex-1 overflow-hidden mr-2">
                 <span class="font-bold text-[9px] truncate">${item.nama}</span>
                 <span class="text-[8px] text-slate-500">@${item.harga.toLocaleString()}</span>
@@ -247,30 +341,22 @@ function renderCart() {
             </div>
         </div>`;
     });
-
     const bersih = Math.max(0, total - pointDiscount);
     document.getElementById("total").innerText = bersih.toLocaleString();
     list.innerHTML = html;
     document.getElementById("pointDiscWrapper").classList.toggle("hidden", pointDiscount <= 0);
     document.getElementById("pointDiscNominal").innerText = pointDiscount.toLocaleString();
-    
-    // Hanya render cash box jika metode tunai dipilih
     if (document.getElementById("metode").value === "CASH") renderCash();
 }
 
 function renderCash() {
     const box = document.getElementById("cashBox");
-    const totalText = document.getElementById("total").innerText.replace(/\D/g,'');
-    const total = Number(totalText);
-    
+    const total = Number(document.getElementById("total").innerText.replace(/\D/g,''));
     if (total <= 0) { box.innerHTML = ""; return; }
-    
     const denoms = [2000, 5000, 10000, 20000, 50000, 100000];
     let btns = `<button onclick="quickCash(${total})" class="flex-1 bg-blue-600 text-white p-1 rounded text-[8px] font-bold">PAS</button>`;
     denoms.forEach(d => { if(d > total) btns += `<button onclick="quickCash(${d})" class="flex-1 bg-white border border-blue-200 p-1 rounded text-[8px] font-bold text-blue-700">${d/1000}K</button>`; });
-
-    box.innerHTML = `
-    <div class="bg-blue-50 p-1.5 rounded space-y-1">
+    box.innerHTML = `<div class="bg-blue-50 p-1.5 rounded space-y-1">
         <div class="flex gap-1 flex-wrap">${btns}</div>
         <div class="flex justify-between items-center">
             <span class="text-[9px] font-bold text-blue-700">BAYAR:</span>
@@ -307,72 +393,6 @@ function cekMember() {
     });
 }
 
-async function submitOrder() {
-    const btn = document.getElementById("btnSubmitOrder");
-    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
-    const diskon = pointDiscount; // pointDiscount didapat dari redeem poin
-    const totalBersih = totalKotor - diskon;
-    
-    btn.innerText = "MENGIRIM..."; btn.disabled = true;
-
-    const trxId = "TRX-" + Date.now();
-    const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
-    pendingOrder = { 
-        total: totalBersih, 
-        noWA: document.getElementById("nohp").value || "-", 
-        pesanan, 
-        metode: document.getElementById("metode").value, 
-        trxId 
-    };
-
-    try {
-        const isSaved = await prosesSimpanKeCloud();
-        if (isSaved) {
-            // --- LOGIKA STRUK DETAIL ---
-            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
-            esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
-            
-            // List Produk
-            Object.values(cart).forEach(i => {
-                esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
-            });
-            
-            esc += "--------------------------------\n";
-            esc += "Total Kotor   : Rp " + totalKotor.toLocaleString() + "\n";
-            esc += "Metode        : " + pendingOrder.metode + "\n";
-            
-            // Data Member & Poin
-            if (member) {
-                const poinDapat = Math.floor(totalBersih / 20000) * 100;
-                const poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
-                
-                esc += "Nama Member   : " + member.nama + "\n";
-                esc += "Poin Didapat  : +" + poinDapat + "\n";
-                esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
-                
-                if (redeemQty > 0) {
-                    esc += "Poin Digunakan: " + redeemQty + "\n";
-                }
-            }
-
-            // Voucher & Diskon
-            // (Jika kamu punya input voucher, ganti "0" dengan variabel vouchermu)
-            esc += "Voucher       : Rp 0\n"; 
-            esc += "Diskon        : Rp " + diskon.toLocaleString() + "\n";
-            esc += "--------------------------------\n";
-            esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersih.toLocaleString() + "\x1B\x21\x00\n";
-            esc += "--------------------------------\n";
-            esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
-
-            if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-            location.reload();
-        } else { throw new Error(); }
-    } catch (e) {
-        alert("Gagal simpan rekapan!");
-        btn.innerText = "BAYAR & CETAK"; btn.disabled = false;
-    }
-}
-
 async function prosesSimpanKeCloud() {
     const p = new URLSearchParams({
         token: TOKEN, action: "processPayment",
@@ -393,45 +413,34 @@ async function manageShift(type) {
         location.reload();
     } else {
         if (!confirm("Tutup shift & Cetak Laporan?")) return;
-        
         try {
             const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
             const r = await res.json();
-            
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\n";
-            esc += (r.shiftName || "No Name") + "\n";
-            esc += "--------------------------------\n\x1B\x61\x00";
-            
-            // Cari bagian ini di manageShift() dalam admin.html
-		esc += "Total Transaksi   : " + r.totalTrx + "\n";
-		esc += "Total Member Trx  : " + (r.totalMemberTrx || 0) + "\n"; // Sesuai Backend
-           	esc += "--------------------------------\n";
-            	esc += "Pemasukan Kotor   : Rp " + r.pemasukanKotor.toLocaleString() + "\n";
-            	esc += "Total Diskon      : Rp " + r.totalDiskon.toLocaleString() + "\n";
-            	esc += "--------------------------------\n";
-            	esc += "TOTAL CASH        : Rp " + r.cash.toLocaleString() + "\n";
-            	esc += "TOTAL QRIS        : Rp " + r.qris.toLocaleString() + "\n";
-            	esc += "TOTAL CARD        : Rp " + r.card.toLocaleString() + "\n";
-            	esc += "--------------------------------\n";
-            	esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + r.pemasukanBersih.toLocaleString() + "\x1B\x21\x00\n";
-            	esc += "--------------------------------\n\n\x1B\x61\x01";
-            	esc += "Waktu Cetak: " + new Date().toLocaleString() + "\n\n\n\n\n";
-
-            // Kirim ke Printer
+            esc += (r.shiftName || "No Name") + "\n--------------------------------\n\x1B\x61\x00";
+            esc += "Total Transaksi   : " + r.totalTrx + "\nTotal Member Trx  : " + (r.totalMemberTrx || 0) + "\n--------------------------------\n";
+            esc += "Pemasukan Kotor   : Rp " + r.pemasukanKotor.toLocaleString() + "\nTotal Diskon      : Rp " + r.totalDiskon.toLocaleString() + "\n--------------------------------\n";
+            esc += "TOTAL CASH        : Rp " + r.cash.toLocaleString() + "\nTOTAL QRIS        : Rp " + r.qris.toLocaleString() + "\nTOTAL CARD        : Rp " + r.card.toLocaleString() + "\n--------------------------------\n";
+            esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + r.pemasukanBersih.toLocaleString() + "\x1B\x21\x00\n--------------------------------\n\x1B\x61\x01Waktu Cetak: " + new Date().toLocaleString() + "\n\n\n\n\n";
             if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-            
-            // Eksekusi Tutup Shift di database
             await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`, { mode: 'no-cors' });
-            alert("Shift Berhasil Ditutup & Laporan Dicetak");
-            location.reload();
-            
-        } catch (e) {
-            alert("Gagal mengambil laporan tutup shift!");
-            console.error(e);
-        }
+            alert("Shift Ditutup!"); location.reload();
+        } catch (e) { alert("Gagal!"); }
     }
 }
+
 window.onload = () => { loadMenu(); checkShiftStatus(); };
 </script>
+<div id="modalMetode" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-xs overflow-hidden">
+        <div class="bg-slate-100 p-3 border-b text-center font-bold text-slate-700 text-[11px]">PILIH METODE PEMBAYARAN</div>
+        <div class="p-3 grid grid-cols-1 gap-2">
+            <button onclick="pilihMetodeManual('CASH')" class="py-3 bg-white border-2 border-slate-200 hover:border-blue-500 rounded-md font-bold text-slate-700 text-[10px] flex items-center justify-center gap-2">💵 TUNAI (CASH)</button>
+            <button onclick="pilihMetodeManual('QRIS')" class="py-3 bg-white border-2 border-slate-200 hover:border-blue-500 rounded-md font-bold text-slate-700 text-[10px] flex items-center justify-center gap-2">📱 QRIS</button>
+            <button onclick="pilihMetodeManual('CARD')" class="py-3 bg-white border-2 border-slate-200 hover:border-blue-500 rounded-md font-bold text-slate-700 text-[10px] flex items-center justify-center gap-2">💳 KARTU / EDC</button>
+        </div>
+        <button onclick="closeModalMetode()" class="w-full py-2 bg-slate-50 text-slate-400 text-[9px] font-bold border-t">BATAL</button>
+    </div>
+</div>
 </body>
 </html>
