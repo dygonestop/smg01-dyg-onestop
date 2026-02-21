@@ -995,6 +995,7 @@ function renderMenu(filterKat = 'ALL') {
 }
 
 function updateCart(id, change) {
+function updateCart(id, change) {
     const item = menuData.find(m => m.id === id);
     if (!item) return;
 
@@ -1025,7 +1026,6 @@ function updateCart(id, change) {
     }
     refreshUI();
 }
-
 function setVariant(id, type, val, extra = 0, event) {
     // 1. Cari porsi dari menu ini yang variannya masih kosong (null)
     // Supaya porsi 1 dan porsi 2 bisa punya pilihan beda
@@ -1207,7 +1207,7 @@ async function submitOrder() {
         return; 
     }
 
-    // --- LOGIKA BARU: VALIDASI VARIAN SETIAP ITEM ---
+    // --- BARU: VALIDASI VARIAN SETIAP ITEM DI KERANJANG ---
     const noSuhuList = ["Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", "Float Mangga", "Float Stoberi", "Nescafe Blue", "Kopi Kapal Api", "Kopi ABC Susu", "Nutrisari Jeruk", "Extra Joss", "Kukubima"];
 
     for (let i = 0; i < cart.length; i++) {
@@ -1215,18 +1215,20 @@ async function submitOrder() {
         const nl = c.nama.toLowerCase();
         const kl = c.kat.toLowerCase();
 
+        // Cek kebutuhan varian berdasarkan kriteria menu
         const needsNasi = (kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"))) && !nl.includes("mie lik");
         const needsMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik") && !nl.includes("mie lik");
         const needsMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
         const needsSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(c.nama);
 
+        // Validasi: Jika butuh tapi belum dipilih (null/empty)
         if ((needsNasi && !c.vN) || (needsMieG && !c.vM) || (needsMieR && !c.vR) || (needsSuhu && !c.vS)) {
             closeModal();
             alert(`⚠️ Mohon pilih varian untuk porsi ke-${i + 1} pada menu: ${c.nama}`);
             
             const targetGrid = document.getElementById(`variant-display-${c.id}`);
             if (targetGrid) {
-                targetGrid.style.display = 'block';
+                targetGrid.style.display = 'block'; // Pastikan terbuka
                 targetGrid.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 targetGrid.classList.add('shake-ani');
                 targetGrid.style.border = "2px solid var(--danger)";
@@ -1236,11 +1238,10 @@ async function submitOrder() {
                 }, 2000);
             }
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            return; 
+            return; // Hentikan proses jika ada varian kosong
         }
     }
 
-    // KEMBALI KE STRUKTUR ASLI ANDA
     if (navigator.vibrate) navigator.vibrate(50);
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
@@ -1251,7 +1252,7 @@ async function submitOrder() {
     const noAntrean = noAntreanFull.replace('#', '').trim();
     const tglK = document.getElementById('tglKatering')?.value || '';
 
-    // Validasi input (Nama, Meja, Alamat) - Sesuai Kode Asli
+    // Validasi input (Nama, Meja, Alamat)
     const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
     cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
 
@@ -1270,21 +1271,23 @@ async function submitOrder() {
         return; 
     }
 
-    // --- LOGIKA BARU: PENGGABUNGAN STRUK (Agar varian beda terpisah, varian sama bergabung) ---
-    const summary = {};
-    cart.forEach(c => {
-        let label = c.nama;
-        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-        if(tags) label += ` [${tags}]`;
-        
-        const itemKey = label; 
-        const itemPrice = c.harga + (c.ex || 0);
-        
-        if (!summary[itemKey]) {
-            summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
-        }
-        summary[itemKey].qty++;
-    });
+    // --- 2. Rangkai Rincian Pesanan & Hitung Total ---
+    // Cari bagian ini di fungsi submitOrder Anda:
+const summary = {};
+cart.forEach(c => {
+    let label = c.nama;
+    // Buat label unik: "Nama Menu [Varian1, Varian2]"
+    let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+    if(tags) label += ` [${tags}]`;
+    
+    const itemKey = label; 
+    const itemPrice = c.harga + (c.ex || 0);
+    
+    if (!summary[itemKey]) {
+        summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
+    }
+    summary[itemKey].qty++;
+});
 
     const pRowsWA = Object.entries(summary).map(([name, data]) => 
         `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
@@ -1296,7 +1299,7 @@ async function submitOrder() {
     const finalPriceNumeric = finalPriceText.replace(/[^0-9]/g, ''); 
     const userLocationUrl = `http://googleusercontent.com/maps.google.com/maps?q=${window.userLat},${window.userLng}`;
 
-    // --- ANIMASI LOADING ASLI ---
+    // --- 3. Animasi Tombol Loading ---
     const btnKirim = document.querySelector('#modalConfirm button:last-child');
     if (btnKirim) {
         btnKirim.innerHTML = "⌛ Mengirim ke Dapur...";
@@ -1304,7 +1307,7 @@ async function submitOrder() {
         btnKirim.style.pointerEvents = "none";
     }
 
-    // --- FETCH GOOGLE SHEETS ASLI ---
+    // --- 4. KIRIM KE GOOGLE SHEETS ---
     const catatanValue = oN ? oN.value : '-';
     const params = new URLSearchParams({
         token: CONFIG.TOKEN,
@@ -1320,7 +1323,7 @@ async function submitOrder() {
 
     fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
 
-    // --- PESAN WHATSAPP ASLI (Termasuk Link Review) ---
+    // --- 5. SUSUN PESAN WHATSAPP ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
@@ -1344,14 +1347,14 @@ async function submitOrder() {
     msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
     msg += `Terimakasih!`;
 
-    // --- PINDAH KE WA ASLI ---
+    // --- 6. EKSEKUSI PINDAH KE WHATSAPP ---
     const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
     
     setTimeout(() => {
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
     }, 500);
 
-    // --- RESET TAMPILAN ASLI ---
+    // --- 7. RESET TAMPILAN WEB ---
     setTimeout(() => {
         cart = [];
         if (typeof refreshUI === 'function') refreshUI();
