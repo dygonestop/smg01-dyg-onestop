@@ -852,22 +852,23 @@ async function startApp() {
     const overlay = document.getElementById('welcome-overlay');
     
     if (startBtn) {
+        // Efek visual tombol saat ditekan
         startBtn.innerHTML = "⌛ Menyiapkan...";
         startBtn.style.opacity = "0.7";
         startBtn.style.pointerEvents = "none";
     }
 
-    // Jalankan fungsi penting
+    // Jalankan fungsi inisialisasi aplikasi
     if (typeof renderMenu === 'function') renderMenu();
     if (typeof fetchCurrentQueue === 'function') fetchCurrentQueue();
 
-    // Beri jeda sedikit agar animasi "Menyiapkan" terlihat
+    // Beri jeda 0.8 detik agar user melihat proses "Menyiapkan"
     setTimeout(() => {
         if (overlay) {
             overlay.style.opacity = '0';
             setTimeout(() => {
                 overlay.style.display = 'none';
-                // Reset tombol agar aktif jika dipanggil lagi nanti
+                // Reset tombol ke kondisi semula (untuk jaga-jaga aplikasi di-reset)
                 if (startBtn) {
                     startBtn.innerHTML = "MULAI SEKARANG";
                     startBtn.style.opacity = "1";
@@ -917,8 +918,8 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
     // (Sudah dihapus agar user yang klik tombol sendiri)
 
 }, (err) => {
-    console.error("GPS Error:", err);
-    // Jika GPS gagal, biarkan user tetap bisa klik "MULAI SEKARANG"
+    console.warn("GPS Gagal:", err.message);
+    // Jika GPS gagal, biarkan saja, user tetap bisa klik MULAI SEKARANG
 }, { enableHighAccuracy: true });
 
     function calculateOngkir(distMeter) {
