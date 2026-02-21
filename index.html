@@ -849,10 +849,14 @@ async function startApp() {
         startBtn.style.pointerEvents = "none";
     }
 
-    // Jalankan load menu & sync antrean secara paralel
+    // ✅ 1. BANNER LANGSUNG (ANTI BLANK)
+    initBanner();
+
+    // ✅ 2. LOAD DATA PARALEL
     loadMenu();
     syncQueue(); 
 
+    // ✅ 3. GPS (BOLEH LAMBAT / GAGAL)
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
         window.userLat = latitude;
@@ -864,35 +868,41 @@ async function startApp() {
         if(dineBtn) dineBtn.classList.remove('disabled', 'too-far');
         if(deliBtn) deliBtn.classList.remove('disabled', 'too-close');
 
-        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+        const straightLineDist = L.latLng(latitude, longitude)
+            .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
         if (userDist > CONFIG.RADIUS_DINE_IN) {
-            if(dineBtn) dineBtn.classList.add('disabled', 'too-far');
+            dineBtn?.classList.add('disabled', 'too-far');
         }
 
-        const MIN_DELIVERY_DIST = 200; 
+        const MIN_DELIVERY_DIST = 200;
         if (userDist < MIN_DELIVERY_DIST) {
-            if(deliBtn) deliBtn.classList.add('disabled', 'too-close');
+            deliBtn?.classList.add('disabled', 'too-close');
         }
 
         initMap(latitude, longitude);
-        initBanner();
-        
-        // Tampilkan nomor antrean yang sudah didapat dari syncQueue
+
         document.getElementById("noAntrean").innerText = "#" + antrean;
         document.getElementById('welcome-overlay').style.display = 'none';
 
         currentMode = null;
-        document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.service-btn')
+            .forEach(btn => btn.classList.remove('active'));
 
     }, (err) => {
+        // ❗ GPS GAGAL → BANNER TETAP ADA
         alert("Gagal akses lokasi. Harap aktifkan GPS.");
+
+        document.getElementById("noAntrean").innerText = "#" + antrean;
         document.getElementById('welcome-overlay').style.display = 'none';
+
         currentMode = null;
-        document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.service-btn')
+            .forEach(btn => btn.classList.remove('active'));
     }, { enableHighAccuracy: true });
 }
+
 
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
@@ -1419,11 +1429,81 @@ function changeMode(m, el) {
         L.marker([lat, lng]).addTo(map).bindPopup("Lokasi Kamu");
     }
 
-    function initBanner() {
-        const track = document.getElementById('banner-track');
-        track.innerHTML = MY_BANNERS.map(img => `<img src="${img}">`).join('');
-        setInterval(() => { bannerIdx = (bannerIdx + 1) % MY_BANNERS.length; track.style.transform = `translateX(-${bannerIdx * 100}%)`; }, 5000);
+    let bannerTimer = null;
+let isBannerTouched = false;
+
+function initBanner() {
+    const track = document.getElementById('banner-track');
+    const container = document.querySelector('.banner-container');
+    if (!track || !container || !MY_BANNERS?.length) return;
+
+    // Cegah init ulang
+    if (track.dataset.ready) return;
+    track.dataset.ready = "1";
+
+    // Render banner
+    track.innerHTML = MY_BANNERS.map(src =>
+        `<img src="${src}" draggable="false">`
+    ).join('');
+
+    bannerIdx = 0;
+    track.style.transform = `translateX(0%)`;
+
+    // ==== AUTO SLIDE ====
+    function startAutoSlide() {
+        stopAutoSlide();
+        bannerTimer = setInterval(() => {
+            if (isBannerTouched) return;
+            bannerIdx = (bannerIdx + 1) % MY_BANNERS.length;
+            track.style.transition = 'transform 0.4s ease';
+            track.style.transform = `translateX(-${bannerIdx * 100}%)`;
+        }, 4000);
     }
+
+    function stopAutoSlide() {
+        if (bannerTimer) {
+            clearInterval(bannerTimer);
+            bannerTimer = null;
+        }
+    }
+
+    startAutoSlide();
+
+    // ==== SWIPE MANUAL ====
+    let startX = 0;
+    let deltaX = 0;
+
+    container.addEventListener('touchstart', e => {
+        isBannerTouched = true;
+        stopAutoSlide();
+        startX = e.touches[0].clientX;
+        track.style.transition = 'none';
+    }, { passive: true });
+
+    container.addEventListener('touchmove', e => {
+        deltaX = e.touches[0].clientX - startX;
+        track.style.transform =
+            `translateX(calc(-${bannerIdx * 100}% + ${deltaX}px))`;
+    }, { passive: true });
+
+    container.addEventListener('touchend', () => {
+        const threshold = container.offsetWidth * 0.25;
+
+        if (deltaX > threshold && bannerIdx > 0) {
+            bannerIdx--;
+        } else if (deltaX < -threshold && bannerIdx < MY_BANNERS.length - 1) {
+            bannerIdx++;
+        }
+
+        track.style.transition = 'transform 0.4s ease';
+        track.style.transform = `translateX(-${bannerIdx * 100}%)`;
+
+        deltaX = 0;
+        isBannerTouched = false;
+        startAutoSlide();
+    });
+}
+
 
     function filterMenu() {
     const q = document.getElementById('searchMenu').value.toLowerCase();
