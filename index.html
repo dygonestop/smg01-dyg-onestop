@@ -6,18 +6,6 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-#welcome-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 10000; /* Pastikan paling atas */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: var(--primary);
-    transition: opacity 0.5s ease;
-    /* Jangan kasih pointer-events: none di sini, 
-       biarkan default agar tombol di dalamnya bisa diklik */
-}
         :root { 
             --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
             --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
@@ -836,92 +824,87 @@ function toggleMenuDropdown() {
     dropdown.style.display = isVisible ? 'none' : 'block';
 }
 
-// --- PERBAIKAN PADA FUNGSI DROPDOWN (Tambahkan penutup yang benar) ---
+// Tambahan: Tutup dropdown otomatis jika pengguna klik di luar menu
 document.addEventListener('click', function(event){
-    const dropdown = document.getElementById('menuDropdown');
-    if (!event.target.matches('[onclick="toggleMenuDropdown()"]') && !event.target.closest('#menuDropdown')) {
+    if (!event.target.matches('[onclick="toggleMenuDropdown()"]')) {
+        const dropdown = document.getElementById('menuDropdown');
         if (dropdown && dropdown.style.display === 'block') {
             dropdown.style.display = 'none';
         }
     }
-}); // Pastikan ada }); disini
+}
 
-// 1. FUNGSI STARTAPP (Hanya dipanggil saat TOMBOL DIKLIK)
-// 1. Fungsi Utama untuk Masuk ke Aplikasi
-// --- PERBAIKAN FUNGSI STARTAPP ---
-async function startApp() {
+function startApp() {
     const startBtn = document.querySelector('#welcome-overlay button');
-    const overlay = document.getElementById('welcome-overlay');
     
-    if (!startBtn) return;
+    // Memberi efek loading saat diklik
+    if (startBtn) {
+        startBtn.innerHTML = "⌛ Menyiapkan...";
+        startBtn.style.opacity = "0.7";
+        startBtn.style.pointerEvents = "none"; 
+    }
 
-    startBtn.innerHTML = "⌛ Menyiapkan...";
-    startBtn.style.opacity = "0.7";
-    startBtn.style.pointerEvents = "none";
-
-    try {
-        // Pastikan fungsi ini ada sebelum dipanggil
-        if (typeof loadMenu === 'function') await loadMenu(); 
-        if (typeof initBanner === 'function') initBanner();
-        
-        // Minta lokasi hanya setelah klik mulai (opsional tapi lebih stabil)
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(updateLocationData);
-        }
-
-        // Animasi keluar
+    // Simulasi pengecekan data atau langsung masuk
+    setTimeout(() => {
+        const overlay = document.getElementById('welcome-overlay');
         if (overlay) {
-            overlay.style.opacity = '0';
-            setTimeout(() => {
-                overlay.style.display = 'none';
-            }, 500);
+            overlay.style.display = 'none'; // Sembunyikan overlay
         }
-    } catch (e) {
-        console.error("Gagal memulai aplikasi:", e);
-        // Tetap hilangkan overlay agar user bisa masuk jika terjadi error kecil
-        if (overlay) overlay.style.display = 'none';
-    }
+        
+        // --- INI KUNCINYA ---
+        // Kita kembalikan status tombol agar jika user kembali ke menu utama, 
+        // tombolnya sudah AKTIF lagi.
+        if (startBtn) {
+            startBtn.innerHTML = "MULAI SEKARANG";
+            startBtn.style.opacity = "1";
+            startBtn.style.pointerEvents = "auto";
+        }
+    }, 500); 
 }
-// 2. Logika GPS & Data (Jalan otomatis di background)
-function initAppData() {
-    // Jalankan fungsi awal
-    if (typeof loadMenu === 'function') loadMenu();
-    if (typeof syncQueue === 'function') syncQueue(); 
+    // Jalankan load menu & sync antrean secara paralel
+    loadMenu();
+    syncQueue(); 
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            window.userLat = latitude;
-            window.userLng = longitude;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        window.userLat = latitude;
+        window.userLng = longitude;
 
-            const dineBtn = document.getElementById('mDineIn');
-            const deliBtn = document.getElementById('mDelivery');
+        const dineBtn = document.getElementById('mDineIn');
+        const deliBtn = document.getElementById('mDelivery');
 
-            // Hitung jarak
-            const warungLoc = L.latLng(CONFIG.WARUNG_LOCATION);
-            const userLoc = L.latLng(latitude, longitude);
-            const straightLineDist = userLoc.distanceTo(warungLoc);
-            userDist = straightLineDist * 1.45; 
+        if(dineBtn) dineBtn.classList.remove('disabled', 'too-far');
+        if(deliBtn) deliBtn.classList.remove('disabled', 'too-close');
 
-            // Update status tombol layanan
-            if(dineBtn && userDist > CONFIG.RADIUS_DINE_IN) dineBtn.classList.add('disabled', 'too-far');
-            if(deliBtn && userDist < 200) deliBtn.classList.add('disabled', 'too-close');
+        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+        userDist = straightLineDist * 1.45; 
 
-            if (typeof initMap === 'function') initMap(latitude, longitude);
-            if (typeof initBanner === 'function') initBanner();
-            
-            // Update No Antrean jika elemennya ada
-            const antreanEl = document.getElementById("noAntrean");
-            if(antreanEl) antreanEl.innerText = "#" + (window.antrean || "0");
+        if (userDist > CONFIG.RADIUS_DINE_IN) {
+            if(dineBtn) dineBtn.classList.add('disabled', 'too-far');
+        }
 
-        }, (err) => {
-            console.warn("GPS Gagal:", err.message);
-        }, { enableHighAccuracy: true });
-    }
+        const MIN_DELIVERY_DIST = 200; 
+        if (userDist < MIN_DELIVERY_DIST) {
+            if(deliBtn) deliBtn.classList.add('disabled', 'too-close');
+        }
+
+        initMap(latitude, longitude);
+        initBanner();
+        
+        // Tampilkan nomor antrean yang sudah didapat dari syncQueue
+        document.getElementById("noAntrean").innerText = "#" + antrean;
+        document.getElementById('welcome-overlay').style.display = 'none';
+
+        currentMode = null;
+        document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
+
+    }, (err) => {
+        alert("Gagal akses lokasi. Harap aktifkan GPS.");
+        document.getElementById('welcome-overlay').style.display = 'none';
+        currentMode = null;
+        document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
+    }, { enableHighAccuracy: true });
 }
-
-// 3. Panggil inisialisasi saat script dimuat
-initAppData();
 
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
