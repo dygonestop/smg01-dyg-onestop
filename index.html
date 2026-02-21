@@ -921,10 +921,6 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
     // Jika GPS gagal, biarkan user tetap bisa klik "MULAI SEKARANG"
 }, { enableHighAccuracy: true });
 
-
-// Panggil fungsi inisialisasi saat script dimuat
-initLocationAndData();
-
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
         if (km <= 1.5) return 3000;
