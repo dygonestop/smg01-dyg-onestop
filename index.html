@@ -1673,20 +1673,28 @@ document.addEventListener('change', function(e) {
     }
 });
 
-function openDesc(title, content) {
+// ===== POPUP INFO MENU (FINAL) =====
+window.openDesc = function(title, content) {
     const modal = document.getElementById('modalDesc');
     const t = document.getElementById('descTitle');
     const c = document.getElementById('descContent');
 
-    t.innerText = title;
-    c.innerText = content || 'Tidak ada deskripsi.';
+    if (!modal) {
+        alert('Modal deskripsi tidak ditemukan');
+        return;
+    }
+
+    t.textContent = title;
+    c.textContent = content || 'Deskripsi belum tersedia';
 
     modal.style.display = 'flex';
-}
+};
 
-function closeDesc() {
-    document.getElementById('modalDesc').style.display = 'none';
-}
+window.closeDesc = function() {
+    const modal = document.getElementById('modalDesc');
+    if (modal) modal.style.display = 'none';
+};
+
 
 </script>
 
