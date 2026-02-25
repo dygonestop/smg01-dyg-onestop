@@ -1673,24 +1673,19 @@ document.addEventListener('change', function(e) {
     }
 });
 
-function openDesc(nama, teks) {
+function openDesc(title, content) {
     const modal = document.getElementById('modalDesc');
-    const title = document.getElementById('descTitle');
-    const content = document.getElementById('descContent');
-    
-    if (modal && title && content) {
-        title.innerText = nama;
-        // Jika deskripsi di CSV kosong, tampilkan pesan default
-        content.innerText = teks && teks !== 'undefined' ? teks : 'Belum ada deskripsi untuk menu ini.';
-        modal.style.display = 'flex';
-    }
+    const t = document.getElementById('descTitle');
+    const c = document.getElementById('descContent');
+
+    t.innerText = title;
+    c.innerText = content || 'Tidak ada deskripsi.';
+
+    modal.style.display = 'flex';
 }
 
 function closeDesc() {
-    const modal = document.getElementById('modalDesc');
-    if (modal) {
-        modal.style.display = 'none';
-    }
+    document.getElementById('modalDesc').style.display = 'none';
 }
 
 </script>
