@@ -1673,28 +1673,20 @@ document.addEventListener('change', function(e) {
     }
 });
 
-// ===== POPUP INFO MENU (FINAL) =====
-window.openDesc = function(title, content) {
+function openDesc(nama, teks) {
     const modal = document.getElementById('modalDesc');
-    const t = document.getElementById('descTitle');
-    const c = document.getElementById('descContent');
-
-    if (!modal) {
-        alert('Modal deskripsi tidak ditemukan');
-        return;
+    if (modal) {
+        document.getElementById('descTitle').innerText = nama;
+        // Jika deskripsi kosong di CSV, beri teks standar
+        document.getElementById('descContent').innerText = teks && teks !== 'undefined' ? teks : 'Belum ada deskripsi untuk menu ini.';
+        modal.style.display = 'flex';
     }
+}
 
-    t.textContent = title;
-    c.textContent = content || 'Deskripsi belum tersedia';
-
-    modal.style.display = 'flex';
-};
-
-window.closeDesc = function() {
+function closeDesc() {
     const modal = document.getElementById('modalDesc');
     if (modal) modal.style.display = 'none';
-};
-
+}
 
 </script>
 
