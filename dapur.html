@@ -6,6 +6,45 @@
     <title>DAPUR | dyg++</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <style>
+.btn-check-sound {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
+        }
+        .btn-check-sound:active { transform: scale(0.95); background: #2563eb; }
+        
+        /* Sembunyikan tombol cek sound jika suara sedang Mute */
+        .hidden { display: none; }
+
+.voice-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        /* Saat Suara Mati (Default) */
+        .voice-off { background: #fee2e2; color: #991b1b; border: 2px solid #ef4444; }
+        /* Saat Suara Aktif */
+        .voice-on { background: #dcfce7; color: #166534; border: 2px solid #22c55e; box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+        
+        .voice-icon { font-size: 20px; }
+        .voice-text { font-size: 12px; font-weight: 800; text-transform: uppercase; }
+
         :root{ --main:#1B4332; --danger:#c0392b; --bg:#f2f4f7; }
         body{ margin:0; background:var(--bg); font-family:Segoe UI,Arial,sans-serif; }
         .header{ margin:15px; padding:15px 20px; background:white; border-radius:14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,.05); }
@@ -24,11 +63,22 @@
 <body>
 
 <div class="header">
-    <h2>👨‍🍳 MONITOR DAPUR</h2>
-    <div id="status">● Menghubungkan...</div>
-</div>
+    <div>
+        <h2 style="margin:0">👨‍🍳 MONITOR DAPUR</h2>
+        <div id="status">● Menghubungkan...</div>
+    </div>
 
-<div class="grid" id="list"></div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button id="checkSoundBtn" class="btn-check-sound hidden" onclick="speak('Tes suara dapur, satu dua tiga')">
+            🎵 CEK SOUND
+        </button>
+
+        <div id="voiceBtn" class="voice-control voice-off" onclick="toggleVoice()">
+            <span id="vIcon" class="voice-icon">🔇</span>
+            <span id="vText" class="voice-text">Suara: Mute</span>
+        </div>
+    </div>
+</div>
 
 <script>
 /* ================= CONFIG ================= */
@@ -44,15 +94,79 @@ let lastCount = 0;
 let removedRows = []; // Menyimpan ID baris yang sudah diselesaikan agar tidak muncul lagi saat refresh
 let currentOrders = [];
 
-/* ================= VOICE NOTIF ================= */
-function playVoiceNotif() {
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const pesan = new SpeechSynthesisUtterance("Orderan baru diterima");
-        pesan.lang = 'id-ID';
-        pesan.rate = 0.9;
-        window.speechSynthesis.speak(pesan);
+/* ================= STATE & VOICE LOGIC ================= */
+let isVoiceEnabled = false; // Status awal suara mati
+
+function toggleVoice() {
+    isVoiceEnabled = !isVoiceEnabled;
+    const btn = document.getElementById("voiceBtn");
+    const icon = document.getElementById("vIcon");
+    const text = document.getElementById("vText");
+    const checkBtn = document.getElementById("checkSoundBtn");
+
+    if (isVoiceEnabled) {
+        // Mode SUARA AKTIF
+        btn.className = "voice-control voice-on";
+        icon.innerText = "🔊";
+        text.innerText = "Suara: ON";
+        
+        if(checkBtn) checkBtn.classList.remove("hidden"); // Munculkan tombol cek sound
+        
+        speak("Notifikasi suara aktif");
+    } else {
+        // Mode MUTE
+        btn.className = "voice-control voice-off";
+        icon.innerText = "🔇";
+        text.innerText = "Suara: Mute";
+        
+        if(checkBtn) checkBtn.classList.add("hidden"); // Sembunyikan tombol cek sound
+        
+        window.speechSynthesis.cancel(); 
     }
+}
+
+function speak(txt) {
+    if ('speechSynthesis' in window) {
+        // Batalkan suara sebelumnya agar tidak menumpuk (biar responsif)
+        window.speechSynthesis.cancel(); 
+        
+        const msg = new SpeechSynthesisUtterance(txt);
+        msg.lang = 'id-ID';
+        msg.rate = 1.0;
+        window.speechSynthesis.speak(msg);
+    }
+}
+
+/* ================= LOAD DATA (Sesuai Logika Terakhir Anda) ================= */
+function loadOrders() {
+    const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`;
+
+    fetch(url, { cache: 'no-store' })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("status").innerText = "TERHUBUNG";
+            document.getElementById("status").style.color = "green";
+            
+            const filteredData = data.filter(o => !removedRows.includes(String(o.row)));
+
+            // NOTIFIKASI SUARA:
+            // Hanya bunyi jika ada data baru, bukan saat refresh pertama (lastCount !== 0)
+            // Dan hanya bunyi jika sakelar isVoiceEnabled bernilai TRUE
+            if (filteredData.length > lastCount && lastCount !== 0) {
+                if (isVoiceEnabled) {
+                    speak("Orderan baru diterima");
+                }
+            }
+            
+            lastCount = filteredData.length;
+            currentOrders = data; 
+            render(filteredData);
+        })
+        .catch(e => {
+            document.getElementById("status").innerText = "OFFLINE / ERROR";
+            document.getElementById("status").style.color = "red";
+            console.error("Fetch Error:", e);
+        });
 }
 
 /* ================= LOAD DATA ================= */
