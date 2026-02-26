@@ -495,65 +495,57 @@ function reprintStruk(index) {
     }
 
     try {
-        // --- HEADER (Sama dengan submitOrder) ---
         let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
         esc += "(COPY STRUK)\n";
         esc += "ID: " + data.id + "\n--------------------------------\n\x1B\x61\x00";
         
-        // --- DETAIL PESANAN ---
-        // Karena data.pesanan formatnya "Menu A x1, Menu B x2"
-        // Kita pecah kembali agar tampilannya rapi ke bawah
         const items = data.pesanan.split(", ");
-        let totalKotor = 0;
+        let totalKotorManual = 0;
 
         items.forEach(itemStr => {
-            // Memisahkan "Nama Menu" dan "Qty"
-            // Contoh: "Nasi Goreng x2" -> ["Nasi Goreng", "2"]
+            // Pecah "Nama Menu xQty" -> ["Nama Menu", "Qty"]
             const parts = itemStr.split(" x");
-            const nama = parts[0];
-            const qty = parts[1] || 1;
+            const namaMenu = parts[0].trim();
+            const qty = parseInt(parts[1]) || 1;
             
-            esc += `${nama}\n${qty} x (Terlampir) = ...\n`; 
-            // Catatan: Karena di database biasanya tidak simpan harga satuan per baris, 
-            // kita tampilkan daftar itemnya saja agar strukturnya serupa.
+            // CARI HARGA DI DAFTAR MENU AKTIF
+            const menuAsli = MENU.find(m => m.nama === namaMenu);
+            const hargaSatuan = menuAsli ? menuAsli.harga : 0;
+            const subTotal = hargaSatuan * qty;
+            totalKotorManual += subTotal;
+
+            // FORMAT PERSIS STRUK ASLI
+            esc += `${namaMenu}\n${qty} x ${hargaSatuan.toLocaleString()} = ${subTotal.toLocaleString()}\n`;
         });
         
         esc += "--------------------------------\n";
         
-        // --- RINCIAN PEMBAYARAN ---
-        // Kalkulasi Total Kotor (Total Bersih + Diskon)
         const bersih = Number(data.total) || 0;
         const diskon = Number(data.diskon) || 0;
-        const kotor = bersih + diskon;
+        // Gunakan total kotor dari hasil hitung ulang item di atas
+        const kotor = totalKotorManual > 0 ? totalKotorManual : (bersih + diskon);
 
         esc += "Total Kotor   : Rp " + kotor.toLocaleString() + "\n";
         esc += "Metode        : " + (data.metode || "CASH") + "\n";
         
-        // --- INFO MEMBER (Jika ada) ---
         if (data.namaMember && data.namaMember !== "-") {
             esc += "Nama Member   : " + data.namaMember + "\n";
             esc += "Poin Didapat  : +" + (data.poinDapat || 0) + "\n";
-            // Poin akumulasi tidak ditampilkan di cetak ulang karena data poin 
-            // di database mungkin sudah berubah sejak transaksi itu terjadi.
-            esc += "Poin Akumulasi: (Lihat Struk Asli)\n";
+            esc += "Poin Akumulasi: (Cek App)\n";
         }
 
         esc += "Voucher       : Rp 0\n";
         esc += "Diskon        : Rp " + diskon.toLocaleString() + "\n";
         esc += "--------------------------------\n";
         esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + bersih.toLocaleString() + "\x1B\x21\x00\n";
-        
-        // Info Bayar/Kembali biasanya tidak disimpan detail di database transaksi 
-        // per baris, jadi kita tutup dengan garis penutup yang sama.
         esc += "--------------------------------\n";
         esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
 
-        // --- EKSEKUSI ---
         if (window.AppInventor) {
             window.AppInventor.setWebViewString("PRINT|" + esc);
         } else {
             console.log(esc);
-            alert("Mode Browser: Cek Console");
+            alert("Berhasil! Cek Console.");
         }
     } catch (err) {
         alert("Gagal memproses struk: " + err.message);
