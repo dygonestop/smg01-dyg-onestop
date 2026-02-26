@@ -83,20 +83,18 @@
 <script>
 /* ================= CONFIG ================= */
 const CONFIG = {
-    // URL Deployment GAS Anda
     API_URL: "https://script.google.com/macros/s/AKfycbxvPOgnZYzJNP3PvJsUP2EMruLF2GmsWQWWLgBpJbtTFC7YtCCabtCtVE2s4LPwD3AVxQ/exec",
     TOKEN: "dyg-access-v2",
-    REFRESH: 8000 // Sinkronisasi setiap 8 detik
+    REFRESH: 8000 
 };
 
 /* ================= STATE ================= */
 let lastCount = 0;
-let removedRows = []; // Menyimpan ID baris yang sudah diselesaikan agar tidak muncul lagi saat refresh
+let removedRows = []; 
 let currentOrders = [];
+let isVoiceEnabled = false; 
 
-/* ================= STATE & VOICE LOGIC ================= */
-let isVoiceEnabled = false; // Status awal suara mati
-
+/* ================= VOICE LOGIC ================= */
 function toggleVoice() {
     isVoiceEnabled = !isVoiceEnabled;
     const btn = document.getElementById("voiceBtn");
@@ -105,31 +103,23 @@ function toggleVoice() {
     const checkBtn = document.getElementById("checkSoundBtn");
 
     if (isVoiceEnabled) {
-        // Mode SUARA AKTIF
         btn.className = "voice-control voice-on";
         icon.innerText = "🔊";
         text.innerText = "Suara: ON";
-        
-        if(checkBtn) checkBtn.classList.remove("hidden"); // Munculkan tombol cek sound
-        
+        if(checkBtn) checkBtn.classList.remove("hidden");
         speak("Notifikasi suara aktif");
     } else {
-        // Mode MUTE
         btn.className = "voice-control voice-off";
         icon.innerText = "🔇";
         text.innerText = "Suara: Mute";
-        
-        if(checkBtn) checkBtn.classList.add("hidden"); // Sembunyikan tombol cek sound
-        
+        if(checkBtn) checkBtn.classList.add("hidden");
         window.speechSynthesis.cancel(); 
     }
 }
 
 function speak(txt) {
     if ('speechSynthesis' in window) {
-        // Batalkan suara sebelumnya agar tidak menumpuk (biar responsif)
         window.speechSynthesis.cancel(); 
-        
         const msg = new SpeechSynthesisUtterance(txt);
         msg.lang = 'id-ID';
         msg.rate = 1.0;
@@ -137,21 +127,20 @@ function speak(txt) {
     }
 }
 
-/* ================= LOAD DATA (Sesuai Logika Terakhir Anda) ================= */
+/* ================= LOAD DATA (FIXED) ================= */
 function loadOrders() {
     const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`;
 
     fetch(url, { cache: 'no-store' })
         .then(r => r.json())
         .then(data => {
-            document.getElementById("status").innerText = "TERHUBUNG";
+            // Jika berhasil, update status jadi Hijau
+            document.getElementById("status").innerText = "● TERHUBUNG";
             document.getElementById("status").style.color = "green";
             
             const filteredData = data.filter(o => !removedRows.includes(String(o.row)));
 
-            // NOTIFIKASI SUARA:
-            // Hanya bunyi jika ada data baru, bukan saat refresh pertama (lastCount !== 0)
-            // Dan hanya bunyi jika sakelar isVoiceEnabled bernilai TRUE
+            // Logika Suara
             if (filteredData.length > lastCount && lastCount !== 0) {
                 if (isVoiceEnabled) {
                     speak("Orderan baru diterima");
@@ -163,42 +152,13 @@ function loadOrders() {
             render(filteredData);
         })
         .catch(e => {
-            document.getElementById("status").innerText = "OFFLINE / ERROR";
+            // Jika gagal (masalah sinyal atau script GAS error)
+            document.getElementById("status").innerText = "● OFFLINE / ERROR";
             document.getElementById("status").style.color = "red";
             console.error("Fetch Error:", e);
         });
 }
 
-/* ================= LOAD DATA ================= */
-function loadOrders() {
-    const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`;
-
-    fetch(url, { cache: 'no-store' })
-        .then(r => r.json())
-        .then(data => {
-            document.getElementById("status").innerText = "TERHUBUNG";
-            document.getElementById("status").style.color = "green";
-            
-            /* FILTER: Kita hanya menampilkan data yang ID barisnya 
-               TIDAK ada di dalam daftar 'removedRows' (pesanan yang baru saja Anda klik selesai)
-            */
-            const filteredData = data.filter(o => !removedRows.includes(String(o.row)));
-
-            // Notifikasi suara jika ada pesanan yang benar-benar baru masuk ke server
-            if (filteredData.length > lastCount && lastCount !== 0) {
-                playVoiceNotif();
-            }
-            
-            lastCount = filteredData.length;
-            currentOrders = data; 
-            render(filteredData);
-        })
-        .catch(e => {
-            document.getElementById("status").innerText = "OFFLINE / ERROR";
-            document.getElementById("status").style.color = "red";
-            console.error("Fetch Error:", e);
-        });
-}
 /* ================= RENDER CARD ================= */
 function render(active){
     const box = document.getElementById("list");
@@ -227,89 +187,50 @@ function render(active){
                 <div class="name">${o.Nama || 'Tanpa Nama'}</div>
                 <div class="mode">${o.Mode} ${o.Meja ? `<span style="color:var(--danger)">[ MEJA ${o.Meja} ]</span>` : ''}</div>
                 <div class="items">${daftarMenu}</div>
-                
-                ${o.Catatan ? `
-                <div style="background:#FFF9C4; padding:10px; border-left:5px solid #FBC02D; margin-top:12px; border-radius:8px; font-size:13px; color:#5D4037; line-height:1.4;">
-                    <strong style="display:block; margin-bottom:2px;">⚠️ CATATAN:</strong>
-                    ${o.Catatan}
-                </div>` : ''}
-
+                ${o.Catatan ? `<div style="background:#FFF9C4; padding:10px; border-left:5px solid #FBC02D; margin-top:12px; border-radius:8px; font-size:13px; color:#5D4037; line-height:1.4;"><strong style="display:block; margin-bottom:2px;">⚠️ CATATAN:</strong>${o.Catatan}</div>` : ''}
                 <button class="btn" onclick="finish(${o.row})" style="margin-top:15px;">✔ SELESAI & CETAK</button>
-            </div>
-        `;
+            </div>`;
     }).join("");
 
-    // Aktifkan kembali Hammer JS untuk Swipe
     document.querySelectorAll(".card").forEach(card => {
         const mc = new Hammer(card);
-        mc.on("swipeleft", () => {
-            const rowId = card.getAttribute("data-row");
-            finish(rowId);
-        });
+        mc.on("swipeleft", () => finish(card.getAttribute("data-row")));
     });
 }
+
 /* ================= ACTION ================= */
 function finish(row) {
     const orderData = currentOrders.find(o => o.row == row);
-    
-    // 1. Animasi & Sembunyikan Instan secara Visual
     const card = document.getElementById("c-" + row);
     if (card) card.classList.add("slide-out-left");
     
-    // Tambahkan ke daftar "sudah dihapus" agar tidak muncul saat auto-refresh
-    if (!removedRows.includes(String(row))) {
-        removedRows.push(String(row));
-    }
+    if (!removedRows.includes(String(row))) removedRows.push(String(row));
 
-    // 2. Eksekusi Cetak (Mempertahankan fungsi RawBT Anda)
     if (orderData) printOrder(orderData);
 
-    // 3. Update Status ke Google Sheets (Background Sync)
-    const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`;
-    fetch(url)
-        .then(r => r.text())
-        .then(res => console.log("Sync Sheet Success:", res))
+    fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`)
         .catch(e => console.error("Sync Failed:", e));
 
-    // 4. Hapus elemen dari DOM setelah animasi selesai
     setTimeout(() => { 
         if (card) card.remove();
-        // Jika setelah dihapus layar kosong, jalankan render ulang untuk memicu empty state
-        if (document.querySelectorAll('.card').length === 0) {
-            render([]);
-        }
+        if (document.querySelectorAll('.card').length === 0) render([]);
     }, 500);
 }
 
-/* ================= PRINT FUNCTION (RAWBT BASE64) ================= */
+/* ================= PRINT ================= */
 function printOrder(order) {
-    // Format teks untuk printer thermal
-    let txt = `      dyg++ KITCHEN\n`;
-    txt += `================================\n`;
-    txt += `Antrean : #${order.Antrean}\n`;
-    txt += `Nama    : ${order.Nama}\n`;
-    txt += `Layanan : ${order.Mode}\n`;
+    let txt = `      dyg++ KITCHEN\n================================\nAntrean : #${order.Antrean}\nNama    : ${order.Nama}\nLayanan : ${order.Mode}\n`;
     if (order.Meja) txt += `Meja    : ${order.Meja}\n`;
-    txt += `Waktu   : ${new Date().toLocaleTimeString()}\n`;
-    txt += `--------------------------------\n`;
-    txt += `PESANAN:\n${order.Pesanan}\n`;
-    
-    // TAMBAHKAN CATATAN DI SINI JIKA ADA (DARI KOLOM I)
-    if (order.Catatan && order.Catatan.trim() !== "") {
-        txt += `--------------------------------\n`;
-        txt += `CATATAN:\n${order.Catatan}\n`;
-    }
-    
+    txt += `Waktu   : ${new Date().toLocaleTimeString()}\n--------------------------------\nPESANAN:\n${order.Pesanan}\n`;
+    if (order.Catatan && order.Catatan.trim() !== "") txt += `--------------------------------\nCATATAN:\n${order.Catatan}\n`;
     txt += `--------------------------------\n\n\n\n`; 
 
-    // Encode ke Base64 untuk dikirim ke aplikasi RawBT
     const base64Data = btoa(unescape(encodeURIComponent(txt)));
     window.location.href = "rawbt:base64," + base64Data;
 }
 
 /* ================= START ================= */
 loadOrders();
-// Interval sinkronisasi otomatis
 setInterval(loadOrders, CONFIG.REFRESH);
 </script>
 </body>
