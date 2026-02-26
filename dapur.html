@@ -6,57 +6,27 @@
     <title>DAPUR | dyg++</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <style>
-.btn-check-sound {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 10px 14px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 800;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s;
-            box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
-        }
-        .btn-check-sound:active { transform: scale(0.95); background: #2563eb; }
-        
-        /* Sembunyikan tombol cek sound jika suara sedang Mute */
-        .hidden { display: none; }
-
-.voice-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            padding: 10px 16px;
-            border-radius: 12px;
-            transition: all 0.2s ease;
-            user-select: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        /* Saat Suara Mati (Default) */
-        .voice-off { background: #fee2e2; color: #991b1b; border: 2px solid #ef4444; }
-        /* Saat Suara Aktif */
-        .voice-on { background: #dcfce7; color: #166534; border: 2px solid #22c55e; box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
-        
-        .voice-icon { font-size: 20px; }
-        .voice-text { font-size: 12px; font-weight: 800; text-transform: uppercase; }
-
         :root{ --main:#1B4332; --danger:#c0392b; --bg:#f2f4f7; }
         body{ margin:0; background:var(--bg); font-family:Segoe UI,Arial,sans-serif; }
+        
         .header{ margin:15px; padding:15px 20px; background:white; border-radius:14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,.05); }
-        #status{ font-weight:900; color:orange; }
+        #status{ font-weight:900; color:orange; font-size: 13px; }
+        
         .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:15px; padding:15px; }
         .card{ background:white; border-radius:16px; padding:18px; border-top:8px solid var(--main); position:relative; animation:pop .3s ease; transition: all 0.5s ease; }
         @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+        
         .no{ font-size:38px; font-weight:900; color:var(--main); }
         .name{ font-size:20px; font-weight:900; }
         .mode{ display:inline-block; margin-top:4px; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:900; background:#eee; }
         .items{ margin:14px 0; font-family:Courier New,monospace; font-weight:900; line-height:1.4; }
         .btn{ width:100%; padding:16px; border:none; border-radius:12px; background:var(--main); color:white; font-weight:900; cursor:pointer; }
+        
+        .btn-check-sound { background: #3b82f6; color: white; border: none; padding: 10px 14px; border-radius: 12px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .voice-control { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: all 0.2s ease; user-select: none; }
+        .voice-off { background: #fee2e2; color: #991b1b; border: 2px solid #ef4444; }
+        .voice-on { background: #dcfce7; color: #166534; border: 2px solid #22c55e; }
+        .hidden { display: none !important; }
         .slide-out-left { transform: translateX(-150%) rotate(-10deg); opacity: 0; pointer-events: none; }
     </style>
 </head>
@@ -75,10 +45,12 @@
 
         <div id="voiceBtn" class="voice-control voice-off" onclick="toggleVoice()">
             <span id="vIcon" class="voice-icon">🔇</span>
-            <span id="vText" class="voice-text">Suara: Mute</span>
+            <span id="vText" class="voice-text" style="font-size:12px; font-weight:800;">SUARA: MUTE</span>
         </div>
     </div>
 </div>
+
+<div class="grid" id="list"></div>
 
 <script>
 /* ================= CONFIG ================= */
@@ -105,13 +77,13 @@ function toggleVoice() {
     if (isVoiceEnabled) {
         btn.className = "voice-control voice-on";
         icon.innerText = "🔊";
-        text.innerText = "Suara: ON";
+        text.innerText = "SUARA: ON";
         if(checkBtn) checkBtn.classList.remove("hidden");
         speak("Notifikasi suara aktif");
     } else {
         btn.className = "voice-control voice-off";
         icon.innerText = "🔇";
-        text.innerText = "Suara: Mute";
+        text.innerText = "SUARA: MUTE";
         if(checkBtn) checkBtn.classList.add("hidden");
         window.speechSynthesis.cancel(); 
     }
@@ -127,24 +99,21 @@ function speak(txt) {
     }
 }
 
-/* ================= LOAD DATA (FIXED) ================= */
+/* ================= LOAD DATA ================= */
 function loadOrders() {
     const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`;
 
-    fetch(url, { cache: 'no-store' })
+    fetch(url)
         .then(r => r.json())
         .then(data => {
-            // Jika berhasil, update status jadi Hijau
             document.getElementById("status").innerText = "● TERHUBUNG";
             document.getElementById("status").style.color = "green";
             
+            // Gunakan rowId atau row (sesuaikan dengan output GAS Anda)
             const filteredData = data.filter(o => !removedRows.includes(String(o.row)));
 
-            // Logika Suara
             if (filteredData.length > lastCount && lastCount !== 0) {
-                if (isVoiceEnabled) {
-                    speak("Orderan baru diterima");
-                }
+                if (isVoiceEnabled) speak("Ada orderan baru masuk");
             }
             
             lastCount = filteredData.length;
@@ -152,7 +121,6 @@ function loadOrders() {
             render(filteredData);
         })
         .catch(e => {
-            // Jika gagal (masalah sinyal atau script GAS error)
             document.getElementById("status").innerText = "● OFFLINE / ERROR";
             document.getElementById("status").style.color = "red";
             console.error("Fetch Error:", e);
@@ -162,6 +130,7 @@ function loadOrders() {
 /* ================= RENDER CARD ================= */
 function render(active){
     const box = document.getElementById("list");
+    if(!box) return;
 
     if(active.length === 0){
         box.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#999;padding:50px">Tidak ada pesanan baru</div>`;
@@ -170,24 +139,32 @@ function render(active){
 
     box.innerHTML = active.map(o => {
         let daftarMenu = "";
+        // Antisipasi perbedaan huruf besar/kecil dari properti JSON
+        const pesananRaw = o.Pesanan || o.pesanan || "";
+        const antrean = o.Antrean || o.antrean || "0";
+        const nama = o.Nama || o.nama || "Tanpa Nama";
+        const mode = o.Mode || o.mode || "DINE IN";
+        const meja = o.Meja || o.meja || "";
+        const catatan = o.Catatan || o.catatan || "";
+
         try {
-            if (o.Pesanan && o.Pesanan.trim().startsWith('{')) {
-                const jsonPesanan = JSON.parse(o.Pesanan);
-                daftarMenu = Object.keys(jsonPesanan).map(menu => `• ${jsonPesanan[menu].qty}x ${menu}`).join("<br>");
+            if (pesananRaw.trim().startsWith('{')) {
+                const json = JSON.parse(pesananRaw);
+                daftarMenu = Object.keys(json).map(m => `• ${json[m].qty}x ${m}`).join("<br>");
             } else {
-                daftarMenu = o.Pesanan.split(/,|\n/).map(i => `• ${i.trim()}`).filter(i => i !== "•").join("<br>");
+                daftarMenu = pesananRaw.split(/,|\n/).map(i => `• ${i.trim()}`).filter(i => i !== "•").join("<br>");
             }
         } catch (e) {
-            daftarMenu = `• ${o.Pesanan}`;
+            daftarMenu = `• ${pesananRaw}`;
         }
 
         return `
             <div class="card" id="c-${o.row}" data-row="${o.row}">
-                <div class="no">#${o.Antrean}</div>
-                <div class="name">${o.Nama || 'Tanpa Nama'}</div>
-                <div class="mode">${o.Mode} ${o.Meja ? `<span style="color:var(--danger)">[ MEJA ${o.Meja} ]</span>` : ''}</div>
+                <div class="no">#${antrean}</div>
+                <div class="name">${nama}</div>
+                <div class="mode">${mode} ${meja ? `<span style="color:var(--danger)">[ MEJA ${meja} ]</span>` : ''}</div>
                 <div class="items">${daftarMenu}</div>
-                ${o.Catatan ? `<div style="background:#FFF9C4; padding:10px; border-left:5px solid #FBC02D; margin-top:12px; border-radius:8px; font-size:13px; color:#5D4037; line-height:1.4;"><strong style="display:block; margin-bottom:2px;">⚠️ CATATAN:</strong>${o.Catatan}</div>` : ''}
+                ${catatan ? `<div style="background:#FFF9C4; padding:10px; border-left:5px solid #FBC02D; margin-top:12px; border-radius:8px; font-size:13px; color:#5D4037; line-height:1.4;"><strong>⚠️ CATATAN:</strong> ${catatan}</div>` : ''}
                 <button class="btn" onclick="finish(${o.row})" style="margin-top:15px;">✔ SELESAI & CETAK</button>
             </div>`;
     }).join("");
@@ -202,14 +179,12 @@ function render(active){
 function finish(row) {
     const orderData = currentOrders.find(o => o.row == row);
     const card = document.getElementById("c-" + row);
-    if (card) card.classList.add("slide-out-left");
     
+    if (card) card.classList.add("slide-out-left");
     if (!removedRows.includes(String(row))) removedRows.push(String(row));
-
     if (orderData) printOrder(orderData);
 
-    fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`)
-        .catch(e => console.error("Sync Failed:", e));
+    fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`).catch(() => {});
 
     setTimeout(() => { 
         if (card) card.remove();
@@ -217,12 +192,17 @@ function finish(row) {
     }, 500);
 }
 
-/* ================= PRINT ================= */
 function printOrder(order) {
-    let txt = `      dyg++ KITCHEN\n================================\nAntrean : #${order.Antrean}\nNama    : ${order.Nama}\nLayanan : ${order.Mode}\n`;
-    if (order.Meja) txt += `Meja    : ${order.Meja}\n`;
-    txt += `Waktu   : ${new Date().toLocaleTimeString()}\n--------------------------------\nPESANAN:\n${order.Pesanan}\n`;
-    if (order.Catatan && order.Catatan.trim() !== "") txt += `--------------------------------\nCATATAN:\n${order.Catatan}\n`;
+    const antrean = order.Antrean || order.antrean || "0";
+    const nama = order.Nama || order.nama || "-";
+    const mode = order.Mode || order.mode || "-";
+    const pesanan = order.Pesanan || order.pesanan || "";
+    const catatan = order.Catatan || order.catatan || "";
+
+    let txt = `      dyg++ KITCHEN\n================================\nAntrean : #${antrean}\nNama    : ${nama}\nLayanan : ${mode}\n`;
+    if (order.Meja || order.meja) txt += `Meja    : ${order.Meja || order.meja}\n`;
+    txt += `Waktu   : ${new Date().toLocaleTimeString()}\n--------------------------------\nPESANAN:\n${pesanan}\n`;
+    if (catatan) txt += `--------------------------------\nCATATAN:\n${catatan}\n`;
     txt += `--------------------------------\n\n\n\n`; 
 
     const base64Data = btoa(unescape(encodeURIComponent(txt)));
