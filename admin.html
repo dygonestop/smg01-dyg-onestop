@@ -94,67 +94,6 @@ function closeModalTrx() {
     document.getElementById("modalTrx").classList.remove("flex");
 }
 
-async function cekDaftarTransaksi() {
-    const btn = document.getElementById("btnCekTrx");
-    const container = document.getElementById("listTrxContent");
-    const originalText = btn.innerText;
-    
-    try {
-        btn.innerText = "..."; btn.disabled = true;
-        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftTransactions`);
-        const data = await res.json();
-
-        if (data.status === "NO_ACTIVE_SHIFT") { alert("Belum ada shift!"); return; }
-
-        document.getElementById("modalTrx").classList.remove("hidden");
-        document.getElementById("modalTrx").classList.add("flex");
-        document.getElementById("shiftStartTime").innerText = "Mulai: " + (data.startTime || "-");
-
-        if (!data.transactions || data.transactions.length === 0) {
-            container.innerHTML = `<div class="text-center py-10 text-slate-400 text-[10px]">Belum ada transaksi</div>`;
-            return;
-        }
-
-        let html = "";
-        // Pakai reverse() supaya transaksi terbaru muncul paling atas
-        data.transactions.reverse().forEach((t, index) => {
-            const infoMember = t.namaMember ? 
-                `<div class="mt-1.5 py-1 px-2 bg-blue-50 border border-blue-100 rounded text-[8px] text-blue-700 flex justify-between">
-                    <span>👤 ${t.namaMember}</span>
-                    <span>Poin: +${t.poinDapat || 0}</span>
-                 </div>` : '';
-
-            const totalPotongan = (Number(t.diskon) || 0) + (Number(t.voucher) || 0);
-            const infoPotongan = totalPotongan > 0 ?
-                `<div class="text-[8px] text-rose-500 font-bold italic">Potongan: -Rp ${totalPotongan.toLocaleString()}</div>` : '';
-
-            html += `
-            <div class="bg-white p-2.5 rounded border border-slate-200 shadow-sm">
-                <div class="flex justify-between items-center border-b pb-1.5 mb-1.5 text-[8px]">
-                    <span class="font-bold text-indigo-700">[${t.metode}]</span>
-                    <span class="text-slate-400">${t.waktu}</span>
-                </div>
-                <div class="flex justify-between items-start mb-1">
-                    <div>
-                        <div class="font-black text-slate-800 text-[11px]">Rp ${Number(t.total).toLocaleString()}</div>
-                        ${infoPotongan}
-                    </div>
-                    <span class="text-[7px] text-slate-300">ID: ${t.id}</span>
-                </div>
-                <div class="text-slate-600 text-[9px] leading-tight border-t border-dotted pt-1.5 mt-1">
-                    ${t.pesanan}
-                </div>
-                ${infoMember}
-            </div>`;
-        });
-        container.innerHTML = html;
-    } catch (e) {
-        alert("Gagal ambil data!");
-    } finally {
-        btn.innerText = originalText; btn.disabled = false;
-    }
-}
-
 // ==========================================
 // 1. FUNGSI KONTROL MODAL & METODE (NEW)
 // ==========================================
@@ -473,6 +412,188 @@ async function manageShift(type) {
 }
 
 window.onload = () => { loadMenu(); checkShiftStatus(); };
+
+async function cekDaftarTransaksi() {
+    const btn = document.getElementById("btnCekTrx");
+    const container = document.getElementById("listTrxContent");
+    const originalText = btn.innerText;
+    
+    try {
+        btn.innerText = "..."; btn.disabled = true;
+        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftTransactions`);
+        const data = await res.json();
+
+        if (data.status === "NO_ACTIVE_SHIFT") { alert("Belum ada shift!"); return; }
+
+        // PENTING: Simpan data ke variabel global agar bisa dicetak semua nantinya
+        window.currentShiftData = data.transactions;
+
+        document.getElementById("modalTrx").classList.remove("hidden");
+        document.getElementById("modalTrx").classList.add("flex");
+        document.getElementById("shiftStartTime").innerText = "Mulai: " + (data.startTime || "-");
+
+        if (!data.transactions || data.transactions.length === 0) {
+            container.innerHTML = `<div class="text-center py-10 text-slate-400 text-[10px]">Belum ada transaksi</div>`;
+            return;
+        }
+
+        let html = "";
+        // Kita salin dan reverse supaya tidak merusak data asli di window.currentShiftData
+        const displayData = [...data.transactions].reverse();
+
+        displayData.forEach((t) => {
+            const infoMember = t.namaMember && t.namaMember !== "-" ? 
+                `<div class="mt-1.5 py-1 px-2 bg-blue-50 border border-blue-100 rounded text-[8px] text-blue-700 flex justify-between">
+                    <span>👤 ${t.namaMember}</span>
+                    <span>Poin: +${t.poinDapat || 0}</span>
+                 </div>` : '';
+
+            const totalPotongan = (Number(t.diskon) || 0);
+            const infoPotongan = totalPotongan > 0 ?
+                `<div class="text-[8px] text-rose-500 font-bold italic">Potongan: -Rp ${totalPotongan.toLocaleString()}</div>` : '';
+
+            // Data untuk dikirim ke fungsi reprintStruk
+            const strData = JSON.stringify({
+                id: t.id,
+                waktu: t.waktu,
+                pesanan: t.pesanan,
+                total: t.total,
+                metode: t.metode,
+                member: t.namaMember,
+                poin: t.poinDapat,
+                diskon: t.diskon
+            }).replace(/'/g, "\\'"); // Escape tanda kutip
+
+            html += `
+            <div class="bg-white p-2.5 rounded border border-slate-200 shadow-sm">
+                <div class="flex justify-between items-center border-b pb-1.5 mb-1.5 text-[8px]">
+                    <span class="font-bold text-indigo-700 uppercase">[${t.metode}]</span>
+                    <span class="text-slate-400">${t.waktu}</span>
+                </div>
+                <div class="flex justify-between items-start mb-1">
+                    <div>
+                        <div class="font-black text-slate-800 text-[11px]">Rp ${Number(t.total).toLocaleString()}</div>
+                        ${infoPotongan}
+                    </div>
+                    <span class="text-[7px] text-slate-300">ID: ${t.id}</span>
+                </div>
+                <div class="text-slate-600 text-[9px] leading-tight border-t border-dotted pt-1.5 mt-1">
+                    ${t.pesanan}
+                </div>
+                ${infoMember}
+                
+                <button onclick="reprintStruk('${strData}')" class="w-full mt-2 py-1 bg-slate-800 text-white text-[8px] font-bold rounded uppercase active:bg-black">
+                    🖨️ Cetak Ulang Struk
+                </button>
+            </div>`;
+        });
+        container.innerHTML = html;
+    } catch (e) {
+        alert("Gagal ambil data!");
+    } finally {
+        btn.innerText = originalText; btn.disabled = false;
+    }
+}
+
+// FUNGSI REPRINT STRUK SATUAN
+function reprintStruk(jsonStr) {
+    const data = JSON.parse(jsonStr);
+    
+    let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
+    esc += "(CETAK ULANG)\n";
+    esc += "ID: " + data.id + "\n--------------------------------\n\x1B\x61\x00";
+    
+    // Pecah pesanan jika berupa string koma
+    const items = data.pesanan.split(", ");
+    items.forEach(item => {
+        esc += item + "\n";
+    });
+    
+    esc += "--------------------------------\n";
+    esc += "Metode        : " + data.metode + "\n";
+    
+    if (data.member && data.member !== "-") {
+        esc += "Nama Member   : " + data.member + "\n";
+        esc += "Poin Didapat  : +" + data.poin + "\n";
+    }
+
+    esc += "Diskon        : Rp " + Number(data.diskon).toLocaleString() + "\n";
+    esc += "--------------------------------\n";
+    esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + Number(data.total).toLocaleString() + "\x1B\x21\x00\n";
+    esc += "--------------------------------\n";
+    esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
+
+    if (window.AppInventor) {
+        window.AppInventor.setWebViewString("PRINT|" + esc);
+    } else {
+        console.log(esc);
+        alert("Mode Browser: Data dikirim ke konsol");
+    }
+}
+
+function cetakSemuaTransaksi() {
+    const container = document.getElementById("listTrxContent");
+    if (!window.currentShiftData || window.currentShiftData.length === 0) {
+        alert("Tidak ada data transaksi!");
+        return;
+    }
+
+    const shiftInfo = document.getElementById("shiftStartTime").innerText;
+    let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10REKAP SHIFT\n";
+    esc += "dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
+    esc += shiftInfo + "\n";
+    esc += "--------------------------------\n\x1B\x61\x00";
+
+    // --- BAGIAN 1: REKAP PER ITEM (LOGIKA BARU) ---
+    esc += "\x1B\x21\x01[ REKAP PENJUALAN MENU ]\x1B\x21\x00\n";
+    
+    let itemMap = {}; // Tempat menampung hitungan menu
+
+    window.currentShiftData.forEach(t => {
+        // t.pesanan biasanya formatnya: "Nasi Ayam x2, Teh Manis x1"
+        let items = t.pesanan.split(", ");
+        items.forEach(itemStr => {
+            // Pecah "Nasi Ayam x2" menjadi ["Nasi Ayam", "2"]
+            let part = itemStr.split(" x");
+            let namaMenu = part[0].trim();
+            let qty = part[1] ? parseInt(part[1]) : 1;
+
+            if (itemMap[namaMenu]) {
+                itemMap[namaMenu] += qty;
+            } else {
+                itemMap[namaMenu] = qty;
+            }
+        });
+    });
+
+    // Masukkan hasil hitungan ke string struk
+    for (let menu in itemMap) {
+        let baris = `${menu.padEnd(25).substring(0, 25)} ${itemMap[menu].toString().padStart(3)}\n`;
+        esc += baris;
+    }
+
+    esc += "--------------------------------\n";
+
+    // --- BAGIAN 2: DAFTAR TRANSAKSI (OPSIONAL/RINGKAS) ---
+    esc += "\x1B\x61\x01\x1B\x21\x01[ DETAIL TRANSAKSI ]\x1B\x21\x00\n\x1B\x61\x00";
+    let grandTotal = 0;
+    window.currentShiftData.forEach((t, index) => {
+        esc += `${index + 1}. ${t.waktu} [${t.metode}] Rp ${Number(t.total).toLocaleString()}\n`;
+        grandTotal += Number(t.total);
+    });
+
+    esc += "--------------------------------\n";
+    esc += "\x1B\x61\x01\x1B\x21\x10GRAND TOTAL: Rp " + grandTotal.toLocaleString() + "\x1B\x21\x00\n";
+    esc += "\n\n\n\n\n";
+
+    // Kirim ke Printer
+    if (window.AppInventor) {
+        window.AppInventor.setWebViewString("PRINT|" + esc);
+    } else {
+        alert("Printer tidak terdeteksi. Lihat konsol.");
+        console.log(esc);
+    }
+}
 </script>
 <div id="modalMetode" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-xs overflow-hidden">
@@ -489,14 +610,19 @@ window.onload = () => { loadMenu(); checkShiftStatus(); };
     <div class="bg-white rounded-lg shadow-xl w-full max-w-sm flex flex-col max-h-[85vh] overflow-hidden">
         <div class="bg-indigo-700 text-white p-3 flex justify-between items-center shrink-0">
             <div>
-                <h3 class="font-bold text-[11px] uppercase">Riwayat Transaksi Shift</h3>
+                <h3 class="font-bold text-[11px] uppercase tracking-wider">Riwayat Transaksi Shift</h3>
                 <p id="shiftStartTime" class="text-[8px] opacity-80 italic"></p>
             </div>
-            <button onclick="closeModalTrx()" class="text-white font-bold text-sm px-2">✕</button>
+            <button onclick="closeModalTrx()" class="text-white font-black text-sm px-2 bg-white/20 rounded-full h-6 w-6 flex items-center justify-center active:scale-95">✕</button>
         </div>
-        <div id="listTrxContent" class="p-2 overflow-y-auto custom-scroll flex-1 bg-slate-100 space-y-2"></div>
+        
+        <div id="listTrxContent" class="p-2 overflow-y-auto custom-scroll flex-1 bg-slate-100 space-y-2">
+            </div>
+        
         <div class="p-2 bg-white border-t">
-            <button onclick="closeModalTrx()" class="w-full py-2 bg-slate-200 text-slate-700 text-[10px] font-bold rounded uppercase">Tutup</button>
+            <button onclick="cetakSemuaTransaksi()" class="w-full py-2.5 bg-emerald-600 text-white text-[10px] font-bold rounded uppercase flex items-center justify-center gap-2 active:bg-emerald-700 shadow-sm">
+                🖨️ Cetak Rekap & Item Penjualan
+            </button>
         </div>
     </div>
 </div>
