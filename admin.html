@@ -27,16 +27,17 @@
         <div id="memberInfo" class="text-[8px] text-slate-400 italic truncate max-w-[100px]">Ready</div>
     </div>
     <div class="flex items-center gap-2">
-    <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">BUKA SHIFT</button>
-    
-    <button id="btnCekPemasukan" onclick="cekPemasukan()" class="bg-amber-500 text-white px-2 py-1 rounded text-[9px] font-bold">CEK INCOME</button>
-    
-    <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
+        <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">BUKA SHIFT</button>
+        
+        <button id="btnCekTrx" onclick="cekDaftarTransaksi()" class="bg-indigo-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek Trx</button>
+        
+        <button id="btnCekPemasukan" onclick="cekPemasukan()" class="bg-amber-500 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Income</button>
+        
+        <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
     </div>
-        <div class="flex items-center gap-1 border-l pl-2">
-            <input id="nohp" type="text" placeholder="No WA" class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
-            <button onclick="cekMember()" class="bg-blue-600 text-white px-2 py-1 rounded text-[9px] font-bold">Cek</button>
-        </div>
+    <div class="flex items-center gap-1 border-l pl-2">
+        <input id="nohp" type="text" placeholder="No WA" class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
+        <button onclick="cekMember()" class="bg-blue-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek</button>
     </div>
 </header>
 
@@ -83,11 +84,76 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxqnYKLMnjSSSUAKNm3FLI8S--bzwllrnBXIxCjFbkuyAMQ5pkOvLX9guYswHSnEmj-eg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxvPOgnZYzJNP3PvJsUP2EMruLF2GmsWQWWLgBpJbtTFC7YtCCabtCtVE2s4LPwD3AVxQ/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
 let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null;
+function closeModalTrx() {
+    document.getElementById("modalTrx").classList.add("hidden");
+    document.getElementById("modalTrx").classList.remove("flex");
+}
+
+async function cekDaftarTransaksi() {
+    const btn = document.getElementById("btnCekTrx");
+    const container = document.getElementById("listTrxContent");
+    const originalText = btn.innerText;
+    
+    try {
+        btn.innerText = "..."; btn.disabled = true;
+        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftTransactions`);
+        const data = await res.json();
+
+        if (data.status === "NO_ACTIVE_SHIFT") { alert("Belum ada shift!"); return; }
+
+        document.getElementById("modalTrx").classList.remove("hidden");
+        document.getElementById("modalTrx").classList.add("flex");
+        document.getElementById("shiftStartTime").innerText = "Mulai: " + (data.startTime || "-");
+
+        if (!data.transactions || data.transactions.length === 0) {
+            container.innerHTML = `<div class="text-center py-10 text-slate-400 text-[10px]">Belum ada transaksi</div>`;
+            return;
+        }
+
+        let html = "";
+        // Pakai reverse() supaya transaksi terbaru muncul paling atas
+        data.transactions.reverse().forEach((t, index) => {
+            const infoMember = t.namaMember ? 
+                `<div class="mt-1.5 py-1 px-2 bg-blue-50 border border-blue-100 rounded text-[8px] text-blue-700 flex justify-between">
+                    <span>👤 ${t.namaMember}</span>
+                    <span>Poin: +${t.poinDapat || 0}</span>
+                 </div>` : '';
+
+            const totalPotongan = (Number(t.diskon) || 0) + (Number(t.voucher) || 0);
+            const infoPotongan = totalPotongan > 0 ?
+                `<div class="text-[8px] text-rose-500 font-bold italic">Potongan: -Rp ${totalPotongan.toLocaleString()}</div>` : '';
+
+            html += `
+            <div class="bg-white p-2.5 rounded border border-slate-200 shadow-sm">
+                <div class="flex justify-between items-center border-b pb-1.5 mb-1.5 text-[8px]">
+                    <span class="font-bold text-indigo-700">[${t.metode}]</span>
+                    <span class="text-slate-400">${t.waktu}</span>
+                </div>
+                <div class="flex justify-between items-start mb-1">
+                    <div>
+                        <div class="font-black text-slate-800 text-[11px]">Rp ${Number(t.total).toLocaleString()}</div>
+                        ${infoPotongan}
+                    </div>
+                    <span class="text-[7px] text-slate-300">ID: ${t.id}</span>
+                </div>
+                <div class="text-slate-600 text-[9px] leading-tight border-t border-dotted pt-1.5 mt-1">
+                    ${t.pesanan}
+                </div>
+                ${infoMember}
+            </div>`;
+        });
+        container.innerHTML = html;
+    } catch (e) {
+        alert("Gagal ambil data!");
+    } finally {
+        btn.innerText = originalText; btn.disabled = false;
+    }
+}
 
 // ==========================================
 // 1. FUNGSI KONTROL MODAL & METODE (NEW)
@@ -134,14 +200,8 @@ function pilihMetodeManual(val) {
 // ==========================================
 async function submitOrder() {
     const m = document.getElementById("metode").value;
-    
-    // VALIDASI: Jika metode masih kosong, munculkan MODAL (Bukan Alert)
-    if (!m) {
-        openModalMetode();
-        return;
-    }
+    if (!m) { openModalMetode(); return; }
 
-    // Validasi tambahan khusus CASH
     if (m === "CASH") {
         const bayarInput = document.getElementById("bayar");
         if (!bayarInput || !bayarInput.value || Number(bayarInput.value) <= 0) {
@@ -155,67 +215,50 @@ async function submitOrder() {
     const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
     const diskon = pointDiscount;
     const totalBersih = totalKotor - diskon;
-    
-    btn.innerText = "MENGIRIM..."; btn.disabled = true;
-
     const trxId = "TRX-" + Date.now();
     const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
     
-    pendingOrder = { 
-        total: totalBersih, 
-        noWA: document.getElementById("nohp").value || "-", 
-        pesanan, 
-        metode: m, 
-        trxId 
-    };
+    btn.innerText = "MENCETAK..."; btn.disabled = true;
 
-    try {
-        const isSaved = await prosesSimpanKeCloud();
-        if (isSaved) {
-            // STRUK TETAP SESUAI FORMAT ASLI
-            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
-            esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
-            
-            Object.values(cart).forEach(i => {
-                esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
-            });
-            
-            esc += "--------------------------------\n";
-            esc += "Total Kotor   : Rp " + totalKotor.toLocaleString() + "\n";
-            esc += "Metode        : " + pendingOrder.metode + "\n";
-            
-            if (member) {
-                const poinDapat = Math.floor(totalBersih / 20000) * 100;
-                const poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
-                esc += "Nama Member   : " + member.nama + "\n";
-                esc += "Poin Didapat  : +" + poinDapat + "\n";
-                esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
-                if (redeemQty > 0) esc += "Poin Digunakan: " + redeemQty + "\n";
-            }
+    pendingOrder = { total: totalBersih, noWA: document.getElementById("nohp").value || "-", pesanan, metode: m, trxId };
 
-            esc += "Voucher       : Rp 0\n"; 
-            esc += "Diskon        : Rp " + diskon.toLocaleString() + "\n";
-            esc += "--------------------------------\n";
-            esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersih.toLocaleString() + "\x1B\x21\x00\n";
-            
-            // Detail Cash jika metode Tunai
-            if (m === "CASH") {
-                const bVal = Number(document.getElementById("bayar").value);
-                esc += "Bayar         : Rp " + bVal.toLocaleString() + "\n";
-                esc += "Kembali       : Rp " + (bVal - totalBersih).toLocaleString() + "\n";
-            }
-
-            esc += "--------------------------------\n";
-            esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
-
-            // Fungsi AppInventor (Bluetooth Printer)
-            if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-            location.reload();
-        } else { throw new Error(); }
-    } catch (e) {
-        alert("Gagal simpan rekapan!");
-        btn.innerText = "BAYAR & CETAK"; btn.disabled = false;
+    // --- FORMULASI STRUK (IDENTIK DENGAN ASLINYA) ---
+    let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
+    esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
+    Object.values(cart).forEach(i => {
+        esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
+    });
+    esc += "--------------------------------\n";
+    esc += "Total Kotor   : Rp " + totalKotor.toLocaleString() + "\n";
+    esc += "Metode        : " + pendingOrder.metode + "\n";
+    if (member) {
+        const poinDapat = Math.floor(totalBersih / 20000) * 100;
+        const poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
+        esc += "Nama Member   : " + member.nama + "\n";
+        esc += "Poin Didapat  : +" + poinDapat + "\n";
+        esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
+        if (redeemQty > 0) esc += "Poin Digunakan: " + redeemQty + "\n";
     }
+    esc += "Voucher       : Rp 0\n"; 
+    esc += "Diskon        : Rp " + diskon.toLocaleString() + "\n";
+    esc += "--------------------------------\n";
+    esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersih.toLocaleString() + "\x1B\x21\x00\n";
+    if (m === "CASH") {
+        const bVal = Number(document.getElementById("bayar").value);
+        esc += "Bayar         : Rp " + bVal.toLocaleString() + "\n";
+        esc += "Kembali       : Rp " + (bVal - totalBersih).toLocaleString() + "\n";
+    }
+    esc += "--------------------------------\n";
+    esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
+
+    // --- EKSEKUSI INSTAN ---
+    if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
+    
+    // Simpan ke cloud tanpa 'await' (jalan di background)
+    prosesSimpanKeCloud(); 
+
+    // Langsung reload setelah jeda 800ms
+    setTimeout(() => { location.reload(); }, 800);
 }
 
 // ==========================================
@@ -440,6 +483,21 @@ window.onload = () => { loadMenu(); checkShiftStatus(); };
             <button onclick="pilihMetodeManual('CARD')" class="py-3 bg-white border-2 border-slate-200 hover:border-blue-500 rounded-md font-bold text-slate-700 text-[10px] flex items-center justify-center gap-2">💳 KARTU / EDC</button>
         </div>
         <button onclick="closeModalMetode()" class="w-full py-2 bg-slate-50 text-slate-400 text-[9px] font-bold border-t">BATAL</button>
+    </div>
+</div>
+<div id="modalTrx" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[60] p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-sm flex flex-col max-h-[85vh] overflow-hidden">
+        <div class="bg-indigo-700 text-white p-3 flex justify-between items-center shrink-0">
+            <div>
+                <h3 class="font-bold text-[11px] uppercase">Riwayat Transaksi Shift</h3>
+                <p id="shiftStartTime" class="text-[8px] opacity-80 italic"></p>
+            </div>
+            <button onclick="closeModalTrx()" class="text-white font-bold text-sm px-2">✕</button>
+        </div>
+        <div id="listTrxContent" class="p-2 overflow-y-auto custom-scroll flex-1 bg-slate-100 space-y-2"></div>
+        <div class="p-2 bg-white border-t">
+            <button onclick="closeModalTrx()" class="w-full py-2 bg-slate-200 text-slate-700 text-[10px] font-bold rounded uppercase">Tutup</button>
+        </div>
     </div>
 </div>
 </body>
