@@ -745,10 +745,10 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
         <div style="max-width: 400px; margin: 0 auto;">
             <h2 style="text-align:center; font-size: 16px; margin-bottom: 30px; color:#555;">PILIH ARENA PERMAINAN</h2>
             
-            <div class="game-item" onclick="startUrlGame('ludo')" style="display:flex; align-items:center; gap:20px; padding:18px; background:white; border-radius:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); cursor:pointer;">
+            <div class="game-item" onclick="startUrlGame('matematika')" style="display:flex; align-items:center; gap:20px; padding:18px; background:white; border-radius:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); cursor:pointer;">
                 <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png" style="width:45px;">
                 <div>
-                    <div style="font-weight:900; font-size:15px;">LUDO ONLINE</div>
+                    <div style="font-weight:900; font-size:15px;">matematika dulu biar pinter</div>
                     <div style="font-size:11px; color:#999;">Main multiplayer bersama pemain lain</div>
                 </div>
             </div>
@@ -783,8 +783,8 @@ let generatedOTP = null;
 function startUrlGame(type) {
     let url = "";
     
-    if (type === 'ludo') {
-        url = "ludo.html";  // Memanggil file buatan sendiri
+    if (type === 'matematika') {
+        url = "matematika.html";  // Memanggil file buatan sendiri
     } else if (type === 'snake') {
         url = "snake.html"; // Memanggil file snake yang dibuat sebelumnya
     } else if (type === 'chess') {
