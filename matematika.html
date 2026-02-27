@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MATH MASTER PRO - dyg++</title>
+    <style>
+        :root {
+            --primary: #1B4332; --accent: #00ff99; --danger: #ff4d4d; --bg: #0a0f0d;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg); color: #fff; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px 0; }
+
+        .game-card { width: 350px; background: #1c2521; padding: 20px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: 1px solid #2d3a34; }
+        
+        /* Stats Header */
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 15px; border-left: 4px solid var(--accent); }
+        .stat-val { font-size: 18px; font-weight: 900; color: var(--accent); }
+        .stat-label { font-size: 10px; opacity: 0.7; text-transform: uppercase; }
+
+        /* Question Area */
+        .question-box { height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; border-radius: 20px; margin-bottom: 15px; border: 2px solid #333; position: relative; overflow: hidden; }
+        #timer-bar { position: absolute; bottom: 0; left: 0; height: 4px; background: var(--accent); width: 100%; transition: width 0.1s linear; }
+        #question-text { font-size: 42px; font-weight: 900; letter-spacing: 2px; }
+
+        /* Input Display */
+        #answer-display { width: 100%; height: 50px; background: transparent; border: none; color: var(--accent); text-align: center; font-size: 32px; font-weight: 900; margin-bottom: 20px; outline: none; }
+        #answer-display::placeholder { color: #333; }
+
+        /* Numpad */
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .btn-num { background: #2d3a34; border: none; padding: 15px; border-radius: 15px; color: #fff; font-size: 20px; font-weight: bold; cursor: pointer; transition: 0.1s; box-shadow: 0 4px 0 #151d1a; }
+        .btn-num:active { transform: translateY(3px); box-shadow: none; background: var(--accent); color: #000; }
+        .btn-del { background: var(--danger); }
+        .btn-enter { background: var(--accent); color: #000; grid-column: span 2; }
+
+        /* Difficulty Menu */
+        #menu { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .btn-diff { width: 100%; max-width: 250px; padding: 15px; margin: 5px; border: none; border-radius: 15px; font-weight: 900; cursor: pointer; transition: 0.2s; }
+        .easy { background: #2ecc71; color: white; }
+        .normal { background: #3498db; color: white; }
+        .hard { background: #e67e22; color: white; }
+        .extreme { background: #c0392b; color: white; }
+
+        /* Leaderboard */
+        .leaderboard { margin-top: 20px; width: 100%; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; font-size: 13px; }
+        .rank-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #333; }
+    </style>
+</head>
+<body>
+
+    <div id="menu">
+        <h1 style="color:var(--accent); margin-bottom: 5px;">MATH MASTER</h1>
+        <p style="opacity: 0.6; margin-bottom: 30px;">Pilih Tingkat Kesulitan</p>
+        <button class="btn-diff easy" onclick="startGame('easy')">🟢 EASY</button>
+        <button class="btn-diff normal" onclick="startGame('normal')">🔵 NORMAL</button>
+        <button class="btn-diff hard" onclick="startGame('hard')">🔴 HARD</button>
+        <button class="btn-diff extreme" onclick="startGame('extreme')">💀 EXTREME</button>
+        
+        <div class="leaderboard" style="max-width: 300px;">
+            <h3 style="text-align: center; margin: 0 0 10px 0;">🏆 TOP RANK</h3>
+            <div id="rank-list"></div>
+        </div>
+    </div>
+
+    <div class="game-card">
+        <div class="stats">
+            <div><div class="stat-label">Skor</div><div id="score" class="stat-val">0</div></div>
+            <div style="text-align:center"><div class="stat-label">Level</div><div id="level" class="stat-val">1</div></div>
+            <div style="text-align:right"><div class="stat-label">Target</div><div id="target" class="stat-val">5</div></div>
+        </div>
+
+        <div class="question-box">
+            <div id="question-text">? + ?</div>
+            <div id="timer-bar"></div>
+        </div>
+
+        <input type="text" id="answer-display" placeholder="0" readonly>
+
+        <div class="numpad">
+            <button class="btn-num" onclick="press(1)">1</button>
+            <button class="btn-num" onclick="press(2)">2</button>
+            <button class="btn-num" onclick="press(3)">3</button>
+            <button class="btn-num" onclick="press(4)">4</button>
+            <button class="btn-num" onclick="press(5)">5</button>
+            <button class="btn-num" onclick="press(6)">6</button>
+            <button class="btn-num" onclick="press(7)">7</button>
+            <button class="btn-num" onclick="press(8)">8</button>
+            <button class="btn-num" onclick="press(9)">9</button>
+            <button class="btn-num btn-del" onclick="press('DEL')">⌫</button>
+            <button class="btn-num" onclick="press(0)">0</button>
+            <button class="btn-num btn-del" onclick="press('-')">-</button>
+            <button class="btn-num btn-enter" onclick="checkAnswer()">JAWAB</button>
+        </div>
+    </div>
+
+    <script>
+        let currentAns = 0;
+        let score = 0;
+        let level = 1;
+        let nextLevel = 5;
+        let timeLeft = 100;
+        let timerInterval;
+        let difficulty = 'easy';
+
+        function startGame(diff) {
+            difficulty = diff;
+            document.getElementById('menu').style.display = 'none';
+            resetGame();
+            nextQuestion();
+        }
+
+        function resetGame() {
+            score = 0; level = 1; nextLevel = 5;
+            updateUI();
+        }
+
+        function nextQuestion() {
+            let a, b, op;
+            const ops = ['+', '-'];
+            if(difficulty === 'normal') ops.push('*');
+            if(difficulty === 'hard' || difficulty === 'extreme') ops.push('*', '/');
+
+            op = ops[Math.floor(Math.random() * ops.length)];
+            
+            let range = difficulty === 'easy' ? 10 : (difficulty === 'normal' ? 15 : 50);
+            if(difficulty === 'extreme') range = 100;
+
+            a = Math.floor(Math.random() * range) + 1;
+            b = Math.floor(Math.random() * range) + 1;
+
+            if(op === '-') { if(a < b) [a, b] = [b, a]; }
+            if(op === '/') { a = a * b; } // Biar hasilnya bulat
+
+            document.getElementById('question-text').innerText = `${a} ${op === '*' ? '×' : (op === '/' ? '÷' : op)} ${b}`;
+            
+            if(op === '+') currentAns = a + b;
+            if(op === '-') currentAns = a - b;
+            if(op === '*') currentAns = a * b;
+            if(op === '/') currentAns = a / b;
+
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 100;
+            let speed = 150 - (level * 10); // Semakin tinggi level, semakin cepat
+            if(difficulty === 'extreme') speed = 80 - (level * 5);
+            
+            timerInterval = setInterval(() => {
+                timeLeft -= 1;
+                document.getElementById('timer-bar').style.width = timeLeft + '%';
+                if(timeLeft <= 0) gameOver();
+            }, speed);
+        }
+
+        function press(val) {
+            const display = document.getElementById('answer-display');
+            if(val === 'DEL') display.value = display.value.slice(0, -1);
+            else if(display.value.length < 5) display.value += val;
+        }
+
+        function checkAnswer() {
+            const userAns = parseInt(document.getElementById('answer-display').value);
+            if(userAns === currentAns) {
+                score += (level * 10);
+                nextLevel--;
+                if(nextLevel === 0) {
+                    level++;
+                    nextLevel = 5;
+                }
+                document.getElementById('answer-display').value = '';
+                updateUI();
+                nextQuestion();
+            } else {
+                gameOver();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('level').innerText = level;
+            document.getElementById('target').innerText = nextLevel;
+        }
+
+        function gameOver() {
+            clearInterval(timerInterval);
+            saveRank(score, difficulty);
+            alert(`💥 GAME OVER!\nSkor Akhir: ${score}\nLevel: ${level}`);
+            location.reload();
+        }
+
+        function saveRank(s, diff) {
+            if(s <= 0) return;
+            let ranks = JSON.parse(localStorage.getItem('math_rank')) || [];
+            ranks.push({score: s, diff: diff.toUpperCase(), date: new Date().toLocaleDateString()});
+            ranks.sort((a,b) => b.score - a.score);
+            localStorage.setItem('math_rank', JSON.stringify(ranks.slice(0, 5)));
+        }
+
+        function loadRank() {
+            const ranks = JSON.parse(localStorage.getItem('math_rank')) || [];
+            const list = document.getElementById('rank-list');
+            list.innerHTML = ranks.length ? "" : "<p style='text-align:center; opacity:0.5'>Belum ada rekor</p>";
+            ranks.forEach((r, i) => {
+                list.innerHTML += `<div class="rank-item"><span>#${i+1} ${r.diff}</span><b>${r.score}</b></div>`;
+            });
+        }
+
+        loadRank();
+    </script>
+</body>
+</html>
