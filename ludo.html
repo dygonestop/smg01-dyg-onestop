@@ -3,241 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LUDO GRAND MASTER dyg++</title>
+    <title>LUDO PRO ULTIMATE - dyg++</title>
     <style>
         :root {
-            --red: #eb4d4b; --blue: #4834d4; --green: #6ab04c; --yellow: #f9ca24;
-            --bg: #130f40; --board: #ffffff;
+            --red: #e74c3c; --blue: #3498db; --green: #2ecc71; --yellow: #f1c40f;
+            --dark: #2c3e50; --white: #ecf0f1;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { 
-            margin: 0; background: var(--bg); color: #fff; font-family: 'Arial', sans-serif;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh;
+            margin: 0; background: #1a1a1a; color: white; font-family: 'Arial', sans-serif;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
 
         /* CONTAINER UTAMA */
-        .ludo-wrapper {
-            position: relative; width: 360px; height: 360px;
-            background: var(--board); border: 8px solid #333;
-            border-radius: 10px; box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        .ludo-container {
+            margin-top: 20px; position: relative; width: 360px; height: 360px;
+            background: #fff; border: 6px solid #333; box-shadow: 0 0 40px rgba(0,0,0,0.5);
             display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr);
         }
 
-        /* STYLING PAPAN (PLEK KETIPLEK) */
-        .box { border: 0.5px solid #ccc; position: relative; z-index: 1; }
-        .home-area { grid-column: span 6; grid-row: span 6; padding: 25px; border: 1px solid #000; }
-        .inner-home { 
-            width: 100%; height: 100%; background: #fff; border-radius: 15%; 
-            display: grid; grid-template-columns: 1fr 1fr; padding: 10px; gap: 10px;
-            border: 5px solid rgba(0,0,0,0.1);
+        /* GRID STYLING */
+        .cell { border: 0.2px solid #ddd; position: relative; }
+        .home { grid-column: span 6; grid-row: span 6; position: relative; border: 2px solid #333; }
+        .inner-home {
+            width: 70%; height: 70%; background: white; border-radius: 15%;
+            position: absolute; top: 15%; left: 15%; display: grid;
+            grid-template-columns: 1fr 1fr; padding: 5px; gap: 10px;
         }
-        .spot { border-radius: 50%; border: 2px dashed #ccc; }
+        .token-spot { border-radius: 50%; border: 2px dashed #ccc; }
 
-        /* WARNA AREA */
-        .bg-red { background: var(--red) !important; }
-        .bg-green { background: var(--green) !important; }
-        .bg-yellow { background: var(--yellow) !important; }
-        .bg-blue { background: var(--blue) !important; }
-        .bg-white { background: #fff !important; }
+        /* WARNA TIAP AREA */
+        .red { background: var(--red); } .blue { background: var(--blue); }
+        .green { background: var(--green); } .yellow { background: var(--yellow); }
+        
+        /* JALUR FINISH */
+        .finish-center { grid-column: 7/10; grid-row: 7/10; background: #333; position: relative; }
+        .finish-center svg { width: 100%; height: 100%; }
 
-        /* CENTER FINISH */
-        .center-finish { 
-            grid-column: 7/10; grid-row: 7/10; background: #eee; 
-            display: flex; align-items: center; justify-content: center;
-            clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 0);
-            position: relative;
-        }
-        .finish-tri {
-            position: absolute; width: 0; height: 0; border-style: solid;
-        }
-
-        /* BIDAK (TOKEN) */
+        /* BIDAK (PAWN) */
         .pawn {
             width: 20px; height: 20px; border-radius: 50%;
-            position: absolute; z-index: 99; border: 2px solid #fff;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: none;
-            display: flex; align-items: center; justify-content: center;
+            position: absolute; z-index: 100; border: 2px solid #fff;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+            transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
-        .pawn::after { content: ''; width: 6px; height: 6px; background: rgba(255,255,255,0.5); border-radius: 50%; }
-        
-        /* ANIMASI AKTIF */
-        .pawn.selectable { 
-            cursor: pointer; pointer-events: auto;
-            animation: pulse 0.6s infinite alternate;
-            box-shadow: 0 0 15px gold;
-            border: 3px solid gold;
-        }
-        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.3); } }
+        .pawn.active { animation: bounce 0.6s infinite alternate; box-shadow: 0 0 15px white; }
+        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.3); } }
 
-        /* DADU & UI */
-        .ui-panel { width: 360px; margin-top: 25px; display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 15px; }
-        
+        /* PANEL KONTROL */
+        .ui-panel {
+            width: 360px; margin-top: 20px; background: #333;
+            padding: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: space-between;
+        }
         #dice-box {
-            width: 70px; height: 70px; background: #fff; border-radius: 15px;
+            width: 65px; height: 65px; background: white; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 35px; color: #333; cursor: pointer;
-            box-shadow: 0 8px 0 #bdc3c7; transition: 0.1s;
+            font-size: 32px; color: #333; font-weight: bold; cursor: pointer;
+            box-shadow: 0 5px 0 #999;
         }
-        #dice-box:active { transform: translateY(4px); box-shadow: 0 4px 0 #bdc3c7; }
+        #dice-box:active { transform: translateY(3px); box-shadow: 0 2px 0 #999; }
         
-        .player-info { text-align: right; }
-        .player-tag { padding: 5px 15px; border-radius: 10px; font-weight: 900; letter-spacing: 1px; }
+        .status-box { text-align: right; }
+        .badge { padding: 5px 12px; border-radius: 20px; font-weight: 900; font-size: 12px; }
 
-        #overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000;
+        /* OVERLAY AWAL */
+        #start-menu {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .btn-start {
+            background: var(--yellow); border: none; padding: 15px 40px;
+            border-radius: 30px; font-weight: 900; font-size: 18px; cursor: pointer; margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
-    <div id="overlay">
-        <h1 style="color:var(--yellow); font-size: 40px; margin-bottom: 10px;">LUDO MASTER</h1>
-        <p style="margin-bottom: 30px; opacity: 0.7;">Pilih Jumlah Pemain</p>
-        <div style="display:flex; gap:10px;">
-            <button onclick="start(2)" style="padding:15px 30px; border-radius:10px; border:none; background:var(--red); color:#fff; font-weight:900;">2 PLAYER</button>
-            <button onclick="start(4)" style="padding:15px 30px; border-radius:10px; border:none; background:var(--blue); color:#fff; font-weight:900;">4 PLAYER</button>
-        </div>
+<div id="start-menu">
+    <h1 style="color:var(--yellow); font-size: 32px; margin: 0;">LUDO PRO</h1>
+    <p style="opacity: 0.6;">Dyg++ Gaming Arena</p>
+    <button class="btn-start" onclick="startGame()">▶ MULAI PERMAINAN</button>
+</div>
+
+<div class="ludo-container" id="board">
+    <div class="home red" style="grid-column: 1/7; grid-row: 1/7;"><div class="inner-home"><div class="token-spot"></div><div class="token-spot"></div><div class="token-spot"></div><div class="token-spot"></div></div></div>
+    <div class="home green" style="grid-column: 10/16; grid-row: 1/7;"><div class="inner-home"><div class="token-spot"></div><div class="token-spot"></div><div class="token-spot"></div><div class="token-spot"></div></div></div>
+    <div class="home yellow" style="grid-column: 1/7; grid-row: 10/16;"><div class="inner-home"><div class="token-spot"></div><div class="token-spot"></div><div class="token-spot"></div><div class="token-spot"></div></div></div>
+    <div class="home blue" style="grid-column: 10/16; grid-row: 10/16;"><div class="inner-home"><div class="token-spot"></div><div class="token-spot"></div><div class="token-spot"></div><div class="token-spot"></div></div></div>
+    
+    <div class="finish-center">
+        <svg viewBox="0 0 100 100">
+            <polygon points="0,0 50,50 100,0" fill="#f1c40f"/>
+            <polygon points="100,0 50,50 100,100" fill="#3498db"/>
+            <polygon points="100,100 50,50 0,100" fill="#2ecc71"/>
+            <polygon points="0,100 50,50 0,0" fill="#e74c3c"/>
+        </svg>
     </div>
 
-    <div class="ludo-wrapper" id="board">
-        </div>
-
-    <div class="ui-panel">
-        <div id="dice-box" onclick="roll()">🎲</div>
-        <div class="player-info">
-            <div id="current-p" class="player-tag bg-red">GILIRAN: MERAH</div>
-            <div id="msg" style="font-size: 12px; margin-top: 5px; color: var(--yellow);">Silahkan Kocok Dadu</div>
-        </div>
     </div>
+
+<div class="ui-panel">
+    <div id="dice-box" onclick="rollDice()">🎲</div>
+    <div class="status-box">
+        <div id="turn-badge" class="badge red">GILIRAN: MERAH</div>
+        <div id="info" style="font-size: 11px; margin-top: 8px; color: #aaa;">Klik dadu untuk mulai</div>
+    </div>
+</div>
 
 <script>
-    const board = document.getElementById('board');
-    let turn = 0; // 0:Red, 1:Blue, 2:Yellow, 3:Green
-    let dice = 0;
-    let canRoll = true;
-    let playerCount = 2;
-    
-    // POSISI JALUR SEBENARNYA (X,Y) - Ini adalah koordinat langkah ludo asli
-    const pathBase = [
+    // DATA PATH & KOORDINAT
+    const players = [
+        { color: 'red', tokens: [-1, -1, -1, -1], home: [[1.5,1.5],[1.5,3.5],[3.5,1.5],[3.5,3.5]], startPath: 0 },
+        { color: 'green', tokens: [-1, -1, -1, -1], home: [[10.5,1.5],[10.5,3.5],[12.5,1.5],[12.5,3.5]], startPath: 13 },
+        { color: 'blue', tokens: [-1, -1, -1, -1], home: [[10.5,10.5],[10.5,12.5],[12.5,10.5],[12.5,12.5]], startPath: 39 },
+        { color: 'yellow', tokens: [-1, -1, -1, -1], home: [[1.5,10.5],[1.5,12.5],[3.5,10.5],[3.5,12.5]], startPath: 26 }
+    ];
+
+    const mainPath = [
         [6,1],[6,2],[6,3],[6,4],[6,5],[5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,7],[0,8],[1,8],[2,8],[3,8],[4,8],[5,8],[6,9],[6,10],[6,11],[6,12],[6,13],[6,14],[7,14],[8,14],[8,13],[8,12],[8,11],[8,10],[8,9],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[14,7],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,5],[8,4],[8,3],[8,2],[8,1],[8,0],[7,0],[6,0]
     ];
 
-    const players = [
-        { name: 'MERAH', color: 'red', start: 0, tokens: [-1, -1, -1, -1], home: [[1,1],[1,4],[4,1],[4,4]], finishIdx: 50 },
-        { name: 'BIRU', color: 'blue', start: 26, tokens: [-1, -1, -1, -1], home: [[10,10],[10,13],[13,10],[13,13]], finishIdx: 24 },
-        { name: 'KUNING', color: 'yellow', start: 13, tokens: [-1, -1, -1, -1], home: [[1,10],[1,13],[4,10],[4,13]], finishIdx: 11 },
-        { name: 'HIJAU', color: 'green', start: 39, tokens: [-1, -1, -1, -1], home: [[10,1],[10,4],[13,1],[13,4]], finishIdx: 37 }
-    ];
+    let currentTurn = 0;
+    let diceValue = 0;
+    let canRoll = true;
 
-    function start(num) {
-        playerCount = num;
-        document.getElementById('overlay').style.removeProperty('display');
-        document.getElementById('overlay').style.display = 'none';
-        renderBoard();
-    }
-
-    function renderBoard() {
-        board.innerHTML = '';
-        for(let i=0; i<225; i++) {
-            let r = Math.floor(i/15), c = i%15;
-            const div = document.createElement('div');
-            div.className = 'box';
-            div.id = `c-${r}-${c}`;
-            
-            // Styling kotak spesial
-            if((r<6 && c<6)) div.classList.add('bg-red');
-            if((r>8 && c>8)) div.classList.add('bg-blue');
-            if((r<6 && c>8)) div.classList.add('bg-yellow');
-            if((r>8 && c<6)) div.classList.add('bg-green');
-            
-            // Safe Points
-            if((r==6 && c==1) || (r==8 && c==13) || (r==1 && c==8) || (r==13 && c==6)) div.innerHTML = '★';
-            
-            board.appendChild(div);
-        }
+    function startGame() {
+        document.getElementById('start-menu').style.display = 'none';
+        generateCells();
         updatePawns();
     }
 
-    function roll() {
+    function generateCells() {
+        const board = document.getElementById('board');
+        // Hanya render cell jalur kosong
+        mainPath.forEach((p, i) => {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.style.gridColumn = p[1] + 1;
+            cell.style.gridRow = p[0] + 1;
+            // Warna jalur start
+            if(i === 0) cell.style.background = 'var(--red)';
+            if(i === 13) cell.style.background = 'var(--green)';
+            if(i === 26) cell.style.background = 'var(--yellow)';
+            if(i === 39) cell.style.background = 'var(--blue)';
+            board.appendChild(cell);
+        });
+    }
+
+    function rollDice() {
         if(!canRoll) return;
         canRoll = false;
+        const box = document.getElementById('dice-box');
         
         let count = 0;
-        let anim = setInterval(() => {
-            dice = Math.floor(Math.random()*6)+1;
-            document.getElementById('dice-box').innerText = dice;
+        let rollAnim = setInterval(() => {
+            diceValue = Math.floor(Math.random() * 6) + 1;
+            box.innerText = diceValue;
             count++;
             if(count > 10) {
-                clearInterval(anim);
-                checkMoves();
+                clearInterval(rollAnim);
+                checkMovableTokens();
             }
         }, 50);
     }
 
-    function checkMoves() {
-        let p = players[turn];
-        let movable = false;
-        
+    function checkMovableTokens() {
+        const p = players[currentTurn];
+        let hasMove = false;
+
         p.tokens.forEach((pos, i) => {
-            if(pos === -1 && dice === 6) movable = true;
-            if(pos >= 0) movable = true;
+            if(pos === -1 && diceValue === 6) hasMove = true;
+            if(pos >= 0) hasMove = true;
         });
 
-        if(!movable) {
-            document.getElementById('msg').innerText = "Tidak ada langkah!";
+        if(!hasMove) {
+            document.getElementById('info').innerText = "Tidak ada langkah!";
             setTimeout(nextTurn, 1000);
         } else {
-            document.getElementById('msg').innerText = "PILIH BIDAK!";
-            showSelectable();
+            document.getElementById('info').innerText = "Pilih bidak untuk jalan";
+            highlightTokens();
         }
     }
 
-    function showSelectable() {
-        let p = players[turn];
+    function highlightTokens() {
+        const p = players[currentTurn];
         p.tokens.forEach((pos, i) => {
-            if(pos >= 0 || (pos === -1 && dice === 6)) {
-                const pawnEl = document.getElementById(`pawn-${turn}-${i}`);
-                pawnEl.classList.add('selectable');
-                pawnEl.onclick = () => movePawn(i);
+            if(pos >= 0 || (pos === -1 && diceValue === 6)) {
+                const pawn = document.getElementById(`pawn-${currentTurn}-${i}`);
+                pawn.classList.add('active');
+                pawn.onclick = () => moveToken(i);
             }
         });
     }
 
-    function movePawn(idx) {
-        document.querySelectorAll('.pawn').forEach(el => { el.classList.remove('selectable'); el.onclick = null; });
+    function moveToken(idx) {
+        const p = players[currentTurn];
         
-        let p = players[turn];
-        if(p.tokens[idx] === -1 && dice === 6) {
-            p.tokens[idx] = 0;
+        // Hapus status aktif
+        document.querySelectorAll('.pawn').forEach(el => { el.classList.remove('active'); el.onclick = null; });
+
+        if(p.tokens[idx] === -1) {
+            p.tokens[idx] = 0; // Keluar dari rumah
         } else {
-            // Animasi lompat dilakukan di sini
-            p.tokens[idx] += dice;
+            p.tokens[idx] += diceValue;
         }
 
-        // Cek Makan Bidak Lawan (Kick)
-        checkCapture(turn, p.tokens[idx], idx);
+        // Cek Makan (Kick)
+        checkCapture(idx);
         
         updatePawns();
         
-        if(dice !== 6) nextTurn();
-        else { canRoll = true; document.getElementById('msg').innerText = "DAPAT 6! KOCOK LAGI"; }
+        if(diceValue === 6) {
+            canRoll = true;
+            document.getElementById('info').innerText = "Dapat 6! Kocok lagi.";
+        } else {
+            nextTurn();
+        }
     }
 
-    function checkCapture(currentTurn, pos, tokenIdx) {
-        if(pos < 0) return;
-        let realIdx = (players[currentTurn].start + pos) % 52;
-        
-        players.forEach((p, pIdx) => {
+    function checkCapture(movedIdx) {
+        const p = players[currentTurn];
+        const movedPos = (p.startPath + p.tokens[movedIdx]) % 52;
+
+        players.forEach((other, pIdx) => {
             if(pIdx !== currentTurn) {
-                p.tokens.forEach((tPos, tIdx) => {
-                    if(tPos >= 0) {
-                        let enemyRealIdx = (p.start + tPos) % 52;
-                        if(realIdx === enemyRealIdx) {
-                            p.tokens[tIdx] = -1; // Kena makan!
-                            document.getElementById('msg').innerText = "KICK! BALIK KANDANG!";
+                other.tokens.forEach((oPos, oIdx) => {
+                    if(oPos >= 0) {
+                        const otherActualPos = (other.startPath + oPos) % 52;
+                        if(movedPos === otherActualPos) {
+                            other.tokens[oIdx] = -1; // Makan!
+                            document.getElementById('info').innerText = "KICK! Bidak lawan dimakan!";
                         }
                     }
                 });
@@ -249,37 +245,35 @@
         document.querySelectorAll('.pawn').forEach(el => el.remove());
         players.forEach((p, pIdx) => {
             p.tokens.forEach((pos, tIdx) => {
+                const pawn = document.createElement('div');
+                pawn.className = `pawn ${p.color}`;
+                pawn.id = `pawn-${pIdx}-${tIdx}`;
+                
                 let r, c;
                 if(pos === -1) {
                     r = p.home[tIdx][0]; c = p.home[tIdx][1];
                 } else {
-                    let pathIdx = (p.start + pos) % 52;
-                    r = pathBase[pathIdx][0]; c = pathBase[pathIdx][1];
+                    const actualIdx = (p.startPath + pos) % 52;
+                    r = mainPath[actualIdx][0]; c = mainPath[actualIdx][1];
                 }
-                
-                const pawn = document.createElement('div');
-                pawn.className = `pawn bg-${p.color}`;
-                pawn.id = `pawn-${pIdx}-${tIdx}`;
-                
-                // Kalkulasi Posisi Pixel
+
                 pawn.style.top = (r * 24 + 2) + 'px';
                 pawn.style.left = (c * 24 + 2) + 'px';
-                
                 document.getElementById('board').appendChild(pawn);
             });
         });
     }
 
     function nextTurn() {
-        turn = (turn + 1) % playerCount;
+        currentTurn = (currentTurn + 1) % 4;
         canRoll = true;
-        const p = players[turn];
-        const el = document.getElementById('current-p');
-        el.innerText = `GILIRAN: ${p.name}`;
-        el.className = `player-tag bg-${p.color}`;
-        document.getElementById('msg').innerText = "Silahkan Kocok Dadu";
+        const badge = document.getElementById('turn-badge');
+        const p = players[currentTurn];
+        badge.innerText = `GILIRAN: ${p.color.toUpperCase()}`;
+        badge.className = `badge ${p.color}`;
+        document.getElementById('info').innerText = "Kocok dadu!";
     }
-
 </script>
+
 </body>
 </html>
