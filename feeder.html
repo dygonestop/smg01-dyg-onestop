@@ -3,98 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DYG FEAST MASTER</title>
+    <title>DYG FEAST MASTER PRO</title>
     <style>
         :root {
-            --skin: #ffdbac; --hair: #4b2c20; --accent: #00ff99; --wall: #2c3e50;
+            --accent: #00ff99; --danger: #ff3366; --cafe-wall: #2c3e50; --wood: #5d4037;
         }
         * { box-sizing: border-box; touch-action: none; overflow: hidden; }
         body { 
             margin: 0; background: #1a1a1a; color: #fff; 
-            font-family: 'Arial Rounded MT Bold', sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* ANIMATED CAFE BACKGROUND */
+        /* ANIMASI BACKGROUND CAFE */
         #game-container {
             position: relative; width: 360px; height: 100vh;
-            background: linear-gradient(to bottom, #34495e, #2c3e50);
-            border-left: 4px solid #444; border-right: 4px solid #444;
+            background: var(--cafe-wall);
+            border-left: 5px solid #333; border-right: 5px solid #333;
             overflow: hidden;
         }
         
-        /* Hiasan Jendela Cafe */
-        .window {
-            position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
-            width: 200px; height: 150px; background: #87ceeb;
-            border: 8px solid #5d4037; box-shadow: 0 0 20px rgba(135,206,235,0.5);
+        .cafe-window {
+            position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+            width: 220px; height: 160px; background: #87ceeb;
+            border: 10px solid var(--wood); box-shadow: 0 0 30px rgba(135,206,235,0.3);
+            display: flex; justify-content: center; align-items: center;
         }
-        .window::before { content: ''; position: absolute; top: 0; left: 50%; width: 8px; height: 100%; background: #5d4037; }
-        .window::after { content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 8px; background: #5d4037; }
+        .cafe-window::after { content: ''; position: absolute; width: 100%; height: 5px; background: var(--wood); }
+        .cafe-window::before { content: ''; position: absolute; height: 100%; width: 5px; background: var(--wood); }
 
-        .table-surface {
-            position: absolute; bottom: 0; width: 100%; height: 100px;
-            background: #5d4037; border-top: 5px solid #3e2723;
+        .table-top {
+            position: absolute; bottom: 0; width: 100%; height: 120px;
+            background: linear-gradient(to bottom, #4e342e, #2a1b18);
+            border-top: 8px solid #3e2723;
         }
 
         /* UI OVERLAY */
-        .ui {
-            position: absolute; top: 20px; width: 100%; padding: 0 20px;
-            display: flex; justify-content: space-between; z-index: 10;
+        .ui-layer {
+            position: absolute; top: 20px; width: 100%; padding: 0 15px;
+            display: flex; justify-content: space-between; z-index: 50;
         }
-        .glass-panel {
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
-            padding: 10px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);
+        .status-pill {
+            background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 20px;
+            border: 1px solid var(--accent); min-width: 80px; text-align: center;
         }
-        .stat-val { font-size: 20px; color: var(--accent); font-weight: 900; }
-        .stat-lbl { font-size: 9px; text-transform: uppercase; opacity: 0.8; }
+        .val { font-size: 18px; font-weight: 900; color: var(--accent); display: block; }
+        .lbl { font-size: 9px; text-transform: uppercase; opacity: 0.7; }
 
-        /* MODAL */
+        /* MODAL / MENU */
         .modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95);
             z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .btn-play {
-            background: var(--accent); color: #000; border: none; padding: 15px 50px;
-            border-radius: 50px; font-weight: 900; font-size: 20px; cursor: pointer;
-            box-shadow: 0 5px 0 #00965e;
+        .btn-start {
+            background: var(--accent); color: #000; border: none; padding: 15px 45px;
+            border-radius: 50px; font-weight: 900; font-size: 18px; cursor: pointer;
+            box-shadow: 0 6px 0 #00965e; margin: 10px;
         }
-        .btn-play:active { transform: translateY(3px); box-shadow: none; }
+        .btn-start:active { transform: translateY(4px); box-shadow: none; }
 
-        canvas { display: block; }
+        canvas { display: block; z-index: 10; position: relative; }
     </style>
 </head>
 <body>
 
     <div id="game-container">
-        <div class="window"></div>
-        <div class="table-surface"></div>
+        <div class="cafe-window"></div>
+        <div class="table-top"></div>
 
-        <div class="ui">
-            <div class="glass-panel">
-                <div class="stat-lbl">Score</div>
-                <div id="score" class="stat-val">0</div>
+        <div class="ui-layer">
+            <div class="status-pill">
+                <span class="lbl">Skor</span>
+                <span id="score-text" class="val">0</span>
             </div>
-            <div class="glass-panel" style="text-align: right;">
-                <div class="stat-lbl">Level</div>
-                <div id="level" class="stat-val">1</div>
+            <div class="status-pill">
+                <span class="lbl">Level</span>
+                <span id="level-text" class="val">1</span>
             </div>
         </div>
 
         <canvas id="gameCanvas"></canvas>
 
-        <div id="menu" class="modal">
-            <h1 style="color:var(--accent); font-size: 42px; margin: 0;">FEAST MASTER</h1>
-            <p style="margin-bottom: 30px; opacity: 0.7;">Pilih Karakter & Mulai</p>
+        <div id="overlay" class="modal">
+            <h1 style="color:var(--accent); margin:0;">FEAST MASTER</h1>
+            <p style="opacity:0.6; margin-bottom:20px;">Tangkap Makanan Dengan Mulut!</p>
             
-            <div style="display: flex; gap: 20px; margin-bottom: 30px;">
-                <button onclick="startGame('boy')" class="btn-play" style="padding:10px 20px; font-size: 14px; background:#3498db;">♂️ COWOK</button>
-                <button onclick="startGame('girl')" class="btn-play" style="padding:10px 20px; font-size: 14px; background:#e91e63;">♀️ CEWEK</button>
-            </div>
+            <button class="btn-start" onclick="beginGame('boy')">👦 PAKAI COWOK</button>
+            <button class="btn-start" onclick="beginGame('girl')" style="background:#ff75a0; box-shadow: 0 6px 0 #c2406a;">👧 PAKAI CEWEK</button>
 
-            <div id="leaderboard" style="width: 280px; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 20px;">
-                <h3 style="margin:0 0 10px 0; font-size: 14px;">🏆 GLOBAL TOP FEEDER</h3>
-                <div id="rank-list" style="font-size: 12px;"></div>
+            <div style="margin-top:30px; width:250px; background:rgba(255,255,255,0.05); padding:15px; border-radius:15px;">
+                <h4 style="margin:0 0 10px 0; font-size:12px; text-align:center;">🏆 TOP LEADERBOARD</h4>
+                <div id="rank-display" style="font-size:11px;"></div>
             </div>
         </div>
     </div>
@@ -105,189 +104,195 @@
     canvas.width = 360;
     canvas.height = window.innerHeight;
 
-    let score = 0, level = 1, gameActive = false, gender = 'boy';
+    let score = 0, level = 1, gameActive = false, charType = 'boy';
     let items = [], particles = [];
     let playerX = 180;
-    let mouthOpen = 0; // 0 to 1
+    let mouthOpen = 0; 
 
-    const foods = [
-        {e: '🍔', s: 'BIG'}, {e: '🍕', s: 'SLI'}, {e: '🍦', s: 'COL'}, 
-        {e: '🥤', s: 'DRK'}, {e: '🍗', s: 'HOT'}, {e: '🍩', s: 'SWT'}
-    ];
+    const foodIcons = ['🍔', '🍕', '🍗', '🍟', '🍦', '🍩', '🥤', '🍰'];
 
-    function startGame(g) {
-        gender = g;
-        document.getElementById('menu').style.display = 'none';
+    function beginGame(type) {
+        charType = type;
+        document.getElementById('overlay').style.display = 'none';
         score = 0; level = 1; items = []; gameActive = true;
-        updateUI();
-        spawnItem();
-        animate();
+        updateStats();
+        spawnLogic();
+        loop();
     }
 
-    function spawnItem() {
+    function spawnLogic() {
         if(!gameActive) return;
         
-        const isBomb = Math.random() < (0.05 + (level * 0.02));
+        // TINGKAT KESULITAN: Probabilitas bom naik sesuai level
+        const bombChance = 0.05 + (level * 0.03);
+        const isBomb = Math.random() < bombChance;
+        
         items.push({
-            x: 40 + Math.random() * (canvas.width - 80),
+            x: 30 + Math.random() * (canvas.width - 60),
             y: -50,
-            emoji: isBomb ? '💣' : foods[Math.floor(Math.random()*foods.length)].e,
+            icon: isBomb ? '💣' : foodIcons[Math.floor(Math.random() * foodIcons.length)],
             isBomb: isBomb,
-            speed: 3 + (level * 0.5) + Math.random() * 2,
-            wobble: Math.random() * 0.05, // Efek jatuh tidak lurus
-            angle: 0
+            // TINGKAT KESULITAN: Kecepatan jatuh naik sesuai level
+            speed: (2.5 + Math.random() * 2) + (level * 0.6),
+            wobble: Math.random() * 0.1,
+            wobbleDir: Math.random() > 0.5 ? 1 : -1
         });
 
-        setTimeout(spawnItem, Math.max(500, 1200 - (level * 100)));
+        // TINGKAT KESULITAN: Jeda spawn makin cepat
+        let nextSpawn = Math.max(400, 1300 - (level * 120));
+        setTimeout(spawnLogic, nextSpawn);
     }
 
     function drawPlayer() {
+        const headY = canvas.height - 140;
         ctx.save();
-        ctx.translate(playerX, canvas.height - 120);
+        ctx.translate(playerX, headY);
 
-        // LEHER
-        ctx.fillStyle = '#e0ac69';
-        ctx.fillRect(-15, 60, 30, 20);
-
-        // KEPALA (BASE)
-        ctx.fillStyle = (gender === 'boy') ? '#4b2c20' : '#d81b60'; // Warna Rambut
+        // RAMBUT (Belakang)
+        ctx.fillStyle = (charType === 'boy') ? '#3e2723' : '#880e4f';
         ctx.beginPath();
-        ctx.arc(0, 0, 45, 0, Math.PI * 2);
+        ctx.arc(0, -5, 48, 0, Math.PI * 2);
         ctx.fill();
 
         // MUKA
         ctx.fillStyle = '#ffdbac';
         ctx.beginPath();
-        ctx.arc(0, 10, 40, 0, Math.PI * 2);
+        ctx.arc(0, 0, 42, 0, Math.PI * 2);
         ctx.fill();
 
         // MATA
-        ctx.fillStyle = '#333';
+        ctx.fillStyle = '#222';
         ctx.beginPath();
-        ctx.arc(-15, 0, 5, 0, Math.PI * 2);
-        ctx.arc(15, 0, 5, 0, Math.PI * 2);
+        ctx.arc(-15, -5, 5, 0, Math.PI * 2);
+        ctx.arc(15, -5, 5, 0, Math.PI * 2);
         ctx.fill();
 
-        // MULUT DINAMIS (MEMBUKA OTOMATIS)
-        ctx.fillStyle = '#641e16';
-        let mouthH = 5 + (mouthOpen * 35);
+        // MULUT DINAMIS (Logika Realistic)
+        ctx.fillStyle = '#4a1412';
+        // Mulut melebar ke bawah saat mouthOpen (0-1)
+        let mSize = mouthOpen * 38;
         ctx.beginPath();
-        ctx.ellipse(0, 30, 20, mouthH, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 18, 22, 5 + mSize, 0, 0, Math.PI * 2);
         ctx.fill();
-        
-        // LIDAH (Hanya muncul kalau buka lebar)
-        if(mouthOpen > 0.5) {
-            ctx.fillStyle = '#ec7063';
-            ctx.beginPath();
-            ctx.ellipse(0, 30 + mouthH/2, 10, 5, 0, 0, Math.PI * 2);
-            ctx.fill();
+
+        // GIGI (Hanya saat buka)
+        if(mouthOpen > 0.4) {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-12, 18 - (5 + mSize), 24, 6);
         }
 
         ctx.restore();
     }
 
-    function animate() {
+    function loop() {
         if(!gameActive) return;
         ctx.clearRect(0,0, canvas.width, canvas.height);
 
-        // Cek jarak makanan terdekat untuk animasi mulut
-        let nearestDist = 1000;
-        
+        let nearestDist = 999;
+        const catchY = canvas.height - 122; // Posisi pas di mulut
+
         items.forEach((item, i) => {
-            // Gerak Realistis
-            item.angle += item.wobble;
-            item.x += Math.sin(item.angle) * 2;
+            // Gerak Jatuh + Wobble (Goyang)
             item.y += item.speed;
+            item.x += Math.sin(item.y / 20) * (item.wobble * 15);
 
-            // Draw Item
-            ctx.font = '40px Arial';
+            // Gambar Makanan
+            ctx.font = '42px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(item.emoji, item.x, item.y);
+            ctx.fillText(item.icon, item.x, item.y);
 
-            // Logic deteksi jarak ke mulut
-            let dist = Math.hypot(item.x - playerX, item.y - (canvas.height - 90));
-            if(dist < nearestDist) nearestDist = dist;
+            // Jarak ke Mulut
+            let d = Math.hypot(item.x - playerX, item.y - catchY);
+            if(d < nearestDist) nearestDist = d;
 
-            // Collision (Tertangkap)
-            if(dist < 40) {
-                if(item.isBomb) gameOver();
-                else {
-                    score += 10;
-                    if(score % 100 === 0) level++;
-                    createExplosion(item.x, item.y);
-                    items.splice(i, 1);
-                    updateUI();
+            // COLLISION DETECTION (ANTI-BUG)
+            if(item.y > catchY - 20 && item.y < catchY + 30) {
+                if(Math.abs(item.x - playerX) < 35) {
+                    if(item.isBomb) {
+                        endGame();
+                    } else {
+                        score += 10;
+                        if(score % 100 === 0) {
+                            level++;
+                            updateStats();
+                        }
+                        createFx(item.x, item.y);
+                        items.splice(i, 1);
+                        updateStats();
+                    }
                 }
             }
 
-            if(item.y > canvas.height) items.splice(i, 1);
+            // Hapus jika lewat bawah
+            if(item.y > canvas.height + 50) items.splice(i, 1);
         });
 
-        // Set mouthOpen berdasarkan jarak makanan (Makin dekat makin mangap)
-        let targetMouth = (nearestDist < 150) ? (150 - nearestDist) / 100 : 0;
-        mouthOpen += (targetMouth - mouthOpen) * 0.2;
+        // Update Animasi Mulut (Buka jika makanan mendekat < 180px)
+        let targetOpen = (nearestDist < 180) ? (180 - nearestDist) / 130 : 0;
+        if(targetOpen > 1) targetOpen = 1;
+        mouthOpen += (targetOpen - mouthOpen) * 0.2;
 
         drawPlayer();
-        drawParticles();
-        requestAnimationFrame(animate);
+        drawFx();
+        requestAnimationFrame(loop);
     }
 
-    function createExplosion(x, y) {
-        for(let i=0; i<10; i++) {
+    function createFx(x, y) {
+        for(let i=0; i<8; i++) {
             particles.push({
                 x, y,
-                vx: (Math.random()-0.5)*10,
-                vy: (Math.random()-0.5)*10,
-                life: 1,
-                c: '#fff'
+                vx: (Math.random()-0.5)*8,
+                vy: (Math.random()-0.5)*8,
+                a: 1
             });
         }
     }
 
-    function drawParticles() {
+    function drawFx() {
         particles.forEach((p, i) => {
-            p.x += p.vx; p.y += p.vy; p.life -= 0.05;
-            ctx.fillStyle = `rgba(255,255,255,${p.life})`;
+            p.x += p.vx; p.y += p.vy; p.a -= 0.04;
+            ctx.fillStyle = `rgba(255,255,255,${p.a})`;
             ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
-            if(p.life <= 0) particles.splice(i, 1);
+            if(p.a <= 0) particles.splice(i, 1);
         });
     }
 
-    function updateUI() {
-        document.getElementById('score').innerText = score;
-        document.getElementById('level').innerText = level;
+    function updateStats() {
+        document.getElementById('score-text').innerText = score;
+        document.getElementById('level-text').innerText = level;
     }
 
-    function gameOver() {
+    function endGame() {
         gameActive = false;
-        saveScore(score);
-        alert("🤢 Ouch! Kamu makan BOM!\nSkor Akhir: " + score);
+        saveLeaderboard(score);
+        alert("💥 MELEDAK! Mulut kamu kena Bom!\nSkor Akhir: " + score);
         location.reload();
     }
 
-    // Touch & Mouse Control
+    // Input Control
     window.addEventListener('mousemove', e => playerX = e.clientX);
     window.addEventListener('touchmove', e => {
         playerX = e.touches[0].clientX;
         e.preventDefault();
     }, {passive: false});
 
-    function saveScore(s) {
-        let h = JSON.parse(localStorage.getItem('feeder_hi')) || [];
-        h.push({s, d: new Date().toLocaleDateString()});
-        h.sort((a,b) => b.s - a.s);
-        localStorage.setItem('feeder_hi', JSON.stringify(h.slice(0, 5)));
+    function saveLeaderboard(s) {
+        let h = JSON.parse(localStorage.getItem('dyg_feeder_rank')) || [];
+        h.push({score: s, date: new Date().toLocaleDateString()});
+        h.sort((a,b) => b.score - a.score);
+        localStorage.setItem('dyg_feeder_rank', JSON.stringify(h.slice(0, 5)));
     }
 
-    function loadRank() {
-        const h = JSON.parse(localStorage.getItem('feeder_hi')) || [];
-        document.getElementById('rank-list').innerHTML = h.map((x,i) => 
-            `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #444">
-                <span>#${i+1}</span><span>${x.d}</span><b>${x.s}</b>
-            </div>`).join('');
+    function showRank() {
+        const h = JSON.parse(localStorage.getItem('dyg_feeder_rank')) || [];
+        document.getElementById('rank-display').innerHTML = h.map((x,i) => `
+            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #333">
+                <span>#${i+1}</span><span>${x.date}</span><b>${x.score}</b>
+            </div>
+        `).join('') || "<p style='text-align:center; opacity:0.5'>Belum ada rekor</p>";
     }
 
-    loadRank();
+    showRank();
 </script>
 </body>
 </html>
