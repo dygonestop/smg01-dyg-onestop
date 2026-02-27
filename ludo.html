@@ -1,164 +1,324 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>🎲 LUDO PRO FULL</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
-body{
-    margin:0;
-    background:#0b3d2e;
-    color:#fff;
-    font-family:Segoe UI,Arial;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-}
-.app{
-    width:420px;
-    background:#111;
-    border-radius:18px;
-    box-shadow:0 0 40px #00ffcc;
-    padding:12px;
-}
-h1{text-align:center;color:#00ffcc}
-canvas{
-    background:#fff;
-    border-radius:12px;
-    display:block;
-    margin:auto;
-}
-.controls{text-align:center;margin-top:10px}
-button,select{
-    width:100%;
-    padding:10px;
-    border-radius:10px;
-    border:none;
-    margin-top:6px;
-    font-weight:bold;
-}
-button{background:linear-gradient(135deg,#00ffcc,#00ccff)}
-.dice{font-size:40px;margin:6px}
-.info{font-size:14px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎲 LUDO ELITE dyg++</title>
+    <style>
+        :root {
+            --red: #ff3838; --blue: #17c0eb; --green: #32ff7e; --yellow: #fff200;
+            --bg: #0f172a; --panel: #1e293b;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            margin: 0; background: var(--bg); color: #fff; 
+            font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; 
+        }
+
+        .game-header { margin: 15px 0; text-align: center; }
+        .game-header h1 { margin: 0; font-size: 20px; color: var(--yellow); text-shadow: 0 0 10px rgba(255,242,0,0.5); }
+
+        /* LUDO BOARD CSS GRID */
+        #ludo-container {
+            width: 360px; height: 360px; background: #fff;
+            display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr);
+            border: 5px solid #333; box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .cell { border: 0.1px solid #ddd; position: relative; display: flex; align-items: center; justify-content: center; }
+        
+        /* Area Home */
+        .home { grid-column: span 6; grid-row: span 6; border: 2px solid #333; display: flex; align-items: center; justify-content: center; padding: 10px; }
+        .home-inner { width: 100%; height: 100%; background: #fff; border-radius: 10px; display: grid; grid-template-columns: 1fr 1fr; padding: 10px; gap: 10px; }
+        .home-red { background: var(--red); grid-column: 1/7; grid-row: 1/7; }
+        .home-green { background: var(--green); grid-column: 10/16; grid-row: 1/7; }
+        .home-yellow { background: var(--yellow); grid-column: 1/7; grid-row: 10/16; }
+        .home-blue { background: var(--blue); grid-column: 10/16; grid-row: 10/16; }
+
+        .finish { grid-column: 7/10; grid-row: 7/10; background: #333; position: relative; overflow: hidden; }
+        .finish-tri { position: absolute; width: 0; height: 0; border-style: solid; }
+        
+        /* Jalur Warna */
+        .path-r { background: var(--red); } .path-g { background: var(--green); }
+        .path-y { background: var(--yellow); } .path-b { background: var(--blue); }
+
+        /* Bidak (Token) */
+        .token {
+            width: 18px; height: 18px; border-radius: 50%; border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 10; position: absolute;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+        .token.active { animation: bounce 0.5s infinite alternate; border: 2px solid gold; transform: scale(1.2); }
+        @keyframes bounce { from { margin-top: 0; } to { margin-top: -8px; } }
+
+        /* Controls */
+        .controls { 
+            width: 360px; margin-top: 20px; background: var(--panel); 
+            padding: 15px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .player-status { display: flex; justify-content: space-between; align-items: center; }
+        .turn-box { font-weight: 900; font-size: 14px; padding: 5px 15px; border-radius: 20px; }
+
+        .dice-area { display: flex; align-items: center; justify-content: center; gap: 20px; }
+        #dice { 
+            width: 60px; height: 60px; background: #fff; border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 30px; color: #333; font-weight: 900; cursor: pointer;
+            box-shadow: 0 5px 0 #ccc; transition: 0.1s;
+        }
+        #dice:active { transform: translateY(3px); box-shadow: 0 2px 0 #ccc; }
+        
+        .btn-play {
+            background: linear-gradient(to bottom, var(--yellow), orange);
+            border: none; padding: 10px; border-radius: 10px; font-weight: 900; cursor: pointer;
+        }
+        .setup-screen {
+            position: fixed; inset: 0; background: var(--bg); z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+        }
+    </style>
 </head>
-
 <body>
-<div class="app">
-<h1>🎲 LUDO PRO</h1>
 
-<select id="mode">
-  <option value="1">1 Player vs AI</option>
-  <option value="2">2 Player</option>
-  <option value="4">4 Player</option>
-</select>
+    <div id="setup" class="setup-screen">
+        <h1 style="color:var(--yellow)">LUDO ELITE</h1>
+        <select id="gameMode" style="padding:10px; border-radius:10px; width:200px;">
+            <option value="pvp">2 Player (Manual)</option>
+            <option value="pva">1 Player vs AI</option>
+            <option value="4p">4 Player (Manual)</option>
+        </select>
+        <button class="btn-play" style="width:200px;" onclick="initGame()">MULAI PERMAINAN</button>
+    </div>
 
-<button onclick="startGame()">▶ MULAI</button>
+    <div class="game-header">
+        <h1>LUDO ARENA dyg++</h1>
+    </div>
 
-<canvas id="board" width="360" height="360"></canvas>
+    <div id="ludo-board-container">
+        <div id="ludo-board">
+            </div>
+    </div>
 
-<div class="controls">
-  <div class="dice" id="dice">🎲</div>
-  <button onclick="rollDice()">ROLL</button>
-  <div class="info" id="info"></div>
-</div>
-</div>
+    <div class="controls">
+        <div class="player-status">
+            <div id="current-turn-text" class="turn-box">GILIRAN: MERAH</div>
+            <div id="info-move" style="font-size: 12px; color: var(--yellow);">Kocok Dadu!</div>
+        </div>
+        <div class="dice-area">
+            <div id="dice" onclick="handleDiceRoll()">🎲</div>
+        </div>
+    </div>
 
 <script>
-/* ====== CORE DATA ====== */
-const canvas=document.getElementById("board");
-const ctx=canvas.getContext("2d");
-const diceEl=document.getElementById("dice");
-const info=document.getElementById("info");
+    // Konfigurasi Koordinat Grid Ludo (0-14)
+    const RED_HOME = [ [1,1], [1,4], [4,1], [4,4] ];
+    const GREEN_HOME = [ [1,10], [1,13], [4,10], [4,13] ];
+    const YELLOW_HOME = [ [10,1], [10,4], [13,1], [13,4] ];
+    const BLUE_HOME = [ [10,10], [10,13], [13,10], [13,13] ];
 
-const COLORS=["red","green","yellow","blue"];
-const EMOJI=["🔴","🟢","🟡","🔵"];
-const SAFE=[0,8,13,21,26,34,39,47];
+    let state = {
+        turn: 0, // 0:Red, 1:Green, 2:Yellow, 3:Blue
+        diceValue: 0,
+        canRoll: true,
+        isMoving: false,
+        mode: 'pvp',
+        players: [
+            { id: 0, color: 'red', tokens: [-1, -1, -1, -1] },
+            { id: 1, color: 'green', tokens: [-1, -1, -1, -1] },
+            { id: 2, color: 'yellow', tokens: [-1, -1, -1, -1] },
+            { id: 3, color: 'blue', tokens: [-1, -1, -1, -1] }
+        ]
+    };
 
-const PATH=[
-  [6,0],[7,0],[8,0],[8,1],[8,2],[8,3],[8,4],
-  [9,4],[10,4],[11,4],[12,4],[13,4],
-  [14,5],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,6],
-  [8,7],[8,8],[7,8],[6,8],[5,8],[4,8],[3,8],[2,8],[1,8],
-  [0,9],[0,10],[1,10],[2,10],[3,10],[4,10],[5,10],[6,10],
-  [6,11],[6,12],[6,13],[6,14],[7,14],[8,14],
-  [8,13],[8,12],[8,11],[9,10],[10,10],[11,10],[12,10],[13,10]
-];
+    function initGame() {
+        state.mode = document.getElementById('gameMode').value;
+        document.getElementById('setup').style.display = 'none';
+        renderBoard();
+        updateUI();
+    }
 
-let players=[],current=0,dice=0,mode=1,gameOn=false;
+    function renderBoard() {
+        const board = document.getElementById('ludo-board');
+        board.className = 'board-grid';
+        board.innerHTML = '';
+        
+        const container = document.getElementById('ludo-board-container');
+        container.innerHTML = `<div id="ludo-board" style="display:grid; grid-template-columns:repeat(15, 1fr); width:360px; height:360px; background:#fff; border:4px solid #333;"></div>`;
+        const grid = document.getElementById('ludo-board');
 
-/* ====== GAME START ====== */
-function startGame(){
-  mode=parseInt(document.getElementById("mode").value);
-  players=[];
-  for(let i=0;i<mode;i++){
-    players.push({
-      color:COLORS[i],
-      bot:(mode===1 && i===1),
-      tokens:[-1,-1,-1,-1]
-    });
-  }
-  current=0;
-  gameOn=true;
-  draw();
-  info.textContent=`Giliran ${EMOJI[current]}`;
-}
+        // Generate 225 Cells
+        for (let r = 0; r < 15; r++) {
+            for (let c = 0; c < 15; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.r = r;
+                cell.dataset.c = c;
 
-/* ====== DRAW ====== */
-function draw(){
-  ctx.clearRect(0,0,360,360);
-  ctx.fillStyle="#eee";
-  ctx.fillRect(0,0,360,360);
+                // Mewarnai Jalur & Home
+                applyCellStyling(cell, r, c);
+                grid.appendChild(cell);
+            }
+        }
+        placeTokens();
+    }
 
-  PATH.forEach(p=>{
-    ctx.fillStyle="#ccc";
-    ctx.fillRect(p[0]*24,p[1]*24,24,24);
-  });
+    function applyCellStyling(cell, r, c) {
+        // Logika pewarnaan area Ludo standar
+        if (r < 6 && c < 6) cell.style.background = 'var(--red)';
+        else if (r < 6 && c > 8) cell.style.background = 'var(--green)';
+        else if (r > 8 && c < 6) cell.style.background = 'var(--yellow)';
+        else if (r > 8 && c > 8) cell.style.background = 'var(--blue)';
+        
+        // Jalur tengah
+        if (r === 7 && c > 0 && c < 7) cell.classList.add('path-r');
+        if (c === 7 && r > 0 && r < 7) cell.classList.add('path-g');
+        if (c === 7 && r > 7 && r < 14) cell.classList.add('path-b');
+        if (r === 7 && c > 7 && c < 14) cell.classList.add('path-y');
+        
+        // Titik Start
+        if (r === 6 && c === 1) cell.style.background = 'var(--red)';
+        if (r === 1 && c === 8) cell.style.background = 'var(--green)';
+        if (r === 8 && c === 13) cell.style.background = 'var(--yellow)';
+        if (r === 13 && c === 6) cell.style.background = 'var(--blue)';
 
-  players.forEach((pl,i)=>{
-    pl.tokens.forEach(pos=>{
-      if(pos>=0){
-        const p=PATH[(pos+i*13)%52];
-        ctx.fillStyle=pl.color;
-        ctx.beginPath();
-        ctx.arc(p[0]*24+12,p[1]*24+12,9,0,Math.PI*2);
-        ctx.fill();
-      }
-    });
-  });
-}
+        if (r >= 6 && r <= 8 && c >= 6 && c <= 8) cell.style.background = '#333';
+    }
 
-/* ====== DICE ====== */
-function rollDice(){
-  if(!gameOn)return;
-  dice=Math.floor(Math.random()*6)+1;
-  diceEl.textContent=dice;
-  info.textContent=`${EMOJI[current]} dapat ${dice}`;
-  setTimeout(moveAuto,600);
-}
+    function handleDiceRoll() {
+        if (!state.canRoll) return;
+        
+        state.canRoll = false;
+        let rollAnim = setInterval(() => {
+            state.diceValue = Math.floor(Math.random() * 6) + 1;
+            document.getElementById('dice').innerText = state.diceValue;
+        }, 50);
 
-/* ====== MOVE ====== */
-function moveAuto(){
-  const pl=players[current];
-  let best=-1,bestScore=-999;
+        setTimeout(() => {
+            clearInterval(rollAnim);
+            checkMovePossibility();
+        }, 600);
+    }
 
-  pl.tokens.forEach((pos,i)=>{
-    let score=0;
-    if(pos===-1 && dice===6) score+=50;
-    if(pos>=0) score+=pos;
-    if(score>bestScore){bestScore=score;best=i;}
-  });
+    function checkMovePossibility() {
+        const player = state.players[state.turn];
+        const canMove = player.tokens.some(pos => {
+            if (pos === -1 && state.diceValue === 6) return true;
+            if (pos >= 0) return true;
+            return false;
+        });
 
-  if(best!==-1){
-    if(pl.tokens[best]===-1 && dice===6) pl.tokens[best]=0;
-    else if(pl.tokens[best]>=0) pl.tokens[best]+=dice;
-  }
+        if (!canMove) {
+            document.getElementById('info-move').innerText = "Tidak ada langkah!";
+            setTimeout(nextTurn, 1000);
+        } else {
+            document.getElementById('info-move').innerText = "Pilih Bidak!";
+            highlightSelectableTokens();
+        }
+    }
 
-  if(dice!==6) current=(current+1)%players.length;
-  draw();
-  info.textContent=`Giliran ${EMOJI[current]}`;
-}
+    function highlightSelectableTokens() {
+        const tokens = document.querySelectorAll(`.token-${state.turn}`);
+        tokens.forEach((t, idx) => {
+            const pos = state.players[state.turn].tokens[idx];
+            if (pos >= 0 || (pos === -1 && state.diceValue === 6)) {
+                t.classList.add('active');
+                t.onclick = () => moveToken(idx);
+            }
+        });
+    }
+
+    function moveToken(tokenIdx) {
+        if (state.isMoving) return;
+        
+        // Hapus semua highlight
+        document.querySelectorAll('.token').forEach(t => {
+            t.classList.remove('active');
+            t.onclick = null;
+        });
+
+        const player = state.players[state.turn];
+        if (player.tokens[tokenIdx] === -1) {
+            player.tokens[tokenIdx] = 0; // Keluar ke start
+        } else {
+            player.tokens[tokenIdx] += state.diceValue;
+        }
+
+        placeTokens();
+        
+        if (state.diceValue !== 6) {
+            nextTurn();
+        } else {
+            state.canRoll = true;
+            document.getElementById('info-move').innerText = "Dapat 6! Kocok Lagi!";
+        }
+    }
+
+    function placeTokens() {
+        // Hapus token lama
+        document.querySelectorAll('.token').forEach(t => t.remove());
+
+        state.players.forEach((p, pIdx) => {
+            p.tokens.forEach((pos, tIdx) => {
+                let coords = getCoordinates(pIdx, pos, tIdx);
+                const cell = document.querySelector(`.cell[data-r='${coords[0]}'][data-c='${coords[1]}']`);
+                if (cell) {
+                    const t = document.createElement('div');
+                    t.className = `token token-${pIdx}`;
+                    t.style.background = `var(--${p.color})`;
+                    cell.appendChild(t);
+                }
+            });
+        });
+    }
+
+    function getCoordinates(pIdx, pos, tIdx) {
+        // Sederhananya untuk demo: posisi awal di rumah masing-masing
+        if (pos === -1) {
+            if (pIdx === 0) return RED_HOME[tIdx];
+            if (pIdx === 1) return GREEN_HOME[tIdx];
+            if (pIdx === 2) return YELLOW_HOME[tIdx];
+            if (pIdx === 3) return BLUE_HOME[tIdx];
+        }
+        // Logika jalur (Simplified)
+        if (pIdx === 0) return [6, 1 + pos];
+        if (pIdx === 1) return [1 + pos, 8];
+        if (pIdx === 2) return [8, 13 - pos];
+        return [13 - pos, 6];
+    }
+
+    function nextTurn() {
+        state.turn = (state.turn + 1) % (state.mode === '4p' ? 4 : 2);
+        state.canRoll = true;
+        updateUI();
+
+        // AI Logic
+        if (state.mode === 'pva' && state.turn === 1) {
+            setTimeout(() => {
+                handleDiceRoll();
+                setTimeout(() => {
+                    // AI pilih bidak pertama yang bisa jalan
+                    const tokens = state.players[1].tokens;
+                    for(let i=0; i<4; i++) {
+                        if(tokens[i] >= 0 || state.diceValue === 6) {
+                            moveToken(i);
+                            break;
+                        }
+                    }
+                }, 1500);
+            }, 1000);
+        }
+    }
+
+    function updateUI() {
+        const colors = ["MERAH", "HIJAU", "KUNING", "BIRU"];
+        const turnText = document.getElementById('current-turn-text');
+        turnText.innerText = `GILIRAN: ${colors[state.turn]}`;
+        turnText.style.background = `var(--${state.players[state.turn].color})`;
+        document.getElementById('info-move').innerText = "Kocok Dadu!";
+    }
+
 </script>
 </body>
 </html>
