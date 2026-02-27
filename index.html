@@ -727,39 +727,36 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
         <button onclick="closeDesc()" style="width:100%; padding:14px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:800; font-size:14px;">TUTUP</button>
     </div>
 </div>
-<div id="modal-games" class="modal">
-    <div class="modal-content" style="max-width: 450px; width: 90%;">
+<div id="modal-games" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:99999; align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:white; max-width: 450px; width: 90%; padding:20px; border-radius:20px; position:relative;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="margin:0; font-size: 16px;">🎮 dyg++ Game Zone</h3>
-            <span class="close" onclick="closeGames()">&times;</span>
+            <span class="close" onclick="closeGames()" style="cursor:pointer; font-size:24px; font-weight:bold;">&times;</span>
         </div>
 
-        <div id="games-menu">
-            <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Pilih game untuk menemani waktu tunggumu:</p>
+        <div id="games-menu-box">
+            <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Pilih game sambil menunggu pesanan:</p>
             <div class="games-grid">
-                <div class="game-card" onclick="startUrlGame('https://www.google.com/logos/2010/pacman10-i.html')">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3501/3501170.png" alt="Snake">
-                    <span>Ular / Pacman</span>
+                <div class="game-card" onclick="playTheGame('https://www.google.com/logos/2010/pacman10-i.html')">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3501/3501170.png">
+                    <span>Snake</span>
                 </div>
-                <div class="game-card" onclick="startUrlGame('https://lichess.org/export/embed/puzzle/daily?theme=brown&bg=light')">
-                    <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png" alt="Catur">
+                <div class="game-card" onclick="playTheGame('https://lichess.org/export/embed/puzzle/daily?theme=brown&bg=light')">
+                    <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png">
                     <span>Catur</span>
                 </div>
-                <div class="game-card" onclick="startUrlGame('https://www.miniplay.com/embed/ludo-legend')">
-                    <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png" alt="Ludo">
+                <div class="game-card" onclick="playTheGame('https://www.miniplay.com/embed/ludo-legend')">
+                    <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png">
                     <span>Ludo</span>
                 </div>
             </div>
         </div>
 
-        <div id="game-frame-container">
+        <div id="game-frame-container" style="display:none; width:100%; height:450px; border-radius:15px; overflow:hidden; background:#000;">
             <iframe id="game-iframe" src="" style="width:100%; height:100%; border:none;"></iframe>
         </div>
 
-        <button id="btn-back-menu" onclick="resetGameMenu()" 
-            style="display:none; width:100%; margin-top:10px; padding:12px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:900; font-size:12px;">
-            KEMBALI KE PILIHAN GAME
-        </button>
+        <button id="btn-back-games" onclick="resetGames()" style="display:none; width:100%; margin-top:15px; padding:12px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:900;">⬅ PILIH GAME LAIN</button>
     </div>
 </div>
 
@@ -769,40 +766,26 @@ let generatedOTP = null;
 
 function openGamesHub() {
     document.getElementById('modal-games').style.display = 'flex';
-    backToGamesMenu(); // Reset tampilan ke menu pilihan
+    resetGames();
 }
 
 function closeGames() {
     document.getElementById('modal-games').style.display = 'none';
-    document.getElementById('game-iframe').src = ""; // Stop game saat ditutup
+    document.getElementById('game-iframe').src = ""; 
 }
 
-function playGame(type) {
-    const iframe = document.getElementById('game-iframe');
-    const menu = document.getElementById('games-menu');
-    const backBtn = document.getElementById('btn-back-games');
-    const hint = document.getElementById('game-hint');
-
-    let gameUrl = "";
-    if (type === 'ludo') gameUrl = "https://www.cubeslam.com/ludo"; // Contoh link game ringan
-    if (type === 'chess') gameUrl = "https://lichess.org/export/embed/puzzle/daily?theme=brown&bg=light";
-    if (type === 'snake') gameUrl = "https://www.google.com/logos/2010/pacman10-i.html"; // Pacman/Snake Google
-
-    if(gameUrl !== "") {
-        iframe.src = gameUrl;
-        iframe.style.display = 'block';
-        menu.style.display = 'none';
-        backBtn.style.display = 'block';
-        hint.style.display = 'none';
-    }
+function playTheGame(url) {
+    document.getElementById('games-menu-box').style.display = 'none';
+    document.getElementById('game-frame-container').style.display = 'block';
+    document.getElementById('btn-back-games').style.display = 'block';
+    document.getElementById('game-iframe').src = url;
 }
 
-function backToGamesMenu() {
-    document.getElementById('game-iframe').style.display = 'none';
-    document.getElementById('game-iframe').src = "";
-    document.getElementById('games-menu').style.display = 'grid';
+function resetGames() {
+    document.getElementById('games-menu-box').style.display = 'block';
+    document.getElementById('game-frame-container').style.display = 'none';
     document.getElementById('btn-back-games').style.display = 'none';
-    document.getElementById('game-hint').style.display = 'block';
+    document.getElementById('game-iframe').src = "";
 }
 
 async function requestOTP() {
