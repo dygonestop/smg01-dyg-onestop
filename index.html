@@ -783,17 +783,17 @@ let generatedOTP = null;
 function startUrlGame(type) {
     let url = "";
     
-    if (type === 'snake') {
-        url = "snake.html"; // Memanggil file yang kita buat tadi
-    } else if (type === 'ludo') {
-        url = "https://html5.gamedistribution.com/669f6e67606e46939f727409f5f08833/";
+    if (type === 'ludo') {
+        url = "ludo.html";  // Memanggil file buatan sendiri
+    } else if (type === 'snake') {
+        url = "snake.html"; // Memanggil file snake yang dibuat sebelumnya
     } else if (type === 'chess') {
         url = "https://lichess.org/training/frame?theme=brown&bg=light";
     }
 
     if (url !== "") {
         const iframe = document.getElementById('game-iframe');
-        iframe.src = "about:blank"; // Bersihkan sisa game lama
+        iframe.src = "about:blank"; // Reset memori
 
         document.getElementById('games-menu').style.display = 'none';
         document.getElementById('game-frame-container').style.display = 'block';
