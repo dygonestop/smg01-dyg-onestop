@@ -783,42 +783,27 @@ let generatedOTP = null;
 function startUrlGame(type) {
     let url = "";
     
-    // Gunakan Link khusus "Embed" agar tidak diblokir browser
-    if (type === 'ludo') {
-        url = "https://html5.gamedistribution.com/669f6e67606e46939f727409f5f08833/?gd_sdk_referrer_url=https://dyg.plus";
+    if (type === 'snake') {
+        url = "snake.html"; // Memanggil file yang kita buat tadi
+    } else if (type === 'ludo') {
+        url = "https://html5.gamedistribution.com/669f6e67606e46939f727409f5f08833/";
     } else if (type === 'chess') {
         url = "https://lichess.org/training/frame?theme=brown&bg=light";
-    } else if (type === 'snake') {
-        url = "https://www.google.com/logos/2010/pacman10-i.html";
     }
 
     if (url !== "") {
         const iframe = document.getElementById('game-iframe');
-        
-        // Reset iframe agar tidak memuat sisa game sebelumnya
-        iframe.src = "about:blank"; 
-
-        if (typeof Swal !== "undefined") {
-            Swal.fire({
-                title: 'Menyiapkan Arena...',
-                text: 'Harap tunggu sebentar',
-                timer: 2000,
-                showConfirmButton: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
-        }
+        iframe.src = "about:blank"; // Bersihkan sisa game lama
 
         document.getElementById('games-menu').style.display = 'none';
         document.getElementById('game-frame-container').style.display = 'block';
         document.getElementById('btn-back-games').style.display = 'block';
         
-        // Berikan delay 100ms agar transisi visual lebih halus
         setTimeout(() => {
             iframe.src = url;
         }, 100);
     }
 }
-
 
 function openGamesHub() {
     document.getElementById('modal-games').style.display = 'flex';
