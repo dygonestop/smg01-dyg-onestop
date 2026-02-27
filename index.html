@@ -6,6 +6,34 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
+/* Styling Hub Games */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    padding: 20px;
+    text-align: center;
+}
+.game-card {
+    background: #f8f9fa;
+    padding: 15px 10px;
+    border-radius: 15px;
+    border: 2px solid #eee;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.game-card:active { transform: scale(0.9); border-color: var(--primary); }
+.game-card img { width: 40px; height: 40px; margin-bottom: 8px; }
+.game-card div { font-size: 12px; font-weight: 800; color: var(--dark); }
+
+/* Bingkai Iframe Game */
+#game-container {
+    width: 100%;
+    height: 450px;
+    border: none;
+    border-radius: 15px;
+    display: none;
+}
 
 .info-btn {
     background: transparent;
@@ -601,7 +629,7 @@ mark {
         <div class="icon"><img src="ngiklan3.png" class="service-icon-img"></div>
         <span>NgIKLAN</span>
     </div>
-    <div class="service-btn secondary" onclick="openComingSoon()">
+    <div class="service-btn secondary" onclick="openGamesHub()">
         <div class="icon"><img src="games3.png" class="service-icon-img"></div>
         <span>Games</span>
     </div>
@@ -699,10 +727,77 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
         <button onclick="closeDesc()" style="width:100%; padding:14px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:800; font-size:14px;">TUTUP</button>
     </div>
 </div>
+<div id="modal-games" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0;">🎮 dyg++ Game Zone</h3>
+            <span class="close" onclick="closeGames()">&times;</span>
+        </div>
+        
+        <p id="game-hint" style="font-size: 11px; color: #666;">Pilih game favoritmu sambil menunggu hidangan siap!</p>
+
+        <div id="games-menu" class="games-grid">
+            <div class="game-card" onclick="playGame('ludo')">
+                <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png" alt="Ludo">
+                <div>Ludo</div>
+            </div>
+            <div class="game-card" onclick="playGame('chess')">
+                <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png" alt="Catur">
+                <div>Catur</div>
+            </div>
+            <div class="game-card" onclick="playGame('snake')">
+                <img src="https://cdn-icons-png.flaticon.com/512/528/528105.png" alt="Ular">
+                <div>Ular</div>
+            </div>
+        </div>
+
+        <iframe id="game-iframe" src="" style="width:100%; height:400px; border:none; border-radius:15px; display:none;"></iframe>
+        
+        <button id="btn-back-games" onclick="backToGamesMenu()" class="btn-checkout" style="display:none; margin-top:10px; background:#666;">KEMBALI KE MENU GAME</button>
+    </div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 let generatedOTP = null;
+
+function openGamesHub() {
+    document.getElementById('modal-games').style.display = 'flex';
+    backToGamesMenu(); // Reset tampilan ke menu pilihan
+}
+
+function closeGames() {
+    document.getElementById('modal-games').style.display = 'none';
+    document.getElementById('game-iframe').src = ""; // Stop game saat ditutup
+}
+
+function playGame(type) {
+    const iframe = document.getElementById('game-iframe');
+    const menu = document.getElementById('games-menu');
+    const backBtn = document.getElementById('btn-back-games');
+    const hint = document.getElementById('game-hint');
+
+    let gameUrl = "";
+    if (type === 'ludo') gameUrl = "https://www.cubeslam.com/ludo"; // Contoh link game ringan
+    if (type === 'chess') gameUrl = "https://lichess.org/export/embed/puzzle/daily?theme=brown&bg=light";
+    if (type === 'snake') gameUrl = "https://www.google.com/logos/2010/pacman10-i.html"; // Pacman/Snake Google
+
+    if(gameUrl !== "") {
+        iframe.src = gameUrl;
+        iframe.style.display = 'block';
+        menu.style.display = 'none';
+        backBtn.style.display = 'block';
+        hint.style.display = 'none';
+    }
+}
+
+function backToGamesMenu() {
+    document.getElementById('game-iframe').style.display = 'none';
+    document.getElementById('game-iframe').src = "";
+    document.getElementById('games-menu').style.display = 'grid';
+    document.getElementById('btn-back-games').style.display = 'none';
+    document.getElementById('game-hint').style.display = 'block';
+}
 
 async function requestOTP() {
     const email = document.getElementById('m-reg-email').value;
