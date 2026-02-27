@@ -743,21 +743,21 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
 
     <div id="games-menu" style="padding: 30px 20px; flex: 1; overflow-y: auto; background: #fafafa;">
         <div style="max-width: 400px; margin: 0 auto;">
-            <h2 style="text-align:center; font-size: 16px; margin-bottom: 30px; color:#555;">PILIH ARENA PERMAINAN</h2>
+            <h2 style="text-align:center; font-size: 16px; margin-bottom: 30px; color:#555;">PILIH PERMAINAN</h2>
             
             <div class="game-item" onclick="startUrlGame('matematika')" style="display:flex; align-items:center; gap:20px; padding:18px; background:white; border-radius:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); cursor:pointer;">
                 <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png" style="width:45px;">
                 <div>
-                    <div style="font-weight:900; font-size:15px;">matematika dulu biar pinter</div>
-                    <div style="font-size:11px; color:#999;">Main multiplayer bersama pemain lain</div>
+                    <div style="font-weight:900; font-size:15px;">matematika dulu</div>
+                    <div style="font-size:11px; color:#999;">Berhitung Dulu biar pinter</div>
                 </div>
             </div>
 
-            <div class="game-item" onclick="startUrlGame('chess')" style="display:flex; align-items:center; gap:20px; padding:18px; background:white; border-radius:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); cursor:pointer;">
+            <div class="game-item" onclick="startUrlGame('feeder')" style="display:flex; align-items:center; gap:20px; padding:18px; background:white; border-radius:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); cursor:pointer;">
                 <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png" style="width:45px;">
                 <div>
-                    <div style="font-weight:900; font-size:15px;">CHESS STRATEGY</div>
-                    <div style="font-size:11px; color:#999;">Uji kecerdasan strategi Anda</div>
+                    <div style="font-weight:900; font-size:15px;">feeder STRATEGY</div>
+                    <div style="font-size:11px; color:#999;">Makan yang banyak biar kenyang</div>
                 </div>
             </div>
 
@@ -787,8 +787,8 @@ function startUrlGame(type) {
         url = "matematika.html";  // Memanggil file buatan sendiri
     } else if (type === 'snake') {
         url = "snake.html"; // Memanggil file snake yang dibuat sebelumnya
-    } else if (type === 'chess') {
-        url = "https://lichess.org/training/frame?theme=brown&bg=light";
+    } else if (type === 'feeder') {
+        url = "feeder.html";
     }
 
     if (url !== "") {
