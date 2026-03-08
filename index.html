@@ -608,7 +608,7 @@ mark {
     <div id="banner-track"></div>
 </div>
 
-<div class="service-mode">
+<div class="service-mode" id="targetLayanan">
     <div id="mDineIn" class="service-btn" onclick="changeMode('DINE IN', this)">
         <div class="icon"><img src="dine-in3.png" class="service-icon-img"></div>
         <span>Dine In</span>
@@ -786,6 +786,35 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 let generatedOTP = null;
+function checkModeSelected() {
+    if (typeof currentMode === 'undefined' || currentMode === null || currentMode === '') {
+        Swal.fire({
+            title: 'Oops! Belum Pilih Layanan',
+            text: 'Silakan pilih Mode Layanan terlebih dahulu.',
+            icon: 'warning',
+            confirmButtonText: 'Pilih Layanan Sekarang',
+            confirmButtonColor: '#1B4332'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Berikan jeda 100ms agar SweetAlert benar-benar tertutup dulu
+                setTimeout(() => {
+                    const el = document.getElementById('targetLayanan');
+                    if (el) {
+                        // Menggunakan teknik scroll manual agar lebih pasti
+                        const y = el.getBoundingClientRect().top + window.pageYOffset - 20;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                        
+                        // Opsional: Berikan efek kedip agar user tahu itu yang harus diklik
+                        el.style.border = "2px solid #1B4332";
+                        setTimeout(() => el.style.border = "none", 2000);
+                    }
+                }, 100);
+            }
+        });
+        return false; 
+    }
+    return true; 
+}
 
 function startUrlGame(type) {
     let url = "";
@@ -1655,29 +1684,6 @@ function changeMode(m, el) {
     });
 
     if (typeof refreshUI === "function") refreshUI();
-}
-
-function checkModeSelected() {
-    // Cek apakah currentMode sudah di-set
-    if (typeof currentMode === 'undefined' || currentMode === null || currentMode === '') {
-        Swal.fire({
-            title: 'Oops! Belum Pilih Layanan',
-            text: 'Silakan pilih Mode Layanan (Dine-In/Take Away/Delivery/Katering) terlebih dahulu.',
-            icon: 'warning',
-            confirmButtonText: 'Pilih Layanan Sekarang',
-            confirmButtonColor: '#1B4332'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Mencari elemen pembungkus tombol layanan berdasarkan class HTML Anda
-                const modeContainer = document.querySelector('.service-mode'); 
-                if (modeContainer) {
-                    modeContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }
-        });
-        return false; 
-    }
-    return true; 
 }
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
