@@ -1575,7 +1575,7 @@ async function submitOrder() {
     }
 
 function changeMode(m, el) {
-    // PROTEKSI: Cek alasan tombol di-disable
+    // 1. PROTEKSI: Cek alasan tombol di-disable
     if (el.classList.contains('too-far')) {
         return alert("Jarak Anda terlalu jauh untuk layanan Dine-In.");
     }
@@ -1584,10 +1584,10 @@ function changeMode(m, el) {
         return alert("Jarak Anda sangat dekat (di bawah 200m). Silakan gunakan layanan Dine-In atau Take Away.");
     }
 
-    // SET MODE AKTIF
+    // 2. SET MODE AKTIF
     currentMode = m;
 
-    // UI: Beri warna hijau pada tombol yang dipilih
+    // 3. UI: Beri warna hijau pada tombol yang dipilih
     document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
     el.classList.add('active');
 
@@ -1595,12 +1595,12 @@ function changeMode(m, el) {
     const boxAlamat = document.getElementById('boxAlamat');
     const boxKatering = document.getElementById('boxKateringInfo');
 
-    // Reset Box Input
+    // 4. Reset Box Input
     if(boxMeja) boxMeja.style.display = 'none';
     if(boxAlamat) boxAlamat.style.display = 'none';
     if(boxKatering) boxKatering.style.display = 'none';
 
-    // Tampilkan Form sesuai Pilihan
+    // 5. Tampilkan Form sesuai Pilihan
     if (m === 'DINE IN') {
         if(boxMeja) boxMeja.style.display = 'block';
     } 
@@ -1623,17 +1623,27 @@ function changeMode(m, el) {
         }
     }
 
-    // --- TAMBAHAN AUTO-SCROLL KE AREA MENU ---
+    // 6. POP-UP INSTRUKSI (SweetAlert2)
+    Swal.fire({
+        title: 'Layanan Dipilih!',
+        text: 'Silakan masukkan data di kolom yang tersedia, kemudian lanjut pilih menu!',
+        icon: 'success',
+        confirmButtonText: 'Siap',
+        confirmButtonColor: '#1B4332',
+        timer: 2500,
+        timerProgressBar: true
+    });
+
+    // 7. AUTO-SCROLL KE AREA MENU
     setTimeout(() => {
-        const targetElement = document.getElementById('searchMenu'); // Menuju ke kolom pencarian menu
+        const targetElement = document.getElementById('searchMenu');
         if (targetElement) {
             targetElement.scrollIntoView({ 
                 behavior: 'smooth', 
-                block: 'center' // Mengarahkan ke tengah layar agar tidak terlalu mepet atas
+                block: 'center' 
             });
         }
-    }, 300); // Jeda 300ms agar form selesai terbuka sebelum scroll berjalan
-    // ------------------------------------------
+    }, 500); // Diberi jeda 500ms agar pop-up terasa lebih nyaman munculnya
 
     if (typeof refreshUI === "function") refreshUI();
 }
