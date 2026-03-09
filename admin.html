@@ -109,98 +109,9 @@ const API_URL = "https://script.google.com/macros/s/AKfycbw-TBIjPXsjYSgXggh-AMI5
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv"; 
 const TOKEN = "dyg-access-v2";
+
 let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null;
 let MEMBER_LIST = [];
-let currentVoucherCode = ""; // Tambahkan ini di atas
-// 1. Variabel Global
-let VOUCHER_LIST = [];
-let voucherDiscount = 0; // Tambahkan ini di deretan let awal
-const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
-
-// 2. Fungsi Load Voucher
-async function loadVouchers() {
-    try {
-        const res = await fetch(VOUCHER_CSV);
-        const text = await res.text();
-        const rows = text.split("\n").slice(1); // Mengabaikan baris header
-
-        VOUCHER_LIST = rows.map(r => {
-            const c = r.split(",");
-            if(c.length < 9) return null;
-            return {
-                kode: c[0]?.trim().toUpperCase(),
-                menu: c[1]?.trim(),
-                kategori: c[2]?.trim(),
-                nilai: parseFloat(c[3]) || 0,
-                tipe: c[4]?.trim(),
-                tglMulai: c[5]?.trim(),
-                tglBerakhir: c[6]?.trim(),
-                minBelanja: parseFloat(c[7]) || 0,
-                maxDiskon: parseFloat(c[8]) || 0
-            };
-        }).filter(v => v !== null && v.kode);
-        console.log("Voucher dimuat:", VOUCHER_LIST);
-    } catch (e) {
-        console.error("Gagal load voucher:", e);
-    }
-}
-
-function applyVoucher() {
-    const voucherInput = document.getElementById("voucherCode");
-    const code = voucherInput.value.trim().toUpperCase();
-    const subtotal = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Cari voucher di daftar
-    const v = VOUCHER_LIST.find(v => v.kode === code);
-
-    // 1. Validasi Kode
-    if (!v) {
-        alert("Kode Voucher tidak ditemukan!");
-        return;
-    }
-
-    // 2. Validasi Tanggal
-    if (today < v.tglMulai || today > v.tglBerakhir) {
-        alert("Voucher sudah kedaluwarsa atau belum aktif!");
-        return;
-    }
-
-    // 3. Validasi Minimal Belanja
-    if (subtotal < v.minBelanja) {
-        alert(`Minimal belanja Rp${v.minBelanja.toLocaleString()} untuk menggunakan voucher ini.`);
-        return;
-    }
-
-    // 4. Validasi Item (Menu/Kategori)
-    const isApplicable = Object.values(cart).some(item => {
-        const menuMatch = (v.menu === "ALL" || item.nama === v.menu);
-        const catMatch = (v.kategori === "ALL" || item.kategori === v.kategori);
-        return menuMatch && catMatch;
-    });
-
-    if (!isApplicable) {
-        alert("Voucher ini tidak berlaku untuk produk di keranjang Anda.");
-        return;
-    }
-
-    // 5. Hitung Diskon
-    let diskon = (v.tipe === "%") ? (subtotal * (v.nilai / 100)) : v.nilai;
-
-    // 6. Batas Maksimal Diskon
-    if (v.maxDiskon > 0 && diskon > v.maxDiskon) {
-        diskon = v.maxDiskon;
-        alert(`Diskon dibatasi maksimal Rp${v.maxDiskon.toLocaleString()}`);
-    }
-
-    // 7. Simpan state voucher dan update UI
-    voucherDiscount = diskon;
-    currentVoucherCode = code; // Simpan kode agar bisa divalidasi ulang nanti
-    
-    alert("Voucher berhasil diterapkan!");
-    updateUI(); 
-}
-
 function closeModalTrx() {
     document.getElementById("modalTrx").classList.add("hidden");
     document.getElementById("modalTrx").classList.remove("flex");
@@ -430,29 +341,18 @@ function updateUI() {
 
 function renderCart() {
     const list = document.getElementById("cartList");
-    let html = "";
+    let html = "", total = 0;
     const items = Object.keys(cart);
-    
-    // 1. Cek jika keranjang kosong
     if (items.length === 0) {
         list.innerHTML = '<div class="text-center text-slate-300 text-[10px] mt-10">Kosong</div>';
         document.getElementById("total").innerText = "0";
         document.getElementById("pointDiscWrapper").classList.add("hidden");
         document.getElementById("cashBox").innerHTML = "";
-        
-        // Reset juga voucher jika keranjang dikosongkan
-        voucherDiscount = 0;
-        currentVoucherCode = "";
-        document.getElementById("voucherCode").value = "";
         return;
     }
-
-    // 2. Validasi voucher secara otomatis setiap keranjang berubah
-    validateVoucher(); 
-
-    // 3. Hitung total kotor dan bangun HTML keranjang
-    const totalKotor = items.reduce((sum, i) => {
+    items.forEach(i => {
         const item = cart[i];
+        total += item.qty * item.harga;
         html += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded border border-slate-100">
             <div class="flex flex-col flex-1 overflow-hidden mr-2">
                 <span class="font-bold text-[9px] truncate">${item.nama}</span>
@@ -464,30 +364,15 @@ function renderCart() {
                 <button onclick="addItem(${i})" class="w-4 h-4 bg-white border rounded text-[9px]">＋</button>
             </div>
         </div>`;
-        return sum + (item.qty * item.harga);
-    }, 0);
-
-    // 4. Hitung bersih (Total Kotor - Diskon Member - Diskon Voucher)
-    const bersih = Math.max(0, totalKotor - pointDiscount - voucherDiscount);
-    
-    // 5. Update UI
-    list.innerHTML = html;
+    });
+    const bersih = Math.max(0, total - pointDiscount);
     document.getElementById("total").innerText = bersih.toLocaleString();
-    
-    // 6. Tampilkan info diskon (gabungan point dan voucher)
-    const totalDiskon = pointDiscount + voucherDiscount;
-    if (totalDiskon > 0) {
-        document.getElementById("pointDiscWrapper").classList.remove("hidden");
-        document.getElementById("pointDiscNominal").innerText = totalDiskon.toLocaleString();
-    } else {
-        document.getElementById("pointDiscWrapper").classList.add("hidden");
-    }
-    
-    // Update input kas jika metode adalah CASH
-    if (document.getElementById("metode") && document.getElementById("metode").value === "CASH") {
-        renderCash();
-    }
+    list.innerHTML = html;
+    document.getElementById("pointDiscWrapper").classList.toggle("hidden", pointDiscount <= 0);
+    document.getElementById("pointDiscNominal").innerText = pointDiscount.toLocaleString();
+    if (document.getElementById("metode").value === "CASH") renderCash();
 }
+
 function renderCash() {
     const box = document.getElementById("cashBox");
     const total = Number(document.getElementById("total").innerText.replace(/\D/g,''));
@@ -571,7 +456,6 @@ async function manageShift(type) {
 window.onload = () => { 
     loadMenu();
     loadMembers();
-    loadVouchers(); // <--- TAMBAHKAN BARIS INI
     checkShiftStatus();
 };
 
@@ -831,20 +715,6 @@ function autoDetectMember() {
     } else {
         infoEl.innerText = "Member tidak ditemukan";
         member = null;
-    }
-}
-function validateVoucher() {
-    if (!currentVoucherCode) return;
-
-    const subtotal = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
-    const v = VOUCHER_LIST.find(v => v.kode === currentVoucherCode);
-
-    // Jika voucher tidak ada di daftar atau subtotal kurang dari syarat
-    if (!v || subtotal < v.minBelanja) {
-        voucherDiscount = 0;
-        // Opsional: alert("Voucher dinonaktifkan karena total belanja kurang dari syarat!");
-        currentVoucherCode = ""; // Reset
-        document.getElementById("voucherCode").value = "";
     }
 }
 </script>
