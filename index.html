@@ -691,7 +691,7 @@ mark {
         <div id="menuDropdown" style="display:none; position:absolute; top:35px; left:0; background:white; color:black; border-radius:12px; width:150px; box-shadow:0 8px 20px rgba(0,0,0,0.2); z-index:2000; overflow:hidden;">
             <div onclick="openVoucherInfo()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
             <div onclick="openMemberModal()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
-            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
+            <div onclick="openBantuan()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
             <div onclick="openSaranKritik()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
         </div>
     </div>
@@ -2212,6 +2212,24 @@ function openSaranKritik() {
     // Langsung mengarahkan ke link review Google Maps
     const reviewLink = "https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI";
     window.open(reviewLink, '_blank');
+}
+function openBantuan() {
+    Swal.fire({
+        title: 'Pusat Bantuan',
+        html: `
+            <div class="close-btn" onclick="Swal.close()">×</div>
+            <div style="text-align: center; padding: 10px;">
+                <p>Ada yang bisa kami bantu? Tim kami siap melayani Anda sepenuh hati.</p>
+            </div>
+        `,
+        confirmButtonText: 'HUBUNGI CS',
+        confirmButtonColor: '#1B4332',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Ganti dengan nomor WhatsApp CS Anda
+            window.open('https://wa.me/62895706092961?text=Halo%20Admin,%20saya%20butuh%20bantuan.', '_blank');
+        }
+    });
 }
 
 </script>
