@@ -254,78 +254,77 @@ async function submitOrder() {
     const m = document.getElementById("metode").value;
     if (!m) { openModalMetode(); return; }
 
-    // Hitung total dasar
-    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
-    const totalBersihAwal = totalKotor - pointDiscount - voucherDiscount;
-    
-    // --- LOGIKA PEMBULATAN SAMA DENGAN RENDER CART ---
-    const sisa = totalBersihAwal % 1000;
-    const nominalPembulatan = (sisa >= 500) ? (1000 - sisa) : -sisa;
-    const totalFinal = totalBersihAwal + nominalPembulatan;
-    // -------------------------------------------------
-
     if (m === "CASH") {
         const bayarInput = document.getElementById("bayar");
-        if (!bayarInput || !bayarInput.value || Number(bayarInput.value) < totalFinal) {
-            alert("Nominal bayar kurang dari total: Rp " + totalFinal.toLocaleString());
+        if (!bayarInput || !bayarInput.value || Number(bayarInput.value) <= 0) {
+            alert("Silakan masukkan nominal uang bayar!");
             if(bayarInput) bayarInput.focus();
             return;
         }
     }
 
     const btn = document.getElementById("btnSubmitOrder");
+    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
+    const diskon = pointDiscount; // Sesuaikan jika ada voucherDiscount
+    
+    // --- Logika Perhitungan ---
+    const totalBersihAwal = totalKotor - diskon;
+    const sisa = totalBersihAwal % 1000;
+    const nominalPembulatan = (sisa >= 500) ? (1000 - sisa) : -sisa;
+    const totalFinal = totalBersihAwal + nominalPembulatan;
+    
+    // Pajak PB1 (Ditanggung Resto)
+    const pajakPB1 = Math.round(totalFinal * 0.1);
+
     const trxId = "TRX-" + Date.now();
     const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
     
     btn.innerText = "MENCETAK..."; btn.disabled = true;
 
+    pendingOrder = { total: totalFinal, noWA: document.getElementById("nohp").value || "-", pesanan, metode: m, trxId };
+
     // --- FORMULASI STRUK ---
-let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
-esc += "UNNES, Gunungpati, Semarang\n";
-esc += "NPWPD P.1.9032024.14.11\n";
-esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
+    let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
+    esc += "UNNES, Gunungpati, Semarang\n";
+    esc += "NPWPD P.1.9032024.14.11\n";
+    esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
+    
+    Object.values(cart).forEach(i => {
+        esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
+    });
+    
+    esc += "--------------------------------\n";
+    esc += "Total Kotor    : Rp " + totalKotor.toLocaleString() + "\n";
+    esc += "Diskon         : Rp " + diskon.toLocaleString() + "\n";
+    esc += "Pembulatan     : Rp " + nominalPembulatan.toLocaleString() + "\n";
+    esc += "--------------------------------\n";
+    
+    if (member) {
+        const poinDapat = Math.floor(totalFinal / 20000) * 100;
+        const poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
+        esc += "Member         : " + member.nama + "\n";
+        esc += "Poin Akumulasi : " + poinAkumulasi + "\n";
+    }
 
-// Tampilkan nama member jika ada
-if (typeof namaMember !== 'undefined' && namaMember) {
-    esc += "Member: " + namaMember + "\n--------------------------------\n";
-}
+    esc += "Total Sebelum PB1 : Rp " + totalFinal.toLocaleString() + "\n";
+    esc += "PB1 (10%)         : Rp " + pajakPB1.toLocaleString() + " (Ditanggung Resto)\n";
+    esc += "--------------------------------\n";
+    esc += "\x1B\x21\x10TOTAL BAYAR       : Rp " + totalFinal.toLocaleString() + "\x1B\x21\x00\n";
+    
+    if (m === "CASH") {
+        const bVal = Number(document.getElementById("bayar").value);
+        esc += "Bayar          : Rp " + bVal.toLocaleString() + "\n";
+        esc += "Kembali        : Rp " + (bVal - totalFinal).toLocaleString() + "\n";
+    }
+    esc += "--------------------------------\n";
+    esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
 
-Object.values(cart).forEach(i => {
-    esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
-});
-
-esc += "--------------------------------\n";
-esc += "Total Kotor       : Rp " + totalKotor.toLocaleString() + "\n";
-
-// Rincian potongan
-if (pointDiscount > 0) esc += "Pot. Poin         : Rp " + pointDiscount.toLocaleString() + "\n";
-if (voucherDiscount > 0) esc += "Pot. Voucher      : Rp " + voucherDiscount.toLocaleString() + "\n";
-esc += "Pembulatan        : Rp " + nominalPembulatan.toLocaleString() + "\n";
-esc += "--------------------------------\n";
-
-// Menghitung pajak berdasarkan total bersih (setelah diskon dan pembulatan)
-const totalSebelumPajak = totalFinal; 
-const pajak = Math.round(totalSebelumPajak * 0.1); 
-
-esc += "Total Bersih      : Rp " + totalSebelumPajak.toLocaleString() + "\n";
-esc += "PB1 (10%)         : Rp " + pajak.toLocaleString() + " (Ditanggung Resto)\n";
-esc += "--------------------------------\n";
-esc += "\x1B\x21\x10TOTAL BAYAR       : Rp " + totalSebelumPajak.toLocaleString() + "\x1B\x21\x00\n";
-
-if (m === "CASH") {
-    const bVal = Number(document.getElementById("bayar").value);
-    esc += "Bayar             : Rp " + bVal.toLocaleString() + "\n";
-    esc += "Kembali           : Rp " + (bVal - totalSebelumPajak).toLocaleString() + "\n";
-}
-esc += "--------------------------------\n";
-esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
-
-    // --- EKSEKUSI ---
     if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
     
     prosesSimpanKeCloud(); 
     setTimeout(() => { location.reload(); }, 800);
 }
+
 // ==========================================
 // 3. FUNGSI PENDUKUNG (TIDAK BERUBAH)
 // ==========================================
@@ -686,7 +685,10 @@ function reprintStruk(index) {
     }
 
     try {
+        // --- HEADER BARU ---
         let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
+        esc += "UNNES, Gunungpati, Semarang\n";
+        esc += "NPWPD P.1.9032024.14.11\n";
         esc += "(COPY STRUK)\n";
         esc += "ID: " + data.id + "\n--------------------------------\n\x1B\x61\x00";
         
@@ -707,22 +709,21 @@ function reprintStruk(index) {
         
         esc += "--------------------------------\n";
         
-        // --- LOGIKA PEMBULATAN RE-CALC ---
-        const totalBersihDiskon = Number(data.total) || 0; // Total setelah diskon sebelum pembulatan
-        // Jika di database tidak ada field pembulatan, kita hitung selisihnya
-        // atau jika 'data.total' sudah final (setelah pembulatan), kita tampilkan apa adanya.
-        
-        // Untuk menampilkan kolom Pembulatan:
-        const totalFinal = Number(data.total); // Asumsi ini adalah nilai yang dibayar
-        // Memastikan nilai sebelum modulus selalu positif
-const totalSebelumBulat = Math.max(0, totalKotorManual - (Number(data.diskon) || 0));
-const sisa = totalSebelumBulat % 1000;
+        // --- LOGIKA PEMBULATAN & PAJAK ---
+        const totalFinal = Number(data.total); 
+        const totalSebelumBulat = Math.max(0, totalKotorManual - (Number(data.diskon) || 0));
+        const sisa = totalSebelumBulat % 1000;
         const nominalPembulatan = (sisa >= 500) ? (1000 - sisa) : -sisa;
-        // ---------------------------------
+        
+        // Perhitungan PB1 10%
+        const pajakPB1 = Math.round(totalFinal * 0.1);
 
         esc += "Subtotal      : Rp " + totalKotorManual.toLocaleString() + "\n";
         esc += "Diskon        : Rp " + (Number(data.diskon) || 0).toLocaleString() + "\n";
         esc += "Pembulatan    : Rp " + nominalPembulatan.toLocaleString() + "\n";
+        esc += "--------------------------------\n";
+        esc += "Total Sblm PB1: Rp " + totalFinal.toLocaleString() + "\n";
+        esc += "PB1 (10%)     : Rp " + pajakPB1.toLocaleString() + " (Ditanggung Resto)\n";
         esc += "--------------------------------\n";
         esc += "\x1B\x21\x10TOTAL BAYAR   : Rp " + totalFinal.toLocaleString() + "\x1B\x21\x00\n";
         
@@ -745,6 +746,7 @@ const sisa = totalSebelumBulat % 1000;
         alert("Gagal memproses struk: " + err.message);
     }
 }
+
 function cetakSemuaTransaksi() {
     const container = document.getElementById("listTrxContent");
     if (!window.currentShiftData || window.currentShiftData.length === 0) {
