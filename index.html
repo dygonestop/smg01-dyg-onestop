@@ -7,14 +7,32 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-    /* Styling agar Form terlihat profesional */
+    /* Agar container form aman dari tombol close */
     .custom-form-container {
         display: flex;
         flex-direction: column;
         gap: 12px;
         text-align: left;
+        margin-top: 20px; /* Memberi ruang untuk tombol X */
     }
-    .form-group {
+
+    /* Tombol X di pojok kiri atas */
+    .close-btn {
+        position: absolute;
+        top: 15px;
+        left: 20px;
+        cursor: pointer;
+        font-size: 24px;
+        font-weight: bold;
+        color: #555;
+        z-index: 1000;
+    }
+
+    /* Memastikan Swal popup relatif agar posisi absolute tombol X akurat */
+    .swal2-popup {
+        position: relative !important;
+    }
+        .form-group {
         display: flex;
         flex-direction: column;
         gap: 5px;
@@ -2029,6 +2047,7 @@ function showMitraKerjaForm() {
     Swal.fire({
         title: 'Daftar Mitra Kerja',
         html: `
+            <div class="close-btn" onclick="Swal.close()">×</div>
             <div class="custom-form-container">
                 <div class="form-group">
                     <label>Nama Lengkap</label>
@@ -2046,13 +2065,14 @@ function showMitraKerjaForm() {
         `,
         confirmButtonText: 'Kirim via WA',
         confirmButtonColor: '#1B4332',
+        showCloseButton: false, // Kita buat kustom sendiri
         preConfirm: () => {
             const nama = document.getElementById('mNama').value;
             const usia = document.getElementById('mUsia').value;
             const exp = document.getElementById('mExp').value;
             
             if (!nama || !usia || !exp) {
-                Swal.showValidationMessage('Mohon lengkapi semua data!');
+                Swal.showValidationMessage('Mohon isi semua data dengan lengkap!');
                 return false;
             }
             return { nama, usia, exp };
@@ -2070,14 +2090,15 @@ function openIklanForm() {
     Swal.fire({
         title: 'Pasang Iklan',
         html: `
+            <div class="close-btn" onclick="Swal.close()">×</div>
             <div class="custom-form-container">
                 <div class="form-group">
                     <label>Nama Lengkap</label>
-                    <input type="text" id="iNama" placeholder="Masukkan nama...">
+                    <input type="text" id="iNama" placeholder="Nama Anda">
                 </div>
                 <div class="form-group">
                     <label>Nama Usaha & Jenis</label>
-                    <input type="text" id="iUsaha" placeholder="Contoh: Kedai Kopi Jaya">
+                    <input type="text" id="iUsaha" placeholder="Contoh: Kopi Jaya">
                 </div>
                 <div class="form-group">
                     <label>Pilih Paket</label>
@@ -2095,21 +2116,47 @@ function openIklanForm() {
                     <input type="number" id="iLama" placeholder="Contoh: 7" oninput="hitungTotal()">
                 </div>
                 <div class="form-group">
-                    <label>Estimasi Total (Rp)</label>
-                    <input type="text" id="iTotal" readonly style="background:#f9f9f9; font-weight:bold; color:#1B4332;">
+                    <label>Estimasi Total</label>
+                    <input type="text" id="iTotal" readonly style="background:#eee;">
                 </div>
             </div>
         `,
-        showConfirmButton: true,
         confirmButtonText: 'Kirim via WA',
         confirmButtonColor: '#1B4332',
         showDenyButton: true,
         denyButtonText: 'Info Paket',
-        denyButtonColor: '#F39C12',
-        width: '90%' // Memastikan responsif di HP
+        preConfirm: () => {
+    const nama = document.getElementById('iNama').value;
+    const paketValue = document.getElementById('iPaket').value; // Ambil nilai harga/ID
+    const paketText = document.getElementById('iPaket').options[document.getElementById('iPaket').selectedIndex].text;
+    const lama = document.getElementById('iLama').value;
+    
+    // Validasi dasar: Harus diisi semua
+    if (!nama || paketValue == "0" || !lama) {
+        Swal.showValidationMessage('Mohon isi Nama, Pilih Paket, dan Lama Sewa!');
+        return false;
+    }
+
+    // Aturan Khusus: Paket Supergold (value 20000) minimal 7 hari
+    if (paketValue == "20000" && parseInt(lama) < 7) {
+        Swal.showValidationMessage('Paket Supergold minimal sewa 7 hari!');
+        return false;
+    }
+
+    return { 
+        nama: nama, 
+        usaha: document.getElementById('iUsaha').value,
+        paket: paketText,
+        lama: lama,
+        total: document.getElementById('iTotal').value 
+    };
+}
     }).then((result) => {
         if (result.isConfirmed) {
-            // Logika Kirim WA (sama seperti sebelumnya)
+            const d = result.value;
+            const wa = "6289601522700";
+            const msg = `Halo, saya ingin pasang iklan:%0A%0A*Nama:* ${d.nama}%0A*Usaha:* ${d.usaha}%0A*Paket:* ${d.paket}%0A*Lama:* ${d.lama} Hari%0A*Total:* ${d.total}`;
+            window.open(`https://wa.me/${wa}?text=${msg}`, '_blank');
         } else if (result.isDenied) {
             showInfoIklan();
         }
