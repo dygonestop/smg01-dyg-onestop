@@ -50,6 +50,41 @@
         border-radius: 8px !important;
         width: 140px; 
     }
+    /* Styling agar Form terlihat profesional & konsisten */
+    .custom-form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        text-align: left;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .form-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #333;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .form-group textarea {
+        height: 100px;
+        resize: none;
+    }
+    .swal2-popup {
+        width: 90% !important;
+        max-width: 400px !important;
+        border-radius: 20px !important;
+    }
+
 .menu-img{
     width:100%;
     height:110px;
@@ -1992,20 +2027,32 @@ function openMitraOptions() {
 
 function showMitraKerjaForm() {
     Swal.fire({
-        title: 'Pendaftaran Mitra Kerja',
+        title: 'Daftar Mitra Kerja',
         html: `
-            <input type="text" id="mNama" class="swal2-input" placeholder="Nama Lengkap">
-            <input type="number" id="mUsia" class="swal2-input" placeholder="Usia">
-            <textarea id="mExp" class="swal2-textarea" placeholder="Posisi yang diinginkan dan Pengalaman kerja..."></textarea>
+            <div class="custom-form-container">
+                <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" id="mNama" placeholder="Nama Anda">
+                </div>
+                <div class="form-group">
+                    <label>Usia</label>
+                    <input type="number" id="mUsia" placeholder="Contoh: 25">
+                </div>
+                <div class="form-group">
+                    <label>Pengalaman Kerja</label>
+                    <textarea id="mExp" placeholder="Ceritakan pengalaman singkat Anda..."></textarea>
+                </div>
+            </div>
         `,
-        confirmButtonText: 'Kirim',
+        confirmButtonText: 'Kirim via WA',
         confirmButtonColor: '#1B4332',
         preConfirm: () => {
             const nama = document.getElementById('mNama').value;
             const usia = document.getElementById('mUsia').value;
             const exp = document.getElementById('mExp').value;
+            
             if (!nama || !usia || !exp) {
-                Swal.showValidationMessage('Mohon isi semua data!');
+                Swal.showValidationMessage('Mohon lengkapi semua data!');
                 return false;
             }
             return { nama, usia, exp };
@@ -2013,7 +2060,7 @@ function showMitraKerjaForm() {
     }).then((result) => {
         if (result.isConfirmed) {
             const { nama, usia, exp } = result.value;
-            const waNumber = "6289601522700";
+            const waNumber = "62895706092961";
             const pesan = `Halo, saya ingin mendaftar Mitra Kerja:%0A%0A*Nama:* ${nama}%0A*Usia:* ${usia}%0A*Pengalaman:* ${exp}`;
             window.open(`https://wa.me/${waNumber}?text=${pesan}`, '_blank');
         }
