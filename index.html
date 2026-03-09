@@ -692,7 +692,7 @@ mark {
             <div onclick="openVoucherInfo()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
             <div onclick="openMemberModal()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
-            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
+            <div onclick="openSaranKritik()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
         </div>
     </div>
 
@@ -2208,6 +2208,12 @@ function openVoucherInfo() {
         }
     });
 }
+function openSaranKritik() {
+    // Langsung mengarahkan ke link review Google Maps
+    const reviewLink = "https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI";
+    window.open(reviewLink, '_blank');
+}
+
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
