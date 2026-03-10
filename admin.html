@@ -190,7 +190,14 @@ async function submitOrder() {
     }
     // -----------------------------------------
 
-    const totalBersih = totalKotor - totalDiskon;
+    const totalBersihAwal = totalKotor - totalDiskon;
+    
+    // --- TAMBAHAN LOGIKA PEMBULATAN ---
+    let sisa = totalBersihAwal % 1000;
+    const totalBersih = sisa >= 500 ? totalBersihAwal + (1000 - sisa) : totalBersihAwal - sisa;
+    const nilaiPembulatan = totalBersih - totalBersihAwal;
+    // ----------------------------------
+
     const trxId = "TRX-" + Date.now();
     const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
     
@@ -208,6 +215,16 @@ async function submitOrder() {
     
     esc += "--------------------------------\n";
     esc += "Total Kotor   : Rp " + totalKotor.toLocaleString() + "\n";
+    
+    // Menampilkan label diskon dinamis
+    esc += `${labelDiskon} : Rp ${totalDiskon.toLocaleString()}\n`; 
+    
+    // --- TAMBAHAN PEMBULATAN DI STRUK ---
+    if (nilaiPembulatan !== 0) {
+        esc += "Pembulatan    : Rp " + (nilaiPembulatan > 0 ? "+" : "") + nilaiPembulatan.toLocaleString() + "\n";
+    }
+    // ------------------------------------
+
     esc += "Metode        : " + pendingOrder.metode + "\n";
     
     if (member) {
@@ -219,8 +236,6 @@ async function submitOrder() {
         if (redeemQty > 0) esc += "Poin Digunakan: " + redeemQty + "\n";
     }
     
-    // Menampilkan label diskon dinamis
-    esc += `${labelDiskon} : Rp ${totalDiskon.toLocaleString()}\n`; 
     esc += "--------------------------------\n";
     esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersih.toLocaleString() + "\x1B\x21\x00\n";
     
@@ -237,22 +252,6 @@ async function submitOrder() {
     
     prosesSimpanKeCloud(); 
     setTimeout(() => { location.reload(); }, 800);
-}
-
-// ==========================================
-// 3. FUNGSI PENDUKUNG (TIDAK BERUBAH)
-// ==========================================
-async function cekPemasukan() {
-    const btn = document.getElementById("btnCekPemasukan");
-    const originalText = btn.innerText;
-    try {
-        btn.innerText = "..."; btn.disabled = true;
-        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
-        const r = await res.json();
-        if (r.status === "NO_ACTIVE_SHIFT") { alert("Belum ada shift!"); return; }
-        const rincian = `=== REAL-TIME REPORT ===\nShift  : ${r.shiftName}\nTrx    : ${r.totalTrx}\nMember : ${r.totalMemberTrx || 0}\n-----------------------\nKOTOR  : Rp ${(r.pemasukanKotor || 0).toLocaleString()}\nDISKON : Rp ${(r.totalDiskon || 0).toLocaleString()}\n-----------------------\nCASH   : Rp ${(r.cash || 0).toLocaleString()}\nQRIS   : Rp ${(r.qris || 0).toLocaleString()}\nCARD   : Rp ${(r.card || 0).toLocaleString()}\n-----------------------\nBERSIH : Rp ${(r.pemasukanBersih || 0).toLocaleString()}\n\nPoin Baru : ${r.totalPoinDapat || 0}\nPoin Cair : ${r.totalPoinRedeem || 0}`;
-        alert(rincian);
-    } catch (e) { alert("Gagal!"); } finally { btn.innerText = originalText; btn.disabled = false; }
 }
 
 async function checkShiftStatus() {
@@ -369,7 +368,7 @@ function renderCart() {
     items.forEach(i => {
         const item = cart[i];
         total += item.qty * item.harga;
-        html += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded border border-slate-100">
+        html += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded border border-slate-100 mb-1">
             <div class="flex flex-col flex-1 overflow-hidden mr-2">
                 <span class="font-bold text-[9px] truncate">${item.nama}</span>
                 <span class="text-[8px] text-slate-500">@${item.harga.toLocaleString()}</span>
@@ -384,7 +383,12 @@ function renderCart() {
 
     // 3. Hitung total diskon (Poin Member + Voucher)
     const totalDiskon = pointDiscount + voucherDiscount;
-    const bersih = Math.max(0, total - totalDiskon);
+    let bersih = Math.max(0, total - totalDiskon);
+
+    // --- TAMBAHAN PEMBULATAN ---
+    let sisa = bersih % 1000;
+    bersih = sisa >= 500 ? bersih + (1000 - sisa) : bersih - sisa;
+    // ---------------------------
 
     // 4. Update UI
     list.innerHTML = html;
