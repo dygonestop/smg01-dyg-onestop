@@ -430,7 +430,7 @@ window.onload = () => {
 // Pastikan fungsi cekMember Anda juga sudah diperbarui untuk memotong 4 digit
 function cekMember() {
     const noInput = document.getElementById("nohp").value.trim();
-    const no = noInput.slice(-4); // Ambil 4 digit terakhir
+    const no = noInput.slice(-4); // Tetap mempertahankan logika 4 digit
     
     if (no.length < 4) return;
     
@@ -441,22 +441,40 @@ function cekMember() {
         .then(d => {
             if (d.exists) {
                 member = d;
-                document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin} P)</span>`;
+                // MENAMBAHKAN FUNGSI INTERAKTIF KLIK PADA NAMA MEMBER
+                document.getElementById("memberInfo").innerHTML = `
+                    <span onclick="bukaTukarPoin()" class="text-blue-600 font-bold cursor-pointer underline hover:text-blue-800">
+                        ✅ ${d.nama} (${d.poin} P)
+                    </span>`;
                 
-                // Pop-up tukar poin otomatis (SYARAT POINT >= 500)
+                // Pop-up tukar poin otomatis tetap berjalan saat member pertama kali ditemukan
                 if (parseInt(d.poin) >= 500) {
-                    let maxTukar = Math.floor(parseInt(d.poin) / 500) * 500;
-                    if (confirm(`Poin ${d.nama} adalah ${d.poin}. Tukarkan ${maxTukar} poin (Rp${(maxTukar * 10).toLocaleString()})?`)) {
-                        redeemQty = maxTukar; 
-                        pointDiscount = maxTukar * 10; 
-                        renderCart();
-                    }
+                    bukaTukarPoin();
                 }
             } else {
                 document.getElementById("memberInfo").innerText = "Member tidak ditemukan";
                 member = null;
             }
         });
+}
+
+// Fungsi baru untuk menangani logika klik pada nama member
+function bukaTukarPoin() {
+    if (!member) return;
+    
+    const poin = parseInt(member.poin);
+    
+    if (poin >= 500) {
+        let maxTukar = Math.floor(poin / 500) * 500;
+        if (confirm(`Poin ${member.nama} adalah ${poin}. Tukarkan ${maxTukar} poin (Rp${(maxTukar * 10).toLocaleString()})?`)) {
+            redeemQty = maxTukar; 
+            pointDiscount = maxTukar * 10; 
+            renderCart(); // Memperbarui tampilan harga
+        }
+    } else {
+        // Notifikasi jika poin belum cukup saat diklik
+        alert(`Poin ${member.nama} saat ini ${poin}. Belum memenuhi syarat minimum 500 poin.`);
+    }
 }
 
 async function cekDaftarTransaksi() {
