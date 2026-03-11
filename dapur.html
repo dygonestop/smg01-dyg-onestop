@@ -176,7 +176,7 @@ function render(active){
 }
 
 /* ================= ACTION ================= */
-function finish(row) {
+async function finish(row) { // Tambahkan async
     const orderData = currentOrders.find(o => o.row == row);
     const card = document.getElementById("c-" + row);
     
@@ -184,7 +184,17 @@ function finish(row) {
     if (!removedRows.includes(String(row))) removedRows.push(String(row));
     if (orderData) printOrder(orderData);
 
-    fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`).catch(() => {});
+    // PENTING: Gunakan await agar kita tahu kapan status benar-benar berubah di server
+    try {
+        await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
+        console.log("Status berhasil diupdate ke Selesai");
+        
+        // Setelah update sukses, segera panggil loadOrders agar data di layar sinkron
+        // dengan data terbaru di Google Sheets
+        await loadOrders(); 
+    } catch (err) {
+        console.error("Gagal update status:", err);
+    }
 
     setTimeout(() => { 
         if (card) card.remove();
