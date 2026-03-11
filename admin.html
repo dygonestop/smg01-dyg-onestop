@@ -347,8 +347,9 @@ function renderMenu() {
         if ((filter === "ALL" || m.kategori === filter) && m.nama.toLowerCase().includes(search)) {
             const qty = cart[i] ? cart[i].qty : 0;
             
+            // Perubahan: Tambahkan class 'relative' di div utama .menu-card
             html += `
-            <div class="menu-card shadow-sm flex flex-col justify-between">
+            <div class="menu-card shadow-sm flex flex-col justify-between relative">
                 <div onclick="addItem(${i})" class="cursor-pointer flex flex-col flex-1 overflow-hidden">
                     ${m.gambar ? `<div class="h-9 w-full mb-1 flex items-center justify-center bg-slate-50 rounded overflow-hidden shrink-0">
                         <img src="${m.gambar}" class="w-full h-full object-cover" onerror="this.style.display='none'">
@@ -365,7 +366,8 @@ function renderMenu() {
                         <button onclick="event.stopPropagation(); addItem(${i})" class="w-4 h-4 bg-blue-600 text-white rounded text-[8px] font-bold">+</button>
                     </div>
                 </div>
-                ${qty > 0 ? `<div class="absolute -top-1 -right-1 bg-red-600 text-white text-[7px] w-4 h-4 rounded-full flex items-center justify-center font-bold border border-white z-10">${qty}</div>` : ''}
+                
+                ${qty > 0 ? `<div class="absolute -top-1 -right-1 bg-red-600 text-white text-[7px] w-4 h-4 rounded-full flex items-center justify-center font-bold border border-white z-20 shadow-sm">${qty}</div>` : ''}
             </div>`;
         }
     });
