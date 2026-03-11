@@ -41,10 +41,7 @@
         <button id="btnCekTrx" onclick="cekDaftarTransaksi()" class="bg-indigo-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek Trx</button>
         
         <button id="btnCekPemasukan" onclick="cekPemasukan()" class="bg-amber-500 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Income</button>
-        <button onclick="document.getElementById('modalPengeluaran').classList.remove('hidden')" 
-        class="bg-red-600 text-white font-bold py-1 px-2 rounded text-[9px] uppercase shadow-md">
-    + Pengeluaran
-</button>
+        
         <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
     </div>
     <div class="flex items-center gap-1 border-l pl-2">
@@ -103,7 +100,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyuSYnxg9oSfkuLHOWFIk9a5Karymfz4qDc3J6D2-WZpUvjVp21OdLSk_renevEq-wScg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzVXzlht1RTgidAOSOc_82VdyhO3P-MuJz2TM-KfBQ757iSDEgLLdWJr9FYvOjcNI_oyg/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -457,33 +454,22 @@ async function manageShift(type) {
     loader.classList.add("flex");
 
     if (type === 'open') {
-        // Input Modal Awal
-        const modalAwal = prompt("Masukkan Modal Awal (Rp):");
-        if (!modalAwal || isNaN(modalAwal) || parseInt(modalAwal) < 0) {
-            loader.classList.add("hidden");
+        if (!confirm("Buka shift?")) {
+            loader.classList.add("hidden"); // Sembunyikan jika batal
             return;
         }
-
-        if (!confirm("Buka shift dengan modal Rp " + parseInt(modalAwal).toLocaleString() + "?")) {
-            loader.classList.add("hidden");
-            return;
-        }
-
-        // Kirim modal ke server (tambahkan parameter &modal=)
-        await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${modalAwal}`, { mode: 'no-cors' });
+        await fetch(`${API_URL}?token=${TOKEN}&action=openShift`, { mode: 'no-cors' });
         location.reload();
     } else {
         if (!confirm("Tutup shift & Cetak Laporan?")) {
-            loader.classList.add("hidden");
+            loader.classList.add("hidden"); // Sembunyikan jika batal
             return;
         }
         try {
             const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
             const r = await res.json();
             
-            // Cetak Laporan dengan Modal Awal
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\n";
-            esc += "MODAL AWAL      : Rp " + (r.modalAwal ? r.modalAwal.toLocaleString() : "0") + "\n";
             esc += (r.shiftName || "No Name") + "\n--------------------------------\n\x1B\x61\x00";
             esc += "Total Transaksi   : " + r.totalTrx + "\nTotal Member Trx  : " + (r.totalMemberTrx || 0) + "\n--------------------------------\n";
             esc += "Pemasukan Kotor   : Rp " + r.pemasukanKotor.toLocaleString() + "\nTotal Diskon      : Rp " + r.totalDiskon.toLocaleString() + "\n--------------------------------\n";
@@ -496,7 +482,7 @@ async function manageShift(type) {
             alert("Shift Ditutup!"); 
             location.reload();
         } catch (e) { 
-            loader.classList.add("hidden");
+            loader.classList.add("hidden"); // Sembunyikan jika gagal
             alert("Gagal memproses shift!"); 
         }
     }
@@ -528,8 +514,7 @@ window.onload = () => {
             // Pemicu otomatis Cek Member saat 4 digit
             if (e.target.value.length >= 4) {
                 cekMember();
-                const searchInput = document.getElementById('searchInput');
-                if(searchInput) searchInput.focus(); 
+                document.getElementById('searchInput').focus(); 
             }
         });
     }
@@ -606,83 +591,70 @@ async function cekDaftarTransaksi() {
     const originalText = btn.innerText;
     
     try {
-        btn.innerText = "..."; 
-        btn.disabled = true;
+        btn.innerText = "..."; btn.disabled = true;
+        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftTransactions`);
+        const data = await res.json();
 
-        // Panggil getShiftReport untuk mendapatkan data transaksi DAN pengeluaran
-        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
-        const r = await res.json();
+        if (data.status === "NO_ACTIVE_SHIFT") { alert("Belum ada shift!"); return; }
 
-        if (r.status === "NO_ACTIVE_SHIFT") { alert("Belum ada shift!"); return; }
-
-        // SIMPAN DATA KE GLOBAL untuk kebutuhan cetak ulang (reprintStruk)
-        window.currentShiftData = r.transactions;
+        // SIMPAN DATA KE GLOBAL
+        window.currentShiftData = data.transactions;
 
         document.getElementById("modalTrx").classList.remove("hidden");
         document.getElementById("modalTrx").classList.add("flex");
-        document.getElementById("shiftStartTime").innerText = "Mulai: " + (r.startTime || "-");
+        document.getElementById("shiftStartTime").innerText = "Mulai: " + (data.startTime || "-");
+
+        if (!data.transactions || data.transactions.length === 0) {
+            container.innerHTML = `<div class="text-center py-10 text-slate-400 text-[10px]">Belum ada transaksi</div>`;
+            return;
+        }
 
         let html = "";
+        // Kita tampilkan data terbaru di atas (reverse)
+        const displayData = [...data.transactions].reverse();
 
-        // 1. Bagian Riwayat Transaksi (KODE LAMA ANDA)
-        if (!r.transactions || r.transactions.length === 0) {
-            html += `<div class="text-center py-5 text-slate-400 text-[10px]">Belum ada transaksi</div>`;
-        } else {
-            const displayData = [...r.transactions].reverse();
-            displayData.forEach((t, index) => {
-                const realIndex = r.transactions.length - 1 - index;
-                const infoMember = t.namaMember && t.namaMember !== "-" ? 
-                    `<div class="mt-1.5 py-1 px-2 bg-blue-50 border border-blue-100 rounded text-[8px] text-blue-700 flex justify-between">
-                        <span>👤 ${t.namaMember}</span>
-                        <span>Poin: +${t.poinDapat || 0}</span>
-                     </div>` : '';
+        displayData.forEach((t, index) => {
+            // Hitung index asli di window.currentShiftData
+            const realIndex = data.transactions.length - 1 - index;
 
-                const totalPotongan = (Number(t.diskon) || 0);
-                const infoPotongan = totalPotongan > 0 ?
-                    `<div class="text-[8px] text-rose-500 font-bold italic">Potongan: -Rp ${totalPotongan.toLocaleString()}</div>` : '';
+            const infoMember = t.namaMember && t.namaMember !== "-" ? 
+                `<div class="mt-1.5 py-1 px-2 bg-blue-50 border border-blue-100 rounded text-[8px] text-blue-700 flex justify-between">
+                    <span>👤 ${t.namaMember}</span>
+                    <span>Poin: +${t.poinDapat || 0}</span>
+                 </div>` : '';
 
-                html += `
-                <div class="bg-white p-2.5 rounded border border-slate-200 shadow-sm mb-2">
-                    <div class="flex justify-between items-center border-b pb-1.5 mb-1.5 text-[8px]">
-                        <span class="font-bold text-indigo-700 uppercase">[${t.metode}]</span>
-                        <span class="text-slate-400">${t.waktu}</span>
+            const totalPotongan = (Number(t.diskon) || 0);
+            const infoPotongan = totalPotongan > 0 ?
+                `<div class="text-[8px] text-rose-500 font-bold italic">Potongan: -Rp ${totalPotongan.toLocaleString()}</div>` : '';
+
+            html += `
+            <div class="bg-white p-2.5 rounded border border-slate-200 shadow-sm mb-2">
+                <div class="flex justify-between items-center border-b pb-1.5 mb-1.5 text-[8px]">
+                    <span class="font-bold text-indigo-700 uppercase">[${t.metode}]</span>
+                    <span class="text-slate-400">${t.waktu}</span>
+                </div>
+                <div class="flex justify-between items-start mb-1">
+                    <div>
+                        <div class="font-black text-slate-800 text-[11px]">Rp ${Number(t.total).toLocaleString()}</div>
+                        ${infoPotongan}
                     </div>
-                    <div class="flex justify-between items-start mb-1">
-                        <div>
-                            <div class="font-black text-slate-800 text-[11px]">Rp ${Number(t.total).toLocaleString()}</div>
-                            ${infoPotongan}
-                        </div>
-                        <span class="text-[7px] text-slate-300">ID: ${t.id}</span>
-                    </div>
-                    <div class="text-slate-600 text-[9px] leading-tight border-t border-dotted pt-1.5 mt-1">
-                        ${t.pesanan}
-                    </div>
-                    ${infoMember}
-                    <button onclick="reprintStruk(${realIndex})" class="w-full mt-2 py-2 bg-slate-800 text-white text-[9px] font-bold rounded uppercase active:bg-black flex items-center justify-center gap-1">
-                        🖨️ CETAK ULANG STRUK
-                    </button>
-                </div>`;
-            });
-        }
-
-        // 2. Bagian Pengeluaran (TAMBAHAN BARU)
-        if (r.pengeluaranList && r.pengeluaranList.length > 0) {
-            html += `<div class="mt-4 p-2 bg-white border-t-2 border-slate-300 pt-2 shadow-sm rounded">
-                        <p class="font-bold text-[10px] uppercase text-red-600 mb-1">Daftar Pengeluaran:</p>`;
-            r.pengeluaranList.forEach(item => {
-                html += `<p class="text-[9px] text-slate-600">• ${item}</p>`;
-            });
-            html += `<div class="mt-2 text-[10px] font-bold border-t pt-1 text-red-700">Total Pengeluaran: Rp ${r.totalPengeluaran.toLocaleString()}</div>
-                     </div>`;
-        }
-        
+                    <span class="text-[7px] text-slate-300">ID: ${t.id}</span>
+                </div>
+                <div class="text-slate-600 text-[9px] leading-tight border-t border-dotted pt-1.5 mt-1">
+                    ${t.pesanan}
+                </div>
+                ${infoMember}
+                
+                <button onclick="reprintStruk(${realIndex})" class="w-full mt-2 py-2 bg-slate-800 text-white text-[9px] font-bold rounded uppercase active:bg-black flex items-center justify-center gap-1">
+                    🖨️ CETAK ULANG STRUK
+                </button>
+            </div>`;
+        });
         container.innerHTML = html;
-
     } catch (e) {
         alert("Gagal ambil data!");
     } finally {
-        btn.innerText = originalText; 
-        btn.disabled = false;
+        btn.innerText = originalText; btn.disabled = false;
     }
 }
 
@@ -975,21 +947,6 @@ function validateAndApplyVoucher() {
     }
 }
 
-function savePengeluaran() {
-    const nama = document.getElementById('namaBarang').value;
-    const harga = document.getElementById('hargaBarang').value;
-    const jumlah = document.getElementById('jumlahBarang').value;
-
-    if (!nama || !harga || !jumlah) return alert("Lengkapi data!");
-
-    if (confirm(`Konfirmasi Pengeluaran:\n${nama}\nRp ${parseInt(harga).toLocaleString()} x ${jumlah}\n\nApakah data sudah benar?`)) {
-        // Kirim ke server
-        fetch(`${API_URL}?token=${TOKEN}&action=addExpense&nama=${nama}&harga=${harga}&jumlah=${jumlah}`, { mode: 'no-cors' });
-        alert("Pengeluaran disimpan!");
-        document.getElementById('modalPengeluaran').classList.add('hidden');
-    }
-}
-
 </script>
 <div id="modalMetode" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-xs overflow-hidden">
@@ -1028,17 +985,6 @@ function savePengeluaran() {
         <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Sedang Memproses...</div>
     </div>
 </div>
-<div id="modalPengeluaran" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[70] p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-4">
-        <h3 class="font-bold text-[11px] mb-3 uppercase">Input Pengeluaran</h3>
-        <input type="text" id="namaBarang" placeholder="Nama Barang" class="w-full p-2 border rounded mb-2 text-[10px]">
-        <input type="number" id="hargaBarang" placeholder="Harga (Rp)" class="w-full p-2 border rounded mb-2 text-[10px]">
-        <input type="number" id="jumlahBarang" placeholder="Jumlah" class="w-full p-2 border rounded mb-4 text-[10px]">
-        <div class="flex gap-2">
-            <button onclick="savePengeluaran()" class="flex-1 bg-green-600 text-white py-2 rounded font-bold">OKE</button>
-            <button onclick="document.getElementById('modalPengeluaran').classList.add('hidden')" class="flex-1 bg-slate-200 py-2 rounded">BATAL</button>
-        </div>
-    </div>
-</div>
+
 </body>
 </html>
