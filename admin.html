@@ -41,7 +41,7 @@
         <button id="btnCekTrx" onclick="cekDaftarTransaksi()" class="bg-indigo-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek Trx</button>
         
         <button id="btnCekPemasukan" onclick="cekPemasukan()" class="bg-amber-500 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Income</button>
-        
+        <button onclick="inputPengeluaran()" class="bg-red-500 text-white p-2 rounded">Input Pengeluaran</button>
         <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
     </div>
     <div class="flex items-center gap-1 border-l pl-2">
@@ -100,7 +100,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwAwaX0HAKWm0JNYj4pPuzzlwsAyUp9M9b-uOfl_M7Hm05cGY6yqzqr_eoPw0XMbZvJfw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbz30gou-LFyaiRoe5jBgIJSW8-NJhc9-zKmrNgL-tf37X13BQ8Xuxc1M8sMWOD6iMwcOQ/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -269,6 +269,12 @@ async function cekPemasukan() {
             return; 
         }
 
+        // Menyiapkan rincian pengeluaran
+        let listExp = "";
+        if (r.listPengeluaran && r.listPengeluaran.length > 0) {
+            listExp = "\n=== PENGELUARAN ===\n" + r.listPengeluaran.join('\n');
+        }
+
         // Kita gunakan r.modalAwal yang sekarang sudah pasti terisi dari server
         const rincian = `=== REAL-TIME REPORT ===\n` +
             `Shift    : ${r.shiftName}\n` +
@@ -284,7 +290,10 @@ async function cekPemasukan() {
             `QRIS     : Rp ${(r.qris || 0).toLocaleString()}\n` +
             `CARD     : Rp ${(r.card || 0).toLocaleString()}\n` +
             `-----------------------\n` +
-            `BERSIH   : Rp ${(r.pemasukanBersih || 0).toLocaleString()}\n\n` +
+            `BERSIH   : Rp ${(r.pemasukanBersih || 0).toLocaleString()}\n` +
+            `${listExp}\n` +
+            `TOTAL PENGELUARAN : Rp ${r.totalPengeluaran ? r.totalPengeluaran.toLocaleString() : "0"}\n` +
+            `-----------------------\n` +
             `Poin Baru : ${r.totalPoinDapat || 0}\n` +
             `Poin Cair : ${r.totalPoinRedeem || 0}`;
             
