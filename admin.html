@@ -497,6 +497,8 @@ async function manageShift(type) {
     if (type === 'open') {
         // Input Modal Awal
         const modalAwal = prompt("Masukkan Modal Awal (Rp):");
+
+localStorage.setItem("modalAwal", modalAwal);
         if (!modalAwal || isNaN(modalAwal) || parseInt(modalAwal) < 0) {
             loader.classList.add("hidden");
             return;
