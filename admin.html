@@ -100,7 +100,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzVXzlht1RTgidAOSOc_82VdyhO3P-MuJz2TM-KfBQ757iSDEgLLdWJr9FYvOjcNI_oyg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx2dxYCUKXPetHdboccj2ckak6ODTqB059Pt1mUgMAhrYX7y5vmwuDZHjNb6JXWhau7mQ/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -252,6 +252,21 @@ async function submitOrder() {
     
     prosesSimpanKeCloud(); 
     setTimeout(() => { location.reload(); }, 800);
+}
+// ==========================================
+// 3. FUNGSI PENDUKUNG (TIDAK BERUBAH)
+// ==========================================
+async function cekPemasukan() {
+    const btn = document.getElementById("btnCekPemasukan");
+    const originalText = btn.innerText;
+    try {
+        btn.innerText = "..."; btn.disabled = true;
+        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
+        const r = await res.json();
+        if (r.status === "NO_ACTIVE_SHIFT") { alert("Belum ada shift!"); return; }
+        const rincian = `=== REAL-TIME REPORT ===\nShift  : ${r.shiftName}\nTrx    : ${r.totalTrx}\nMember : ${r.totalMemberTrx || 0}\n-----------------------\nKOTOR  : Rp ${(r.pemasukanKotor || 0).toLocaleString()}\nDISKON : Rp ${(r.totalDiskon || 0).toLocaleString()}\n-----------------------\nCASH   : Rp ${(r.cash || 0).toLocaleString()}\nQRIS   : Rp ${(r.qris || 0).toLocaleString()}\nCARD   : Rp ${(r.card || 0).toLocaleString()}\n-----------------------\nBERSIH : Rp ${(r.pemasukanBersih || 0).toLocaleString()}\n\nPoin Baru : ${r.totalPoinDapat || 0}\nPoin Cair : ${r.totalPoinRedeem || 0}`;
+        alert(rincian);
+    } catch (e) { alert("Gagal!"); } finally { btn.innerText = originalText; btn.disabled = false; }
 }
 
 async function checkShiftStatus() {
