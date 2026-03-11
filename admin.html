@@ -41,7 +41,9 @@
         <button id="btnCekTrx" onclick="cekDaftarTransaksi()" class="bg-indigo-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek Trx</button>
         
         <button id="btnCekPemasukan" onclick="cekPemasukan()" class="bg-amber-500 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Income</button>
-        <button onclick="inputPengeluaran()" class="bg-red-500 text-white p-2 rounded">Input Pengeluaran</button>
+        <button onclick="inputPengeluaran()" class="bg-red-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">
+    Pengeluaran
+</button>
         <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
     </div>
     <div class="flex items-center gap-1 border-l pl-2">
@@ -1013,7 +1015,45 @@ function validateAndApplyVoucher() {
         voucherDiscount = Math.floor(diskon);
     }
 }
+async function inputPengeluaran() {
+    const nama = prompt("Nama Pengeluaran:");
+    if (!nama) return;
+    const harga = prompt("Jumlah Nominal (Rp):");
+    if (!harga || isNaN(harga)) return;
+    
+    // Tampilkan loader
+    const loader = document.getElementById("fullLoader");
+    loader.classList.remove("hidden");
+    loader.classList.add("flex");
 
+    try {
+        // Menggunakan API sesuai dengan backend yang Anda miliki
+        const response = await fetch(`${API_URL}?token=${TOKEN}&action=addExpense&nama=${encodeURIComponent(nama)}&harga=${harga}&jumlah=1`);
+        const result = await response.text();
+        
+        if (result === "SUCCESS") {
+            alert("Pengeluaran berhasil dicatat!");
+        } else if (result === "NO_SHIFT") {
+            alert("Gagal: Shift belum dibuka!");
+        } else {
+            alert("Gagal mencatat pengeluaran.");
+        }
+    } catch (e) {
+        alert("Error koneksi!");
+    } finally {
+        loader.classList.add("hidden");
+    }
+}
+function scrollModal(direction) {
+    const container = document.getElementById("listTrxContent");
+    if (container) {
+        const scrollAmount = 250; // Jarak geser 250px
+        container.scrollBy({
+            top: direction === 'down' ? scrollAmount : -scrollAmount,
+            behavior: 'smooth'
+        });
+    }
+}
 </script>
 <div id="modalMetode" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-xs overflow-hidden">
@@ -1035,11 +1075,20 @@ function validateAndApplyVoucher() {
             </div>
             <button onclick="closeModalTrx()" class="text-white font-black text-sm px-2 bg-white/20 rounded-full h-6 w-6 flex items-center justify-center active:scale-95">✕</button>
         </div>
-        
+
         <div id="listTrxContent" class="p-2 overflow-y-auto custom-scroll flex-1 bg-slate-100 space-y-2">
             </div>
-        
-        <div class="p-2 bg-white border-t">
+
+        <div class="grid grid-cols-2 gap-2 p-2 bg-white border-t border-slate-200">
+            <button onclick="scrollModal('up')" class="py-4 bg-slate-800 text-white font-bold rounded-lg text-[10px] active:bg-slate-900 shadow-md">
+                ⬆️ NAIK
+            </button>
+            <button onclick="scrollModal('down')" class="py-4 bg-slate-800 text-white font-bold rounded-lg text-[10px] active:bg-slate-900 shadow-md">
+                ⬇️ TURUN
+            </button>
+        </div>
+
+        <div class="p-2 bg-white border-t border-slate-200">
             <button onclick="cetakSemuaTransaksi()" class="w-full py-2.5 bg-emerald-600 text-white text-[10px] font-bold rounded uppercase flex items-center justify-center gap-2 active:bg-emerald-700 shadow-sm">
                 🖨️ Cetak Rekap & Item Penjualan
             </button>
