@@ -28,6 +28,10 @@
         .voice-on { background: #dcfce7; color: #166534; border: 2px solid #22c55e; }
         .hidden { display: none !important; }
         .slide-out-left { transform: translateX(-150%) rotate(-10deg); opacity: 0; pointer-events: none; }
+        
+        /* Loading state */
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .processing { background: #f59e0b !important; }
     </style>
 </head>
 <body>
@@ -62,9 +66,9 @@ const CONFIG = {
 
 /* ================= STATE ================= */
 let lastCount = 0;
-let removedRows = []; 
 let currentOrders = [];
 let isVoiceEnabled = false; 
+let processingRows = new Set(); // Track rows yang sedang diproses
 
 /* ================= VOICE LOGIC ================= */
 function toggleVoice() {
@@ -109,16 +113,16 @@ function loadOrders() {
             document.getElementById("status").innerText = "● TERHUBUNG";
             document.getElementById("status").style.color = "green";
             
-            // Gunakan rowId atau row (sesuaikan dengan output GAS Anda)
-            const filteredData = data.filter(o => !removedRows.includes(String(o.row)));
-
-            if (filteredData.length > lastCount && lastCount !== 0) {
+            // ✅ PERBAIKAN: Tidak filter berdasarkan removedRows lagi
+            // Biarkan server yang menentukan apa yang "Diproses" vs "Selesai"
+            
+            if (data.length > lastCount && lastCount !== 0) {
                 if (isVoiceEnabled) speak("Ada orderan baru masuk");
             }
             
-            lastCount = filteredData.length;
+            lastCount = data.length;
             currentOrders = data; 
-            render(filteredData);
+            render(data); // Render semua data dari server
         })
         .catch(e => {
             document.getElementById("status").innerText = "● OFFLINE / ERROR";
@@ -139,13 +143,13 @@ function render(active){
 
     box.innerHTML = active.map(o => {
         let daftarMenu = "";
-        // Antisipasi perbedaan huruf besar/kecil dari properti JSON
         const pesananRaw = o.Pesanan || o.pesanan || "";
         const antrean = o.Antrean || o.antrean || "0";
         const nama = o.Nama || o.nama || "Tanpa Nama";
         const mode = o.Mode || o.mode || "DINE IN";
         const meja = o.Meja || o.meja || "";
         const catatan = o.Catatan || o.catatan || "";
+        const isProcessing = processingRows.has(String(o.row));
 
         try {
             if (pesananRaw.trim().startsWith('{')) {
@@ -165,7 +169,9 @@ function render(active){
                 <div class="mode">${mode} ${meja ? `<span style="color:var(--danger)">[ MEJA ${meja} ]</span>` : ''}</div>
                 <div class="items">${daftarMenu}</div>
                 ${catatan ? `<div style="background:#FFF9C4; padding:10px; border-left:5px solid #FBC02D; margin-top:12px; border-radius:8px; font-size:13px; color:#5D4037; line-height:1.4;"><strong>⚠️ CATATAN:</strong> ${catatan}</div>` : ''}
-                <button class="btn" onclick="finish(${o.row})" style="margin-top:15px;">✔ SELESAI & CETAK</button>
+                <button class="btn ${isProcessing ? 'processing' : ''}" onclick="finish(${o.row})" ${isProcessing ? 'disabled' : ''} style="margin-top:15px;">
+                    ${isProcessing ? '⏳ MEMPROSES...' : '✔ SELESAI & CETAK'}
+                </button>
             </div>`;
     }).join("");
 
@@ -176,30 +182,64 @@ function render(active){
 }
 
 /* ================= ACTION ================= */
-async function finish(row) { // Tambahkan async
+async function finish(row) {
+    // Cegah double-click
+    if (processingRows.has(String(row))) return;
+    
     const orderData = currentOrders.find(o => o.row == row);
     const card = document.getElementById("c-" + row);
     
-    if (card) card.classList.add("slide-out-left");
-    if (!removedRows.includes(String(row))) removedRows.push(String(row));
-    if (orderData) printOrder(orderData);
-
-    // PENTING: Gunakan await agar kita tahu kapan status benar-benar berubah di server
-    try {
-        await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
-        console.log("Status berhasil diupdate ke Selesai");
-        
-        // Setelah update sukses, segera panggil loadOrders agar data di layar sinkron
-        // dengan data terbaru di Google Sheets
-        await loadOrders(); 
-    } catch (err) {
-        console.error("Gagal update status:", err);
+    // Tandai sedang diproses
+    processingRows.add(String(row));
+    
+    // Update UI untuk tunjukkan loading
+    const btn = card.querySelector('.btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.classList.add('processing');
+        btn.innerText = '⏳ MEMPROSES...';
     }
 
-    setTimeout(() => { 
-        if (card) card.remove();
-        if (document.querySelectorAll('.card').length === 0) render([]);
-    }, 500);
+    try {
+        // ✅ PERBAIKAN: Update status DI SERVER dulu, baru animasi
+        const response = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
+        const result = await response.text();
+        
+        console.log("Update status result:", result);
+        
+        if (result.includes("Success") || result.includes("success")) {
+            // Cetak struk
+            if (orderData) printOrder(orderData);
+            
+            // Animasi keluar
+            if (card) card.classList.add("slide-out-left");
+            
+            // Hapus dari DOM setelah animasi
+            setTimeout(() => { 
+                if (card) card.remove();
+                if (document.querySelectorAll('.card').length === 0) render([]);
+            }, 500);
+            
+            // Refresh data dari server untuk memastikan sinkron
+            setTimeout(() => loadOrders(), 600);
+            
+        } else {
+            throw new Error("Gagal update status: " + result);
+        }
+        
+    } catch (err) {
+        console.error("Gagal update status:", err);
+        alert("Gagal menyelesaikan order. Silakan coba lagi.");
+        
+        // Reset UI
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('processing');
+            btn.innerText = '✔ SELESAI & CETAK';
+        }
+    } finally {
+        processingRows.delete(String(row));
+    }
 }
 
 function printOrder(order) {
