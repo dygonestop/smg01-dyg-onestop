@@ -266,7 +266,8 @@ function printOrder(order) {
         // Gunakan Print Standar untuk PC (menghindari error rawbt:)
         const printWindow = window.open('', '_blank', 'width=300,height=500');
         printWindow.document.write(`<pre style="font-family: monospace;">${txt}</pre>`);
-        printWindow.document.write('<script>window.print(); window.close();</script>');
+        // PERBAIKAN: Pecah </script> agar tidak dianggap penutup tag script
+        printWindow.document.write('<script>window.print(); window.close();<' + '/script>');
         printWindow.document.close();
     }
 }
