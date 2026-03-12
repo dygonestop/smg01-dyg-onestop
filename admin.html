@@ -1130,6 +1130,12 @@ function scrollModal(direction) {
         });
     }
 }
+container.scrollBy({
+            top: direction === 'down' ? scrollAmount : -scrollAmount,
+            behavior: 'smooth'
+        });
+    }
+}
 </script>
 <div id="modalMetode" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-xs overflow-hidden">
