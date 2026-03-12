@@ -4,39 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DAPUR | dyg++</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <style>
         :root{ --main:#1B4332; --danger:#c0392b; --bg:#f2f4f7; }
         body{ margin:0; background:var(--bg); font-family:Segoe UI,Arial,sans-serif; }
         .header{ margin:15px; padding:15px 20px; background:white; border-radius:14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,.05); }
-        #status{ font-weight:900; color:orange; font-size: 13px; }
         .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:15px; padding:15px; }
-        .card{ background:white; border-radius:16px; padding:18px; border-top:8px solid var(--main); position:relative; animation:pop .3s ease; transition: all 0.5s ease; }
-        @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+        .card{ background:white; border-radius:16px; padding:18px; border-top:8px solid var(--main); animation:pop .3s ease; }
         .no{ font-size:38px; font-weight:900; color:var(--main); }
-        .name{ font-size:20px; font-weight:900; }
-        .mode{ display:inline-block; margin-top:4px; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:900; background:#eee; }
-        .items{ margin:14px 0; font-family:Courier New,monospace; font-weight:900; line-height:1.4; }
+        .items{ margin:14px 0; font-family:Courier New,monospace; font-weight:900; }
         .btn{ width:100%; padding:16px; border:none; border-radius:12px; background:var(--main); color:white; font-weight:900; cursor:pointer; }
-        .btn:disabled { background: #ccc; cursor: not-allowed; }
         .processing { background: #f59e0b !important; }
-        .slide-out-left { transform: translateX(-150%) rotate(-10deg); opacity: 0; pointer-events: none; }
+        .slide-out-left { transform: translateX(-150%); opacity: 0; transition: 0.5s; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div>
-        <h2 style="margin:0">👨‍🍳 MONITOR DAPUR</h2>
-        <div id="status">● Menghubungkan...</div>
-    </div>
+    <div><h2 style="margin:0">👨‍🍳 MONITOR DAPUR</h2><div id="status">● Menghubungkan...</div></div>
 </div>
-
 <div class="grid" id="list"></div>
 
 <script>
 const CONFIG = {
-    API_URL: "https://script.google.com/macros/s/AKfycbzQLOQV-1M4fE33TvG7QphkH_myYLZHb8WIq_7ufmtCI8PD7b7_i-p85sabaxDjb6XP/exec",
+    API_URL: "URL_DEPLOYMENT_ANDA_DISINI", // GANTI DENGAN URL DEPLOYMENT BARU
     TOKEN: "dyg-access-v2",
     REFRESH: 8000 
 };
@@ -44,73 +34,67 @@ const CONFIG = {
 let currentOrders = [];
 let processingRows = new Set();
 
-function loadOrders() {
-    fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`)
-        .then(r => r.json())
-        .then(data => {
-            document.getElementById("status").innerText = "● TERHUBUNG";
-            document.getElementById("status").style.color = "green";
-            currentOrders = data;
-            render(data);
-        })
-        .catch(e => {
-            document.getElementById("status").innerText = "● OFFLINE / ERROR";
-            document.getElementById("status").style.color = "red";
-        });
+async function loadOrders() {
+    try {
+        const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`);
+        const data = await res.json();
+        document.getElementById("status").innerText = "● TERHUBUNG";
+        document.getElementById("status").style.color = "green";
+        currentOrders = data;
+        render(data);
+    } catch(e) {
+        document.getElementById("status").innerText = "● OFFLINE";
+        document.getElementById("status").style.color = "red";
+    }
 }
 
 function render(active){
     const box = document.getElementById("list");
-    if(active.length === 0){
-        box.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:50px">Tidak ada pesanan</div>`;
-        return;
-    }
     box.innerHTML = active.map(o => `
-        <div class="card" id="c-${o.row}" data-row="${o.row}">
+        <div class="card" id="c-${o.row}">
             <div class="no">#${o.Antrean}</div>
-            <div class="name">${o.Nama}</div>
-            <div class="mode">${o.Mode} ${o.Meja ? `[MEJA ${o.Meja}]` : ''}</div>
-            <div class="items">${o.Pesanan}</div>
-            <button class="btn" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
+            <div style="font-weight:900; font-size:20px;">${o.Nama}</div>
+            <div style="font-size:12px; background:#eee; padding:4px 8px; border-radius:8px; display:inline-block;">${o.Mode} ${o.Meja ? `| MEJA: ${o.Meja}` : ''}</div>
+            <div class="items">${o.Pesanan.replace(/\n/g, '<br>')}</div>
+            ${o.Catatan ? `<div style="background:#FFF9C4; padding:8px; border-left:4px solid #FBC02D; font-size:12px;">⚠️ <strong>Catatan:</strong> ${o.Catatan}</div>` : ''}
+            <button class="btn" style="margin-top:15px;" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
         </div>`).join("");
 }
 
 async function finish(row) {
     if (processingRows.has(String(row))) return;
     const card = document.getElementById("c-" + row);
-    const orderData = currentOrders.find(o => o.row == row);
+    const order = currentOrders.find(o => o.row == row);
     
     processingRows.add(String(row));
     card.querySelector('.btn').innerText = '⏳ MEMPROSES...';
 
-    try {
-        const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
-        const text = await res.text();
-        
-        if (text.toLowerCase().includes("success")) {
-            printOrder(orderData);
-            card.classList.add("slide-out-left");
-            setTimeout(() => { card.remove(); loadOrders(); }, 500);
-        } else {
-            throw new Error("Gagal");
-        }
-    } catch (e) {
-        alert("Gagal. Coba lagi.");
-        card.querySelector('.btn').innerText = '✔ SELESAI & CETAK';
-    } finally {
-        processingRows.delete(String(row));
+    const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
+    if ((await res.text()).toLowerCase().includes("success")) {
+        printOrder(order);
+        card.classList.add("slide-out-left");
+        setTimeout(() => { loadOrders(); }, 500);
+    } else {
+        alert("Gagal update status!");
     }
+    processingRows.delete(String(row));
 }
 
-function printOrder(order) {
-    let txt = `dyg++ KITCHEN\nAntrean: #${order.Antrean}\nNama: ${order.Nama}\nPesanan: ${order.Pesanan}\n\n\n\n`;
-    const isAndroid = /Android/i.test(navigator.userAgent);
+function printOrder(o) {
+    let txt = `      dyg++ KITCHEN\n================================\n`;
+    txt += `Antrean : #${o.Antrean}\nNama    : ${o.Nama}\nLayanan : ${o.Mode}\n`;
+    if (o.Meja) txt += `Meja    : ${o.Meja}\n`;
+    txt += `Waktu   : ${new Date().toLocaleTimeString()}\n--------------------------------\nPESANAN:\n${o.Pesanan}\n`;
+    if (o.Catatan) txt += `--------------------------------\nCATATAN:\n${o.Catatan}\n`;
+    txt += `--------------------------------\n\n\n\n`;
 
-    if (isAndroid) {
+    if (/Android/i.test(navigator.userAgent)) {
         window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(txt)));
     } else {
         const pW = window.open('', '_blank', 'width=300,height=500');
-        pW.document.write(`<pre>${txt}</pre><script>window.onload=function(){window.print();window.close();}<\/script>`);
+        pW.document.write(`<pre style="font-family: monospace;">${txt}</pre>`);
+        pW.document.write('<script>window.print(); window.close();<\/script>');
+        pW.document.close();
     }
 }
 
