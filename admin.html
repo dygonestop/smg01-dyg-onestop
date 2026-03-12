@@ -102,7 +102,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbz30gou-LFyaiRoe5jBgIJSW8-NJhc9-zKmrNgL-tf37X13BQ8Xuxc1M8sMWOD6iMwcOQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyPzV7z5ynFGH2KvjEU2VYnwJp6a-CtLg2x9kqmEOaEiFQ_tk_LMT9mdd44a9Z5RXD9Rw/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -209,7 +209,11 @@ async function submitOrder() {
 
     // --- FORMULASI STRUK (STRUKTUR TETAP SAMA) ---
     let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
-    esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
+esc += "Alamat: UNNES, Gunungpati, Semarang\n";
+esc += "NPWD  : P.1.9032024.14.11\n";
+esc += "--------------------------------\n";
+esc += "ID: " + trxId + "\n";
+esc += "--------------------------------\n\x1B\x61\x00";
     
     Object.values(cart).forEach(i => {
         esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
@@ -229,23 +233,45 @@ async function submitOrder() {
 
     esc += "Metode        : " + pendingOrder.metode + "\n";
     
-    if (member) {
-        const poinDapat = Math.floor(totalBersih / 20000) * 100;
-        const poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
-        esc += "Nama Member   : " + member.nama + "\n";
-        esc += "Poin Didapat  : +" + poinDapat + "\n";
-        esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
-        if (redeemQty > 0) esc += "Poin Digunakan: " + redeemQty + "\n";
-    }
+    let namaMember = "-";
+let poinDapat = "-";
+let poinAkumulasi = "-";
+let voucher = "-";
+
+if (member) {
+    namaMember = member.nama || "-";
+    poinDapat = Math.floor(totalBersih / 20000) * 100;
+    poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
+}
+
+if (redeemQty > 0) {
+    voucher = redeemQty;
+}
+
+esc += "Nama Member   : " + namaMember + "\n";
+esc += "Poin Didapat  : " + (poinDapat === "-" ? "-" : "+" + poinDapat) + "\n";
+esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
+esc += "Voucher       : " + voucher + "\n";
+esc += "Diskon        : Rp " + (totalDiskon ? totalDiskon.toLocaleString() : "-") + "\n";
+esc += "Pembulatan    : " + (nilaiPembulatan ? "Rp " + nilaiPembulatan.toLocaleString() : "-") + "\n";
     
+    // --- PENYUSUNAN AKHIR STRUK ---
+    // Pastikan PB1 dihitung dari totalBersih
+    const pb1 = Math.round(totalBersih * 0.10);
+
+    esc += "PB1 (10%)     : Rp " + pb1.toLocaleString() + " (Tanggung Resto)\n";
     esc += "--------------------------------\n";
+    
+    // Tambahkan baris TOTAL BERSIH dengan font lebih besar (\x1B\x21\x10)
     esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersih.toLocaleString() + "\x1B\x21\x00\n";
     
     if (m === "CASH") {
         const bVal = Number(document.getElementById("bayar").value);
+        esc += "--------------------------------\n";
         esc += "Bayar         : Rp " + bVal.toLocaleString() + "\n";
         esc += "Kembali       : Rp " + (bVal - totalBersih).toLocaleString() + "\n";
     }
+    
     esc += "--------------------------------\n";
     esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
 
@@ -728,69 +754,99 @@ async function cekDaftarTransaksi() {
 }
 
 function reprintStruk(index) {
+
     const data = window.currentShiftData[index];
-    
+
     if (!data) {
         alert("Data transaksi tidak ditemukan!");
         return;
     }
 
     try {
+
         let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
+        esc += "Alamat: UNNES, Gunungpati, Semarang\n";
+        esc += "NPWD  : P.1.9032024.14.11\n";
         esc += "(COPY STRUK)\n";
-        esc += "ID: " + data.id + "\n--------------------------------\n\x1B\x61\x00";
-        
+        esc += "--------------------------------\n";
+        esc += "ID: " + (data.id || "-") + "\n";
+        esc += "--------------------------------\n\x1B\x61\x00";
+
         const items = data.pesanan.split(", ");
         let totalKotorManual = 0;
 
         items.forEach(itemStr => {
-            // Pecah "Nama Menu xQty" -> ["Nama Menu", "Qty"]
+
             const parts = itemStr.split(" x");
             const namaMenu = parts[0].trim();
             const qty = parseInt(parts[1]) || 1;
-            
-            // CARI HARGA DI DAFTAR MENU AKTIF
+
             const menuAsli = MENU.find(m => m.nama === namaMenu);
             const hargaSatuan = menuAsli ? menuAsli.harga : 0;
+
             const subTotal = hargaSatuan * qty;
+
             totalKotorManual += subTotal;
 
-            // FORMAT PERSIS STRUK ASLI
             esc += `${namaMenu}\n${qty} x ${hargaSatuan.toLocaleString()} = ${subTotal.toLocaleString()}\n`;
+
         });
-        
+
         esc += "--------------------------------\n";
-        
+
         const bersih = Number(data.total) || 0;
         const diskon = Number(data.diskon) || 0;
-        // Gunakan total kotor dari hasil hitung ulang item di atas
+        const voucher = Number(data.voucher) || 0;
+        const pembulatan = Number(data.pembulatan) || 0;
+
         const kotor = totalKotorManual > 0 ? totalKotorManual : (bersih + diskon);
 
         esc += "Total Kotor   : Rp " + kotor.toLocaleString() + "\n";
         esc += "Metode        : " + (data.metode || "CASH") + "\n";
-        
-        if (data.namaMember && data.namaMember !== "-") {
-            esc += "Nama Member   : " + data.namaMember + "\n";
-            esc += "Poin Didapat  : +" + (data.poinDapat || 0) + "\n";
-            esc += "Poin Akumulasi: (Cek App)\n";
-        }
 
-        esc += "Voucher       : Rp 0\n";
-        esc += "Diskon        : Rp " + diskon.toLocaleString() + "\n";
         esc += "--------------------------------\n";
+
+        const namaMember = data.namaMember || "-";
+        const poinDapat = data.poinDapat || "-";
+        const poinAkumulasi = data.poinAkumulasi || "-";
+
+        esc += "Nama Member   : " + namaMember + "\n";
+        esc += "Poin Didapat  : " + (poinDapat === "-" ? "-" : "+" + poinDapat) + "\n";
+        esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
+
+        esc += "Voucher       : " + (voucher ? "Rp " + voucher.toLocaleString() : "-") + "\n";
+        esc += "Diskon        : " + (diskon ? "Rp " + diskon.toLocaleString() : "-") + "\n";
+        esc += "Pembulatan    : " + (pembulatan ? "Rp " + pembulatan.toLocaleString() : "-") + "\n";
+
+        esc += "--------------------------------\n";
+
         esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + bersih.toLocaleString() + "\x1B\x21\x00\n";
+
+        const pb1 = Math.round(bersih * 0.10);
+
+        esc += "PB1 10%       : Rp " + pb1.toLocaleString() + " (Pajak ditanggung resto)\n";
+
         esc += "--------------------------------\n";
+
         esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
 
         if (window.AppInventor) {
+
             window.AppInventor.setWebViewString("PRINT|" + esc);
+
         } else {
+
             console.log(esc);
             alert("Berhasil! Cek Console.");
+
         }
+
     } catch (err) {
+
         alert("Gagal memproses struk: " + err.message);
+
     }
+
 }
 
 function cetakSemuaTransaksi() {
@@ -1015,35 +1071,55 @@ function validateAndApplyVoucher() {
         voucherDiscount = Math.floor(diskon);
     }
 }
-async function inputPengeluaran() {
-    const nama = prompt("Nama Pengeluaran:");
-    if (!nama) return;
-    const harga = prompt("Jumlah Nominal (Rp):");
-    if (!harga || isNaN(harga)) return;
-    
-    // Tampilkan loader
+// Membuka Modal
+function inputPengeluaran() {
+    document.getElementById("modalPengeluaran").classList.remove("hidden");
+    document.getElementById("modalPengeluaran").classList.add("flex");
+}
+
+// Menutup Modal
+function closeModalExp() {
+    document.getElementById("modalPengeluaran").classList.add("hidden");
+}
+
+// Menyimpan ke Backend
+async function saveExpense() {
+    const nama = document.getElementById("expNama").value;
+    const harga = document.getElementById("expHarga").value;
+    const jumlah = document.getElementById("expJumlah").value;
+
+    if (!nama || !harga || !jumlah) {
+        alert("Harap lengkapi semua data!");
+        return;
+    }
+
+    closeModalExp();
     const loader = document.getElementById("fullLoader");
     loader.classList.remove("hidden");
     loader.classList.add("flex");
 
     try {
-        // Menggunakan API sesuai dengan backend yang Anda miliki
-        const response = await fetch(`${API_URL}?token=${TOKEN}&action=addExpense&nama=${encodeURIComponent(nama)}&harga=${harga}&jumlah=1`);
+        const url = `${API_URL}?token=${TOKEN}&action=addExpense&nama=${encodeURIComponent(nama)}&harga=${harga}&jumlah=${jumlah}`;
+        const response = await fetch(url);
         const result = await response.text();
         
         if (result === "SUCCESS") {
             alert("Pengeluaran berhasil dicatat!");
+            // Reset input setelah berhasil
+            document.getElementById("expNama").value = "";
+            document.getElementById("expHarga").value = "";
+            document.getElementById("expJumlah").value = "";
         } else if (result === "NO_SHIFT") {
-            alert("Gagal: Shift belum dibuka!");
+            alert("Gagal: Shift belum dibuka! Silakan buka shift terlebih dahulu.");
         } else {
-            alert("Gagal mencatat pengeluaran.");
+            alert("Gagal mencatat pengeluaran. Cek kembali data Anda.");
         }
     } catch (e) {
         alert("Error koneksi!");
     } finally {
         loader.classList.add("hidden");
     }
-}
+
 function scrollModal(direction) {
     const container = document.getElementById("listTrxContent");
     if (container) {
@@ -1101,6 +1177,19 @@ function scrollModal(direction) {
         <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Sedang Memproses...</div>
     </div>
 </div>
-
+<div id="modalPengeluaran" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[200] p-4">
+    <div class="bg-white rounded-xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div class="p-4 bg-slate-800 text-white font-bold text-center">INPUT PENGELUARAN</div>
+        <div class="p-4 space-y-3">
+            <input type="text" id="expNama" placeholder="Nama Barang/Keperluan" class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <input type="number" id="expHarga" placeholder="Harga Satuan (Rp)" class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <input type="number" id="expJumlah" placeholder="Jumlah (Qty)" class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div class="flex gap-2 p-4 pt-0">
+            <button onclick="closeModalExp()" class="flex-1 py-2.5 bg-gray-200 rounded-lg text-sm font-bold text-gray-700">BATAL</button>
+            <button onclick="saveExpense()" class="flex-1 py-2.5 bg-emerald-600 rounded-lg text-sm font-bold text-white">SIMPAN</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
