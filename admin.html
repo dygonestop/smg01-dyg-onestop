@@ -102,7 +102,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyb1eUL-D2jJjfFmh7RAAwW3xdeizjYcXwd2nx_M8LApXwEu0prinkDdbNd-H53I5-gAA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzH-iwoAXT5uJHjXSwP-hsJuJDjS7lcHH64SxQaaCxyhPc7FevULSFfDs3WvUiuu6D7zw/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -544,7 +544,6 @@ function manageShift(type) {
     modal.classList.add("flex");
 }
 
-// PERBAIKAN: Pindahkan event listener ke luar dan perbaiki struktur
 document.addEventListener("DOMContentLoaded", function() {
     const btnKonfirmasi = document.getElementById("btnShiftKonfirmasi");
     if (btnKonfirmasi) {
@@ -553,9 +552,13 @@ document.addEventListener("DOMContentLoaded", function() {
             const val2 = document.getElementById("shiftUangLaci").value;
             const val3 = document.getElementById("shiftNamaKasir").value;
 
-            // VALIDASI
+            // VALIDASI INPUT
             if (modeShift === 'open' && !val1) { alert("Masukkan Modal Awal!"); return; }
             if (modeShift === 'close' && (!val2 || !val3)) { alert("Lengkapi Uang Laci dan Nama Kasir!"); return; }
+
+            // VALIDASI FORMAT ANGKA
+            const uangLaci = parseFloat(val2 || 0);
+            if (isNaN(uangLaci)) { alert("Input Uang Laci tidak valid!"); return; }
 
             const loader = document.getElementById("fullLoader");
             document.getElementById("modalShift").classList.add("hidden");
@@ -563,46 +566,47 @@ document.addEventListener("DOMContentLoaded", function() {
     
             try {
                 if (modeShift === 'open') {
-                    const res = await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${val1 || 0}`);
-const responseText = (await res.text()).trim();
+                    const res = await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${parseFloat(val1) || 0}`);
+                    const responseText = (await res.text()).trim();
 
-if (responseText.startsWith("SHIFT-")) {
-    alert("Shift Berhasil Dibuka!");
-    location.reload();
-
-} else if (responseText === "SHIFT_ALREADY_OPEN") {
-    alert("Shift sudah terbuka!");
-
-} else {
-    throw new Error("Gagal membuka shift: " + responseText);
-}
+                    if (responseText.startsWith("SUCCESS-")) {
+                        alert("Shift Berhasil Dibuka!");
+                        location.reload();
+                    } else if (responseText === "SHIFT_ALREADY_OPEN") {
+                        alert("Shift sudah terbuka!");
+                    } else {
+                        throw new Error("Gagal membuka shift: " + responseText);
+                    }
                 } else {
-                    // Tutup Shift
+                    // Tutup Shift: Ambil Report Terbaru
                     const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
                     const r = await res.json();
                     
-                    const uangLaci = parseFloat(val2 || 0);
+                    // Pastikan r.pemasukanBersih adalah angka. 
+                    // Menggunakan perhitungan dari server (pemasukanBersih sudah sesuai rumus baru)
                     const totalBersih = parseFloat(r.pemasukanBersih || 0);
-                    const totalPengeluaran = parseFloat(r.totalPengeluaran || 0);
                     const selisih = uangLaci - totalBersih;
                     const statusUang = selisih === 0 ? "PAS" : (selisih > 0 ? "LEBIH" : "KURANG");
 
+                    // FORMAT STRUK
                     let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
                     esc += `${r.shiftName || 'SHIFT'}-${new Date().toLocaleDateString('id-ID')}\n`;
                     esc += "--------------------------------\n\x1B\x61\x00";
-                    esc += `Modal Awal      : Rp ${parseFloat(r.modalAwal).toLocaleString('id-ID')}\n`;
+                    esc += `Modal Awal      : Rp ${parseFloat(r.modalAwal || 0).toLocaleString('id-ID')}\n`;
                     esc += `Total QRIS      : Rp ${(r.qris || 0).toLocaleString('id-ID')}\n`;
                     esc += `Total Cash      : Rp ${(r.cash || 0).toLocaleString('id-ID')}\n`;
                     esc += `Total Card      : Rp ${(r.card || 0).toLocaleString('id-ID')}\n`;
-                    esc += `Pengeluaran     : Rp ${totalPengeluaran.toLocaleString('id-ID')}\n`;
+                    esc += `Pengeluaran     : Rp ${parseFloat(r.totalPengeluaran || 0).toLocaleString('id-ID')}\n`;
                     esc += "--------------------------------\n";
                     esc += `TOTAL BERSIH    : Rp ${totalBersih.toLocaleString('id-ID')}\n`;
                     esc += `UANG DI LACI    : Rp ${uangLaci.toLocaleString('id-ID')}\n`;
-                    esc += `SELISIH         : Rp ${selisih.toLocaleString('id-ID')} (${statusUang})\n`;
+                    esc += `SELISIH         : Rp ${Math.abs(selisih).toLocaleString('id-ID')} (${statusUang})\n`;
                     esc += "--------------------------------\n";
                     esc += `Kasir : ${val3}\n\n\n\n\n`;
 
-                    const closeRes = await fetch(`${API_URL}?token=${TOKEN}&action=closeShift&uangLaci=${val2}&namaKasir=${encodeURIComponent(val3)}&selisih=${selisih}&keterangan=${statusUang}`);
+                    // KIRIM KE SERVER
+                    const closeRes = await fetch(`${API_URL}?token=${TOKEN}&action=closeShift&uangLaci=${uangLaci}&namaKasir=${encodeURIComponent(val3)}&keterangan=${statusUang}`);
+                    
                     if ((await closeRes.text()) === "CLOSED") {
                         if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
                         alert("Shift Ditutup!");
