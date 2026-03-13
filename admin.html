@@ -102,7 +102,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzH-iwoAXT5uJHjXSwP-hsJuJDjS7lcHH64SxQaaCxyhPc7FevULSFfDs3WvUiuu6D7zw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwt0ejL0NKjYH5gDzBi1UixMg5CdMWuXssTcAJlfkh3imGLc9K-VDK8-NscYUkFPzEdng/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -552,13 +552,15 @@ document.addEventListener("DOMContentLoaded", function() {
             const val2 = document.getElementById("shiftUangLaci").value;
             const val3 = document.getElementById("shiftNamaKasir").value;
 
-            // VALIDASI INPUT
+            // 1. VALIDASI INPUT AWAL
             if (modeShift === 'open' && !val1) { alert("Masukkan Modal Awal!"); return; }
             if (modeShift === 'close' && (!val2 || !val3)) { alert("Lengkapi Uang Laci dan Nama Kasir!"); return; }
 
-            // VALIDASI FORMAT ANGKA
+            // 2. AMBIL & VALIDASI ANGKA (Lakukan di sini agar bisa dipakai di bawah)
+            const modalAwalInput = parseFloat(val1 || 0);
             const uangLaci = parseFloat(val2 || 0);
-            if (isNaN(uangLaci)) { alert("Input Uang Laci tidak valid!"); return; }
+            
+            if (modeShift === 'close' && isNaN(uangLaci)) { alert("Input Uang Laci tidak valid!"); return; }
 
             const loader = document.getElementById("fullLoader");
             document.getElementById("modalShift").classList.add("hidden");
@@ -566,7 +568,7 @@ document.addEventListener("DOMContentLoaded", function() {
     
             try {
                 if (modeShift === 'open') {
-                    const res = await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${parseFloat(val1) || 0}`);
+                    const res = await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${modalAwalInput}`);
                     const responseText = (await res.text()).trim();
 
                     if (responseText.startsWith("SUCCESS-")) {
@@ -578,31 +580,53 @@ document.addEventListener("DOMContentLoaded", function() {
                         throw new Error("Gagal membuka shift: " + responseText);
                     }
                 } else {
-                    // Tutup Shift: Ambil Report Terbaru
+                    // Tutup Shift
                     const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
                     const r = await res.json();
                     
-                    // Pastikan r.pemasukanBersih adalah angka. 
-                    // Menggunakan perhitungan dari server (pemasukanBersih sudah sesuai rumus baru)
+                    // Kalkulasi (menggunakan variabel yang sudah bersih)
+                    const modalAwal = parseFloat(r.modalAwal || 0);
+                    const totalPendapatan = parseFloat(r.pemasukanKotor || 0);
+                    const totalPengeluaran = parseFloat(r.totalPengeluaran || 0);
+                    const totalDiskon = parseFloat(r.totalDiskon || 0);
                     const totalBersih = parseFloat(r.pemasukanBersih || 0);
-                    const selisih = uangLaci - totalBersih;
-                    const statusUang = selisih === 0 ? "PAS" : (selisih > 0 ? "LEBIH" : "KURANG");
+                    
+                    const cashSeharusnya = modalAwal + totalPendapatan - totalPengeluaran - totalDiskon;
+                    const selisih = uangLaci - cashSeharusnya;
+                    const statusUang = Math.abs(selisih) < 1 ? "PAS" : (selisih > 0 ? "LEBIH" : "KURANG");
 
-                    // FORMAT STRUK
-                    let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
-                    esc += `${r.shiftName || 'SHIFT'}-${new Date().toLocaleDateString('id-ID')}\n`;
-                    esc += "--------------------------------\n\x1B\x61\x00";
-                    esc += `Modal Awal      : Rp ${parseFloat(r.modalAwal || 0).toLocaleString('id-ID')}\n`;
-                    esc += `Total QRIS      : Rp ${(r.qris || 0).toLocaleString('id-ID')}\n`;
-                    esc += `Total Cash      : Rp ${(r.cash || 0).toLocaleString('id-ID')}\n`;
-                    esc += `Total Card      : Rp ${(r.card || 0).toLocaleString('id-ID')}\n`;
-                    esc += `Pengeluaran     : Rp ${parseFloat(r.totalPengeluaran || 0).toLocaleString('id-ID')}\n`;
-                    esc += "--------------------------------\n";
-                    esc += `TOTAL BERSIH    : Rp ${totalBersih.toLocaleString('id-ID')}\n`;
-                    esc += `UANG DI LACI    : Rp ${uangLaci.toLocaleString('id-ID')}\n`;
-                    esc += `SELISIH         : Rp ${Math.abs(selisih).toLocaleString('id-ID')} (${statusUang})\n`;
-                    esc += "--------------------------------\n";
-                    esc += `Kasir : ${val3}\n\n\n\n\n`;
+
+// FORMAT STRUK
+let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
+esc += `${r.shiftName || 'SHIFT'}-${new Date().toLocaleDateString('id-ID')}\n`;
+esc += "--------------------------------\n\x1B\x61\x00";
+
+esc += `Modal Awal      : Rp ${modalAwal.toLocaleString('id-ID')}\n`;
+esc += `Total QRIS      : Rp ${(r.qris || 0).toLocaleString('id-ID')}\n`;
+esc += `Total Cash      : Rp ${(r.cash || 0).toLocaleString('id-ID')}\n`;
+esc += `Total Card      : Rp ${(r.card || 0).toLocaleString('id-ID')}\n`;
+esc += `Total Pengeluaran: Rp ${totalPengeluaran.toLocaleString('id-ID')}\n`;
+esc += "--------------------------------\n";
+esc += `TOTAL BERSIH    : Rp ${totalBersih.toLocaleString('id-ID')}\n`;
+esc += `UANG DI LACI    : Rp ${uangLaci.toLocaleString('id-ID')}\n`;
+esc += `SELISIH         : Rp ${Math.abs(selisih).toLocaleString('id-ID')} (${statusUang})\n`;
+esc += "--------------------------------\n";
+esc += `Kasir : ${val3}\n\n`;
+
+// RINCIAN PENGELUARAN (Sesuai permintaan Anda di bawah Kasir)
+esc += "RINCIAN PENGELUARAN:\n";
+if (r.listPengeluaran && r.listPengeluaran.length > 0) {
+    r.listPengeluaran.forEach(item => { 
+        esc += `- ${item}\n`; 
+    });
+} else {
+    esc += "- Tidak ada pengeluaran\n";
+}
+
+esc += "--------------------------------\n";
+// JUMLAH MEMBER UNIK
+esc += `Jml Member Unik : ${r.jumlahMember || 0}\n`;
+esc += "--------------------------------\n\n\n\n";
 
                     // KIRIM KE SERVER
                     const closeRes = await fetch(`${API_URL}?token=${TOKEN}&action=closeShift&uangLaci=${uangLaci}&namaKasir=${encodeURIComponent(val3)}&keterangan=${statusUang}`);
