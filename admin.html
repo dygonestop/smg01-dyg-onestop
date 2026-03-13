@@ -532,84 +532,100 @@ async function manageShift(type) {
     loader.classList.remove("hidden");
     loader.classList.add("flex");
 
-    if (type === 'open') {
-        const modalAwal = prompt("Masukkan Modal Awal (Rp):");
-        localStorage.setItem("modalAwal", modalAwal);
-        
-        if (!modalAwal || isNaN(modalAwal) || parseInt(modalAwal) < 0) {
-            loader.classList.add("hidden");
-            return;
-        }
+    try {
+        // ==============================
+        // 1. OPEN SHIFT
+        // ==============================
+        if (type === 'open') {
+            const modalAwal = prompt("Masukkan Modal Awal (Rp):");
+            if (!modalAwal || isNaN(modalAwal) || parseInt(modalAwal) < 0) {
+                loader.classList.add("hidden");
+                return;
+            }
 
-        if (!confirm("Buka shift dengan modal Rp " + parseInt(modalAwal).toLocaleString() + "?")) {
-            loader.classList.add("hidden");
-            return;
-        }
+            if (!confirm("Buka shift dengan modal Rp " + parseInt(modalAwal).toLocaleString('id-ID') + "?")) {
+                loader.classList.add("hidden");
+                return;
+            }
 
-        await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${modalAwal}`, { mode: 'no-cors' });
-        location.reload();
-    } else {
-        const uangLaci = prompt("Masukkan total UANG DI LACI (Rp):");
-        const namaKasir = prompt("Masukkan NAMA KASIR:");
+            localStorage.setItem("modalAwal", modalAwal);
+            await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${modalAwal}`);
+            location.reload();
+        } 
 
-        if (uangLaci === null || namaKasir === null || isNaN(uangLaci)) {
-            loader.classList.add("hidden");
-            return;
-        }
+        // ==============================
+        // 2. CLOSE SHIFT
+        // ==============================
+        else {
+            const uangLaci = prompt("Masukkan total UANG DI LACI (Rp):");
+            const namaKasir = prompt("Masukkan NAMA KASIR:");
 
-        if (!confirm("Tutup shift & Cetak Laporan?")) {
-            loader.classList.add("hidden");
-            return;
-        }
+            if (uangLaci === null || namaKasir === null || isNaN(uangLaci)) {
+                loader.classList.add("hidden");
+                return;
+            }
 
-        try {
+            if (!confirm("Tutup shift & Cetak Laporan?")) {
+                loader.classList.add("hidden");
+                return;
+            }
+
+            // A. Ambil data laporan dari server
             const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
             const r = await res.json();
-            
+
             const modalAwal = parseFloat(r.modalAwal || 0);
             const cashDiterima = parseFloat(r.cash || 0);
             const totalBersih = parseFloat(r.pemasukanBersih || 0);
-            
-            // Logika Selisih & Keterangan
-            const selisih = parseFloat(uangLaci) - totalBersih; 
+            const selisih = parseFloat(uangLaci) - totalBersih;
             const statusUang = selisih === 0 ? "PAS" : (selisih > 0 ? "LEBIH" : "KURANG");
 
-            // FORMAT LAPORAN (Sesuai variabel yang dikirim GAS Anda)
+            // B. Format Struk
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
-            esc += `${r.shiftName || 'SHIFT'}-${new Date().toLocaleDateString('id-ID')}-${new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}\n`;
+            esc += `${r.shiftName || 'SHIFT'}-${new Date().toLocaleDateString('id-ID')}-${new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}\n`;
             esc += "--------------------------------\n\x1B\x61\x00";
-
             esc += `Total Transaksi      : ${r.totalTrx || 0}\n`;
-            esc += `Modal Awal          : Rp ${modalAwal.toLocaleString('id-ID')}\n`;
+            esc += `Total Member Trx     : ${r.totalMemberTrx || 0}\n`;
+            esc += `Modal Awal           : Rp ${modalAwal.toLocaleString('id-ID')}\n`;
             esc += "--------------------------------\n";
-            esc += `Total QRIS          : Rp ${(r.qris || 0).toLocaleString('id-ID')}\n`;
-            esc += `Total Cash          : Rp ${cashDiterima.toLocaleString('id-ID')}\n`;
-            esc += `Total Card          : Rp ${(r.card || 0).toLocaleString('id-ID')}\n`;
+            esc += `Total QRIS           : Rp ${(r.qris || 0).toLocaleString('id-ID')}\n`;
+            esc += `Total Cash           : Rp ${cashDiterima.toLocaleString('id-ID')}\n`;
+            esc += `Total Card           : Rp ${(r.card || 0).toLocaleString('id-ID')}\n`;
             esc += "--------------------------------\n";
-            esc += `Pemasukan Kotor     : Rp ${(r.pemasukanKotor || 0).toLocaleString('id-ID')}\n`;
-            esc += `Total Diskon        : Rp ${(r.totalDiskon || 0).toLocaleString('id-ID')}\n`;
-            esc += `Total Pengeluaran   : Rp ${(r.totalPengeluaran || 0).toLocaleString('id-ID')}\n`;
+            esc += `Pemasukan Kotor      : Rp ${(r.pemasukanKotor || 0).toLocaleString('id-ID')}\n`;
+            esc += `Total Diskon         : Rp ${(r.totalDiskon || 0).toLocaleString('id-ID')}\n`;
+            esc += `Total Pengeluaran    : Rp ${(r.totalPengeluaran || 0).toLocaleString('id-ID')}\n`;
             esc += "--------------------------------\n";
-            esc += `TOTAL BERSIH        : Rp ${totalBersih.toLocaleString('id-ID')}\n`;
+            esc += `TOTAL BERSIH         : Rp ${totalBersih.toLocaleString('id-ID')}\n`;
             esc += "--------------------------------\n";
-            esc += `UANG DI LACI        : Rp ${parseFloat(uangLaci).toLocaleString('id-ID')}\n`;
-            esc += `SELISIH             : Rp ${selisih.toLocaleString('id-ID')} (${statusUang})\n`;
+            esc += `UANG DI LACI         : Rp ${parseFloat(uangLaci).toLocaleString('id-ID')}\n`;
+            esc += `SELISIH              : Rp ${selisih.toLocaleString('id-ID')} (${statusUang})\n`;
             esc += "--------------------------------\n";
             esc += `Kasir : ${namaKasir}\n`;
             esc += `Waktu : ${new Date().toLocaleString('id-ID')}\n\n\n\n\n`;
-                
-            if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-            
-            // Kirim data ke Backend (Action closeShift)
+
+            // C. Simpan ke Database (Harus menunggu respons server)
             const closeUrl = `${API_URL}?token=${TOKEN}&action=closeShift&uangLaci=${uangLaci}&namaKasir=${encodeURIComponent(namaKasir)}&selisih=${selisih}&keterangan=${statusUang}`;
-            await fetch(closeUrl, { mode: 'no-cors' });
-            
-            alert("Shift Ditutup!"); 
-            location.reload();
-        } catch (e) { 
-            loader.classList.add("hidden");
-            alert("Gagal memproses shift!"); 
+            const closeRes = await fetch(closeUrl);
+            const closeStatus = await closeRes.text();
+
+            if (closeStatus === "CLOSED") {
+                // D. Print jika sudah berhasil tersimpan
+                if (window.AppInventor) {
+                    window.AppInventor.setWebViewString("PRINT|" + esc);
+                }
+
+                setTimeout(() => {
+                    alert("Shift Ditutup!");
+                    location.reload();
+                }, 1000);
+            } else {
+                throw new Error("Gagal menyimpan ke server");
+            }
         }
+    } catch (e) {
+        loader.classList.add("hidden");
+        alert("Gagal memproses shift! Pastikan koneksi internet stabil.");
     }
 }
 
