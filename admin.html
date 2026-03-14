@@ -102,7 +102,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzCHVKg0qaQZ6m_--gWdjJNO8BfGIh_j7QfoZGjrJNiFRDCm6j82p_M50fLezZuY6FA4Q/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwackvImGfa5dRc_rjkScrmKx3b2ePACy5GeuttLSP6hqlvnFXzYDraAD6e6XJ4a6aNvQ/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -210,7 +210,7 @@ async function submitOrder() {
     // --- FORMULASI STRUK (STRUKTUR TETAP SAMA) ---
     let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
 esc += "Alamat: UNNES, Gunungpati, Semarang\n";
-esc += "NPWD  : P.1.9032024.14.11\n";
+esc += "NPWPD  : P.1.9032024.14.11\n";
 esc += "--------------------------------\n";
 esc += "ID: " + trxId + "\n";
 esc += "--------------------------------\n\x1B\x61\x00";
@@ -278,8 +278,31 @@ esc += "Pembulatan    : " + (nilaiPembulatan ? "Rp " + nilaiPembulatan.toLocaleS
     // --- EKSEKUSI ---
     if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
     
-    prosesSimpanKeCloud(); 
+    // 1. Simpan transaksi ke cloud
+    await prosesSimpanKeCloud(); 
+    
+    // 2. TAMBAHAN: Update Voucher jika ada yang dipakai
+    const vInput = document.getElementById("voucher");
+    if (vInput && vInput.value.trim() !== "") {
+        markVoucherAsUsed(vInput.value.trim());
+    }
+    
     setTimeout(() => { location.reload(); }, 800);
+}
+
+// 3. Tambahkan fungsi ini di bawah submitOrder atau di bagian akhir script
+function markVoucherAsUsed(kode) {
+    // Gunakan API_URL yang sudah ada di baris paling atas script Anda
+    fetch(`${API_URL}?action=markVoucherAsUsed&kode=${encodeURIComponent(kode)}`)
+    .then(response => response.text())
+    .then(result => {
+        if(result === "SUCCESS") {
+            console.log("Voucher berhasil ditandai TERPAKAI");
+        } else {
+            console.log("Gagal menandai voucher");
+        }
+    })
+    .catch(err => console.error("Error update voucher:", err));
 }
 // ==========================================
 // 3. FUNGSI PENDUKUNG (TIDAK BERUBAH)
