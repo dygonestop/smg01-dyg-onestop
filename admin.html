@@ -102,7 +102,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwackvImGfa5dRc_rjkScrmKx3b2ePACy5GeuttLSP6hqlvnFXzYDraAD6e6XJ4a6aNvQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxqFwBqLQHNMwk8BIPL2zAHSWZdZs7P0umXmk1sToTaa5DCjfJJsPchSG5hauCVVEaYKg/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -180,12 +180,11 @@ async function submitOrder() {
     let labelDiskon = "Diskon"; 
     
     if (redeemQty > 0) {
-        totalDiskon = pointDiscount;
+        totalDiskon = pointDiscount; // Diambil dari variabel global yang sudah dikali 10
         labelDiskon = "Diskon Poin";
     } else {
         const vInput = document.getElementById("voucher");
         if (vInput && vInput.value.trim() !== "") {
-            // Pastikan fungsi hitungVoucher() sudah ada di skrip Anda
             totalDiskon = typeof hitungVoucher === 'function' ? hitungVoucher(vInput.value.trim()) : 0;
             labelDiskon = "Diskon Voucher";
         }
@@ -205,15 +204,24 @@ async function submitOrder() {
     
     btn.innerText = "MENCETAK..."; btn.disabled = true;
 
-    pendingOrder = { total: totalBersih, noWA: document.getElementById("nohp").value || "-", pesanan, metode: m, trxId };
+    // --- PENTING: Penambahan parameter untuk Cloud agar sinkron ---
+    pendingOrder = { 
+        total: totalBersih, 
+        noWA: document.getElementById("nohp").value || "-", 
+        pesanan, 
+        metode: m, 
+        trxId,
+        redeemQty: redeemQty, // Mengirim jumlah poin (misal: 500)
+        nominalVoucher: (redeemQty > 0) ? 0 : totalDiskon // Mengirim nominal rupiah voucher
+    };
 
     // --- FORMULASI STRUK (STRUKTUR TETAP SAMA) ---
     let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
-esc += "Alamat: UNNES, Gunungpati, Semarang\n";
-esc += "NPWPD  : P.1.9032024.14.11\n";
-esc += "--------------------------------\n";
-esc += "ID: " + trxId + "\n";
-esc += "--------------------------------\n\x1B\x61\x00";
+    esc += "Alamat: UNNES, Gunungpati, Semarang\n";
+    esc += "NPWPD  : P.1.9032024.14.11\n";
+    esc += "--------------------------------\n";
+    esc += "ID: " + trxId + "\n";
+    esc += "--------------------------------\n\x1B\x61\x00";
     
     Object.values(cart).forEach(i => {
         esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
@@ -221,48 +229,41 @@ esc += "--------------------------------\n\x1B\x61\x00";
     
     esc += "--------------------------------\n";
     esc += "Total Kotor   : Rp " + totalKotor.toLocaleString() + "\n";
+    esc += `${labelDiskon.padEnd(14)}: Rp ${totalDiskon.toLocaleString()}\n`; 
     
-    // Menampilkan label diskon dinamis
-    esc += `${labelDiskon} : Rp ${totalDiskon.toLocaleString()}\n`; 
-    
-    // --- TAMBAHAN PEMBULATAN DI STRUK ---
     if (nilaiPembulatan !== 0) {
         esc += "Pembulatan    : Rp " + (nilaiPembulatan > 0 ? "+" : "") + nilaiPembulatan.toLocaleString() + "\n";
     }
-    // ------------------------------------
 
-    esc += "Metode        : " + pendingOrder.metode + "\n";
+    esc += "Metode        : " + m + "\n";
     
     let namaMember = "-";
-let poinDapat = "-";
-let poinAkumulasi = "-";
-let voucher = "-";
+    let poinDapat = "-";
+    let poinAkumulasi = "-";
+    let voucher = "-";
 
-if (member) {
-    namaMember = member.nama || "-";
-    poinDapat = Math.floor(totalBersih / 20000) * 100;
-    poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
-}
+    if (member) {
+        namaMember = member.nama || "-";
+        poinDapat = Math.floor(totalBersih / 20000) * 100;
+        poinAkumulasi = (Number(member.poin || 0) + poinDapat - redeemQty);
+    }
 
-if (redeemQty > 0) {
-    voucher = redeemQty;
-}
+    if (redeemQty > 0) {
+        voucher = redeemQty;
+    }
 
-esc += "Nama Member   : " + namaMember + "\n";
-esc += "Poin Didapat  : " + (poinDapat === "-" ? "-" : "+" + poinDapat) + "\n";
-esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
-esc += "Voucher       : " + voucher + "\n";
-esc += "Diskon        : Rp " + (totalDiskon ? totalDiskon.toLocaleString() : "-") + "\n";
-esc += "Pembulatan    : " + (nilaiPembulatan ? "Rp " + nilaiPembulatan.toLocaleString() : "-") + "\n";
+    esc += "Nama Member   : " + namaMember + "\n";
+    esc += "Poin Didapat  : " + (poinDapat === "-" ? "-" : "+" + poinDapat) + "\n";
+    esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
+    esc += "Voucher       : " + voucher + "\n";
     
-    // --- PENYUSUNAN AKHIR STRUK ---
-    // Pastikan PB1 dihitung dari totalBersih
+    // Bagian diskon dan pembulatan tetap sesuai permintaan Anda
+    esc += "Diskon        : Rp " + (totalDiskon ? totalDiskon.toLocaleString() : "-") + "\n";
+    esc += "Pembulatan    : " + (nilaiPembulatan ? "Rp " + nilaiPembulatan.toLocaleString() : "-") + "\n";
+    
     const pb1 = Math.round(totalBersih * 0.10);
-
     esc += "PB1 (10%)     : Rp " + pb1.toLocaleString() + " (Tanggung Resto)\n";
     esc += "--------------------------------\n";
-    
-    // Tambahkan baris TOTAL BERSIH dengan font lebih besar (\x1B\x21\x10)
     esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersih.toLocaleString() + "\x1B\x21\x00\n";
     
     if (m === "CASH") {
@@ -278,12 +279,10 @@ esc += "Pembulatan    : " + (nilaiPembulatan ? "Rp " + nilaiPembulatan.toLocaleS
     // --- EKSEKUSI ---
     if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
     
-    // 1. Simpan transaksi ke cloud
     await prosesSimpanKeCloud(); 
     
-    // 2. TAMBAHAN: Update Voucher jika ada yang dipakai
     const vInput = document.getElementById("voucher");
-    if (vInput && vInput.value.trim() !== "") {
+    if (vInput && vInput.value.trim() !== "" && redeemQty === 0) {
         markVoucherAsUsed(vInput.value.trim());
     }
     
@@ -448,16 +447,17 @@ function removeItem(i) {
 }
 
 function updateUI() {
+    validateAndApplyVoucher(); // Validasi ulang voucher tiap ada perubahan item
     renderCart();
     renderMenu();
 }
 
 function renderCart() {
-    // 1. Panggil validasi voucher otomatis (update nilai voucherDiscount)
+    // 1. Validasi voucher otomatis (Update nilai voucherDiscount)
     validateAndApplyVoucher();
 
     const list = document.getElementById("cartList");
-    let html = "", total = 0;
+    let html = "", totalKotor = 0;
     const items = Object.keys(cart);
 
     if (items.length === 0) {
@@ -468,10 +468,10 @@ function renderCart() {
         return;
     }
 
-    // 2. Loop item untuk menghitung total kotor
+    // 2. Hitung Total Kotor
     items.forEach(i => {
         const item = cart[i];
-        total += item.qty * item.harga;
+        totalKotor += item.qty * item.harga;
         html += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded border border-slate-100 mb-1">
             <div class="flex flex-col flex-1 overflow-hidden mr-2">
                 <span class="font-bold text-[9px] truncate">${item.nama}</span>
@@ -485,20 +485,21 @@ function renderCart() {
         </div>`;
     });
 
-    // 3. Hitung total diskon (Poin Member + Voucher)
+    // 3. Hitung Sisa Bayar Setelah Diskon
     const totalDiskon = pointDiscount + voucherDiscount;
-    let bersih = Math.max(0, total - totalDiskon);
+    let sisaBayar = Math.max(0, totalKotor - totalDiskon);
 
-    // --- TAMBAHAN PEMBULATAN ---
-    let sisa = bersih % 1000;
-    bersih = sisa >= 500 ? bersih + (1000 - sisa) : bersih - sisa;
-    // ---------------------------
+    // 4. LOGIKA PEMBULATAN (IDEMU: 500 ke atas naik, di bawah 500 turun)
+    let sisa = sisaBayar % 1000;
+    let bersihFinal = sisa >= 500 ? sisaBayar + (1000 - sisa) : sisaBayar - sisa;
 
-    // 4. Update UI
+    // 5. UPDATE UI
     list.innerHTML = html;
-    document.getElementById("total").innerText = bersih.toLocaleString();
+    
+    // PENTING: Tampilkan bersihFinal (yang sudah bulat) ke layar
+    document.getElementById("total").innerText = bersihFinal.toLocaleString();
 
-    // 5. Tampilkan Wrapper jika ada diskon yang aktif
+    // 6. Kelola Tampilan Diskon
     const discWrapper = document.getElementById("pointDiscWrapper");
     if (totalDiskon > 0) {
         discWrapper.classList.remove("hidden");
@@ -507,7 +508,7 @@ function renderCart() {
         discWrapper.classList.add("hidden");
     }
 
-    // 6. Render box bayar jika metode CASH
+    // 7. Render box pembayaran (Akan otomatis menyesuaikan nominal bersihFinal)
     if (document.getElementById("metode").value === "CASH") renderCash();
 }
 
@@ -1233,6 +1234,31 @@ function scrollModal(direction) {
             behavior: 'smooth'
         });
     }
+}
+
+function hitungMaksimalRedeem(totalBelanja, saldoPoinUser, nominalVoucher = 0) {
+    // Sisa yang harus dibayar setelah dipotong voucher
+    let sisaSetelahVoucher = Math.max(0, totalBelanja - nominalVoucher);
+
+    // 1. Hitung potensi diskon dari saldo poin (500 poin = 5000)
+    // Kita hanya ambil kelipatan 500 poin yang tersedia
+    let poinKelipatan = Math.floor(saldoPoinUser / 500) * 500;
+    let potensiDiskonPoin = (poinKelipatan / 500) * 5000;
+    
+    // 2. Batasi diskon poin agar tidak melebihi sisa belanja
+    let diskonPoinFinal = Math.min(potensiDiskonPoin, sisaSetelahVoucher);
+    
+    // 3. Konversi balik ke Qty Poin yang benar-benar dipotong (Kelipatan 500)
+    let poinYangDipakai = Math.floor(diskonPoinFinal / 500) * 500;
+    
+    // 4. Hitung ulang rupiahnya berdasarkan poin kelipatan 500 tadi
+    let diskonRupiahFinalPoin = (poinYangDipakai / 500) * 5000;
+    
+    return {
+        rupiahPoin: diskonRupiahFinalPoin,
+        poinQty: poinYangDipakai,
+        totalDiskonGabungan: diskonRupiahFinalPoin + nominalVoucher
+    };
 }
 
 </script>
