@@ -607,15 +607,21 @@ document.addEventListener("DOMContentLoaded", function() {
                     const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
                     const r = await res.json();
                     
-                    // Kalkulasi (menggunakan variabel yang sudah bersih)
-                    const modalAwal = parseFloat(r.modalAwal || 0);
-                    const totalPendapatan = parseFloat(r.pemasukanKotor || 0);
-                    const totalPengeluaran = parseFloat(r.totalPengeluaran || 0);
-                    const totalDiskon = parseFloat(r.totalDiskon || 0);
-                    const totalBersih = parseFloat(r.pemasukanBersih || 0);
-                    
-// Temukan bagian ini di admin.html dan ubah menjadi:
-const cashSeharusnya = modalAwal + r.pemasukanKotor - totalPengeluaran - totalDiskon;;
+                   // --- PERBAIKAN LOGIKA PERHITUNGAN (ADMIN.HTML) ---
+
+// 1. Ambil angka dari response 'r' (hasil getShiftReport)
+const modalAwal = Number(r.modalAwal || 0);
+const totalCash = Number(r.cash || 0);
+const totalQris = Number(r.qris || 0);
+const totalCard = Number(r.card || 0);
+const totalPengeluaran = Number(r.totalPengeluaran || 0);
+const totalDiskon = Number(r.totalDiskon || 0);
+
+// 2. RUMUS YANG BENAR: Hanya uang tunai yang masuk ke perhitungan laci
+// QRIS dan CARD tidak boleh masuk ke sini karena tidak ada fisiknya di laci
+const cashSeharusnya = modalAwal + totalCash - totalPengeluaran - totalDiskon;
+
+// 3. Hitung Selisih
 const selisih = uangLaci - cashSeharusnya;
 const selisihBulat = Math.round(selisih);
 
@@ -626,29 +632,28 @@ if (selisihBulat > 0) {
     statusUang = "KURANG";
 }
 
-// Gunakan selisihBulat saat mengirim ke server jika perlu (tapi biasanya selisih asli lebih baik untuk data)
-// Jika Anda ingin di Spreadsheet tersimpan angka 0 bukan -0.000...
-const selisihUntukServer = selisihBulat;
+// 4. Hitung Total Omzet (Semua metode bayar + diskon yang diberikan)
+const omzetKotor = totalCash + totalQris + totalCard + totalDiskon;
 
-
-// FORMAT STRUK
+// --- FORMAT STRUK ---
 let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
-esc += `${r.shiftName || 'SHIFT'}-${new Date().toLocaleDateString('id-ID')}\n`;
+esc += `${r.shiftName || 'SHIFT'}\n`;
 esc += "--------------------------------\n\x1B\x61\x00";
 
 esc += `Modal Awal      : Rp ${modalAwal.toLocaleString('id-ID')}\n`;
-esc += `Total QRIS      : Rp ${(r.qris || 0).toLocaleString('id-ID')}\n`;
-esc += `Total Cash      : Rp ${(r.cash || 0).toLocaleString('id-ID')}\n`;
-esc += `Total Card      : Rp ${(r.card || 0).toLocaleString('id-ID')}\n`;
+esc += `Total QRIS      : Rp ${totalQris.toLocaleString('id-ID')}\n`;
+esc += `Total Cash      : Rp ${totalCash.toLocaleString('id-ID')}\n`;
+esc += `Total Card      : Rp ${totalCard.toLocaleString('id-ID')}\n`;
 esc += `Total Pengeluaran: Rp ${totalPengeluaran.toLocaleString('id-ID')}\n`;
 esc += "--------------------------------\n";
-esc += `TOTAL BERSIH    : Rp ${totalBersih.toLocaleString('id-ID')}\n`;
+// Menampilkan Omzet Kotor agar pemilik tahu total penjualan
+esc += `TOTAL OMZET     : Rp ${omzetKotor.toLocaleString('id-ID')}\n`;
 esc += `UANG DI LACI    : Rp ${uangLaci.toLocaleString('id-ID')}\n`;
-esc += `SELISIH         : Rp ${Math.abs(selisih).toLocaleString('id-ID')} (${statusUang})\n`;
+// Math.abs digunakan agar tanda minus tidak muncul dobel saat ditulis (KURANG)
+esc += `SELISIH         : Rp ${Math.abs(selisihBulat).toLocaleString('id-ID')} (${statusUang})\n`;
 esc += "--------------------------------\n";
 esc += `Kasir : ${val3}\n\n`;
 
-// RINCIAN PENGELUARAN (Sesuai permintaan Anda di bawah Kasir)
 esc += "RINCIAN PENGELUARAN:\n";
 if (r.listPengeluaran && r.listPengeluaran.length > 0) {
     r.listPengeluaran.forEach(item => { 
@@ -659,18 +664,17 @@ if (r.listPengeluaran && r.listPengeluaran.length > 0) {
 }
 
 esc += "--------------------------------\n";
-// JUMLAH MEMBER UNIK
 esc += `Jml Member Unik : ${r.jumlahMember || 0}\n`;
 esc += "--------------------------------\n\n\n\n";
 
-                    // KIRIM KE SERVER
-                    const closeRes = await fetch(`${API_URL}?token=${TOKEN}&action=closeShift&uangLaci=${uangLaci}&namaKasir=${encodeURIComponent(val3)}&keterangan=${statusUang}`);
-                    
-                    if ((await closeRes.text()) === "CLOSED") {
-                        if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-                        alert("Shift Ditutup!");
-                        location.reload();
-                    } else throw new Error("Gagal menyimpan ke server");
+// --- PROSES KIRIM KE SERVER ---
+const closeRes = await fetch(`${API_URL}?token=${TOKEN}&action=closeShift&uangLaci=${uangLaci}&namaKasir=${encodeURIComponent(val3)}&keterangan=${statusUang}`);
+
+if ((await closeRes.text()) === "CLOSED") {
+    if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
+    alert("Shift Ditutup!");
+    location.reload();
+} else throw new Error("Gagal menyimpan ke server");
                 }
             } catch (e) { 
                 alert("Error: " + e.message); 
