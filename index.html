@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
+
 /* Container Utama Header */
 .header-top-wrapper {
     background: var(--primary);
@@ -116,7 +118,7 @@
     pointer-events: auto; /* Aktifkan kembali klik untuk elemen di dalamnya */
 }
 
-/* Navigasi Utama (Paling Bawah) */
+/* Container Navigasi Utama */
 #main-footer-container nav {
     background: #ffffff;
     height: 70px;
@@ -128,37 +130,51 @@
     padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Item Menu Navigasi */
 .nav-menu-item {
     text-align: center;
     flex: 1;
     cursor: pointer;
-    transition: all 0.2s ease;
-    color: #A0A0A0; /* Warna muted */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Transisi lebih halus */
+    color: #A0A0A0; /* Warna abu-abu Fore */
+    position: relative;
 }
 
 .nav-menu-item i {
-    font-size: 20px;
-    margin-bottom: 4px;
+    font-size: 18px; /* Ukuran sedikit lebih kecil agar lebih elegan */
+    margin-bottom: 5px;
     display: block;
+    transition: transform 0.2s ease;
 }
 
 .nav-menu-item div {
     font-size: 9px;
     font-weight: 800;
     letter-spacing: 0.5px;
+    text-transform: uppercase; /* Membuat teks menu jadi seragam */
 }
 
-/* Efek saat ditekan atau aktif */
-.nav-menu-item:active {
-    transform: scale(0.9);
-    color: var(--primary);
-}
-
+/* Efek saat Menu Aktif */
 .nav-menu-item.active {
-    color: var(--primary);
+    color: var(--primary) !important; /* Warna hijau tua brand kamu */
 }
 
+/* Efek saat menu ditekan (Feedback Visual) */
+.nav-menu-item:active i {
+    transform: scale(1.2); /* Icon membesar sedikit saat disentuh */
+}
+
+/* Garis kecil di atas menu aktif (Opsional, agar sangat mirip App Premium) */
+.nav-menu-item.active::after {
+    content: '';
+    position: absolute;
+    top: -15px; /* Menempel di border atas */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 0 0 5px 5px;
+}
 /* BOTTOM BAR (Keranjang Pesanan) - Dibuat Melayang */
 .bottom-bar {
     margin: 0 15px 10px 15px; /* Memberi jarak agar melayang */
@@ -868,28 +884,34 @@ mark {
         <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
     </div>
 
-    <nav>
-        <div class="nav-menu-item active" onclick="location.reload()">
-            <i class="fas fa-home"></i>
-            <div>HOME</div>
-        </div>
-        <div class="nav-menu-item" onclick="openVoucherInfo()">
-            <i class="fas fa-ticket-alt"></i>
-            <div>VOUCHER</div>
-        </div>
-        <div class="nav-menu-item" onclick="openMemberModal()">
-            <i class="fas fa-coins"></i>
-            <div>POIN</div>
-        </div>
-        <div class="nav-menu-item" onclick="openBantuan()">
-            <i class="fas fa-question-circle"></i>
-            <div>BANTUAN</div>
-        </div>
-        <div class="nav-menu-item" onclick="openSaranKritik()">
-            <i class="fas fa-comment-dots"></i>
-            <div>SARAN</div>
-        </div>
-    </nav>
+   <nav style="background: white; display: flex; justify-content: space-around; align-items: center; height: 70px; border-top: 1px solid #f0f0f0; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); padding-bottom: env(safe-area-inset-bottom);">
+    
+    <div class="nav-menu-item active" onclick="location.reload()" style="text-align: center; flex: 1; cursor: pointer;">
+        <i class="fa-solid fa-house-chimney" style="font-size: 20px; margin-bottom: 4px; display: block;"></i>
+        <div style="font-size: 9px; font-weight: 800; letter-spacing: 0.5px;">HOME</div>
+    </div>
+
+    <div class="nav-menu-item" onclick="openVoucherInfo()" style="text-align: center; flex: 1; cursor: pointer; color: #A0A0A0;">
+        <i class="fa-solid fa-ticket" style="font-size: 20px; margin-bottom: 4px; display: block;"></i>
+        <div style="font-size: 9px; font-weight: 800; letter-spacing: 0.5px;">VOUCHER</div>
+    </div>
+
+    <div class="nav-menu-item" onclick="openMemberModal()" style="text-align: center; flex: 1; cursor: pointer; color: #A0A0A0;">
+        <i class="fa-solid fa-circle-nodes" style="font-size: 20px; margin-bottom: 4px; display: block;"></i>
+        <div style="font-size: 9px; font-weight: 800; letter-spacing: 0.5px;">POIN</div>
+    </div>
+
+    <div class="nav-menu-item" onclick="openBantuan()" style="text-align: center; flex: 1; cursor: pointer; color: #A0A0A0;">
+        <i class="fa-solid fa-circle-question" style="font-size: 20px; margin-bottom: 4px; display: block;"></i>
+        <div style="font-size: 9px; font-weight: 800; letter-spacing: 0.5px;">BANTUAN</div>
+    </div>
+
+    <div class="nav-menu-item" onclick="openSaranKritik()" style="text-align: center; flex: 1; cursor: pointer; color: #A0A0A0;">
+        <i class="fa-solid fa-comment-dots" style="font-size: 20px; margin-bottom: 4px; display: block;"></i>
+        <div style="font-size: 9px; font-weight: 800; letter-spacing: 0.5px;">SARAN</div>
+    </div>
+
+</nav>
 </div>
 <div class="nav-row">
     <div class="brand-logo"><div class="brand-icon">D+</div> cloudkitchen.dyg++</div>
