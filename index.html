@@ -1253,10 +1253,9 @@ async function startApp() {
         document.getElementById("noAntrean").innerText = "#" + antrean;
         document.getElementById('welcome-overlay').style.display = 'none';
 
-// 🛠️ PERBAIKAN: JANGAN reset currentMode ke null di sini.
-        // Biarkan mode yang sudah dipilih user tetap aktif.
-        // Cukup panggil refreshUI untuk memastikan keranjang sinkron dengan data terbaru.
-        refreshUI();
+        currentMode = null;
+        document.querySelectorAll('.service-btn')
+            .forEach(btn => btn.classList.remove('active'));
 
     }, (err) => {
         // ❗ GPS GAGAL → BANNER TETAP ADA
@@ -1265,12 +1264,11 @@ async function startApp() {
         document.getElementById("noAntrean").innerText = "#" + antrean;
         document.getElementById('welcome-overlay').style.display = 'none';
 
-        // ✅ PERBAIKAN: Di sini juga jangan reset ke null.
-        // Biarkan user tetap bisa pesan (Dine-in/Takeaway) meski GPS gagal.
-        refreshUI();
+        currentMode = null;
+        document.querySelectorAll('.service-btn')
+            .forEach(btn => btn.classList.remove('active'));
     }, { enableHighAccuracy: true });
 }
-
 
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
@@ -1396,7 +1394,7 @@ ${m.deskripsi ? `
 }
 
 function updateCart(id, change) {
-    // 1. Validasi mode - hanya untuk menambah (change > 0)
+    // 1. Validasi mode (misal: dine-in/takeaway)
     if (change > 0 && !checkModeSelected()) {
         return; 
     }
@@ -1404,7 +1402,7 @@ function updateCart(id, change) {
     const item = menuData.find(m => m.id === id);
     if (!item) return;
 
-    // --- LOGIKA PENENTUAN VARIAN ---
+    // --- LOGIKA PENENTUAN VARIAN (Sama dengan renderMenu) ---
     const nl = item.nama.toLowerCase().trim();
     const kl = item.kat.toLowerCase();
     const noSuhuList = [
@@ -1422,11 +1420,13 @@ function updateCart(id, change) {
     const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(nl);
     
     const hasVariant = isNasi || isMieG || isMieR || isSuhu;
+    // --------------------------------------------------------
 
     if (change > 0) {
         // Tambah ke keranjang
         cart.push({ ...item, vN: null, vM: null, vR: null, vS: null, ex: 0 });
         
+        // HANYA tampilkan varian jika menu memang membutuhkan varian
         if (hasVariant) {
             const vDisplay = document.getElementById(`variant-display-${id}`);
             if (vDisplay) {
@@ -1448,14 +1448,13 @@ function updateCart(id, change) {
         let idx = cart.findLastIndex(c => c.id === id);
         if (idx !== -1) cart.splice(idx, 1);
         
+        // Sembunyikan varian jika qty jadi 0
         const currentQty = cart.filter(c => c.id === id).length;
         if (currentQty === 0) {
             const vDisplay = document.getElementById(`variant-display-${id}`);
             if (vDisplay) vDisplay.style.display = 'none';
         }
     }
-    
-    // ✅ PERBAIKAN: refreshUI() HARUS dipanggil di AKHIR fungsi, di luar if-else
     refreshUI();
 }
 
@@ -1502,62 +1501,54 @@ function setVariant(id, type, val, extra = 0, event) {
 }
 
 function refreshUI() {
-    let subtotal = 0; 
-    const counts = {};
-    cart.forEach(c => { 
-        subtotal += (c.harga + (c.ex || 0)); 
-        counts[c.id] = (counts[c.id] || 0) + 1; 
-    });
+        let subtotal = 0; 
+        const counts = {};
+        cart.forEach(c => { 
+            subtotal += (c.harga + (c.ex || 0)); 
+            counts[c.id] = (counts[c.id] || 0) + 1; 
+        });
 
-    menuData.forEach(m => {
-        const el = document.getElementById(`qty-${m.id}`);
-        if(el) {
-            const val = counts[m.id] || 0;
-            el.innerText = val;
-            el.previousElementSibling.disabled = val === 0;
-        }
-    });
+        menuData.forEach(m => {
+            const el = document.getElementById(`qty-${m.id}`);
+            if(el) {
+                const val = counts[m.id] || 0;
+                el.innerText = val;
+                el.previousElementSibling.disabled = val === 0;
+            }
+        });
 
-    const sInd = document.getElementById('swipeInd');
-    const distEl = document.getElementById('dist-info');
-    const ongEl = document.getElementById('ongkir-label');
-    const priceEl = document.getElementById('miniPrice');
-    const btnOrder = document.getElementById('btnOrder');
-    const bottomBar = document.getElementById('bottomBarTrigger'); // Elemen keranjang Anda
+        const sInd = document.getElementById('swipeInd');
+        const distEl = document.getElementById('dist-info');
+        const ongEl = document.getElementById('ongkir-label');
+        const priceEl = document.getElementById('miniPrice');
 
-    if (subtotal > 0) {
-        // PERBAIKAN LAYER: Pastikan keranjang muncul di atas navigasi
-        if (bottomBar) bottomBar.style.display = 'flex'; 
-        
-        sInd.style.display = 'block';
-        if (currentMode === 'DELIVERY') {
-            let ongkir = calculateOngkir(userDist);
-            priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
-            distEl.style.display = 'block';
-            distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
-            ongEl.style.display = 'block';
-            ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+        if (subtotal > 0) {
+            sInd.style.display = 'block';
+            if (currentMode === 'DELIVERY') {
+                let ongkir = calculateOngkir(userDist);
+                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+                distEl.style.display = 'block';
+                distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
+                ongEl.style.display = 'block';
+                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+            } else {
+                priceEl.innerText = subtotal.toLocaleString('id-ID');
+                distEl.style.display = 'none';
+                ongEl.style.display = 'none';
+            }
+            document.getElementById('btnOrder').disabled = false;
+            document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
         } else {
-            priceEl.innerText = subtotal.toLocaleString('id-ID');
+            sInd.style.display = 'none';
             distEl.style.display = 'none';
             ongEl.style.display = 'none';
+            priceEl.innerText = "0";
+            document.getElementById('btnOrder').disabled = true;
+            document.getElementById('btnOrder').innerText = 'PILIH MENU';
+            toggleSummary(false); // Tutup rincian jika item habis
         }
-        btnOrder.disabled = false;
-        btnOrder.innerText = 'PESAN SEKARANG';
-    } else {
-        // Sembunyikan keranjang jika tidak ada item
-        if (bottomBar) bottomBar.style.display = 'none';
-        
-        sInd.style.display = 'none';
-        distEl.style.display = 'none';
-        ongEl.style.display = 'none';
-        priceEl.innerText = "0";
-        btnOrder.disabled = true;
-        btnOrder.innerText = 'PILIH MENU';
-        toggleSummary(false); // Tutup rincian jika item habis
+        updateOrderSummary();
     }
-    updateOrderSummary();
-}
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
