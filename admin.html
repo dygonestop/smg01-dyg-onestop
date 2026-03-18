@@ -102,7 +102,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxqFwBqLQHNMwk8BIPL2zAHSWZdZs7P0umXmk1sToTaa5DCjfJJsPchSG5hauCVVEaYKg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx_nO7T7qYxuZ0EZaSgScc2I4iE8-Sy9ZJ7uz0DocH2MEVpoDDY-XsWvTcXaD6bOuUiWg/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -111,6 +111,8 @@ let pointDiscount = 0;   // Diskon dari Poin Member
 let voucherDiscount = 0; // Diskon dari Voucher CSV
 let VOUCHER_LIST = []; // Variabel penampung data voucher 
 let MENU = [], cart = {}, member = null, redeemQty = 0, shiftOpen = false, pendingOrder = null;
+let selectedMemberFullHP = null;
+
 function closeModalTrx() {
     document.getElementById("modalTrx").classList.add("hidden");
     document.getElementById("modalTrx").classList.remove("flex");
@@ -204,16 +206,16 @@ async function submitOrder() {
     
     btn.innerText = "MENCETAK..."; btn.disabled = true;
 
-    // --- PENTING: Penambahan parameter untuk Cloud agar sinkron ---
-    pendingOrder = { 
-        total: totalBersih, 
-        noWA: document.getElementById("nohp").value || "-", 
-        pesanan, 
-        metode: m, 
-        trxId,
-        redeemQty: redeemQty, // Mengirim jumlah poin (misal: 500)
-        nominalVoucher: (redeemQty > 0) ? 0 : totalDiskon // Mengirim nominal rupiah voucher
-    };
+    // Ganti baris noWA di dalam object pendingOrder
+pendingOrder = { 
+    total: totalBersih, 
+    noWA: selectedMemberFullHP || document.getElementById("nohp").value || "-", // 🔥 PRIORITASKAN FULL HP
+    pesanan, 
+    metode: m, 
+    trxId,
+    redeemQty: redeemQty,
+    nominalVoucher: (redeemQty > 0) ? 0 : totalDiskon 
+};
 
     // --- FORMULASI STRUK (STRUKTUR TETAP SAMA) ---
     let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
@@ -539,11 +541,17 @@ function hitungKembali() {
 }
 
 async function prosesSimpanKeCloud() {
+    console.log("Mengirim No WA:", pendingOrder.noWA); // 🧪 CEK DI KONSOL
+
     const p = new URLSearchParams({
-        token: TOKEN, action: "processPayment",
-        total: pendingOrder.total, pesanan: pendingOrder.pesanan,
-        method: pendingOrder.metode, trxId: pendingOrder.trxId,
-        noWA: pendingOrder.noWA, redeemQty: redeemQty
+        token: TOKEN, 
+        action: "processPayment",
+        total: pendingOrder.total, 
+        pesanan: pendingOrder.pesanan,
+        method: pendingOrder.metode, 
+        trxId: pendingOrder.trxId,
+        noWA: pendingOrder.noWA, // 🔥 AKAN MENGIRIM NO FULL (0812...)
+        redeemQty: redeemQty
     });
     try {
         const res = await fetch(`${API_URL}?${p.toString()}`);
@@ -735,10 +743,9 @@ window.onload = () => {
     }
 };
 
-// Pastikan fungsi cekMember Anda juga sudah diperbarui untuk memotong 4 digit
 function cekMember() {
     const noInput = document.getElementById("nohp").value.trim();
-    const no = noInput.slice(-4); // Tetap mempertahankan logika 4 digit
+    const no = noInput.slice(-4); 
     
     if (no.length < 4) return;
     
@@ -749,19 +756,20 @@ function cekMember() {
         .then(d => {
             if (d.exists) {
                 member = d;
-                // MENAMBAHKAN FUNGSI INTERAKTIF KLIK PADA NAMA MEMBER
+                selectedMemberFullHP = d.noHP; // 🔥 SIMPAN NO HP FULL DISINI
+                
                 document.getElementById("memberInfo").innerHTML = `
-                    <span onclick="bukaTukarPoin()" class="text-blue-600 font-bold cursor-pointer underline hover:text-blue-800">
+                    <span onclick="bukaTukarPoin()" class="text-blue-600 font-bold cursor-pointer underline">
                         ✅ ${d.nama} (${d.poin} P)
                     </span>`;
                 
-                // Pop-up tukar poin otomatis tetap berjalan saat member pertama kali ditemukan
                 if (parseInt(d.poin) >= 500) {
                     bukaTukarPoin();
                 }
             } else {
                 document.getElementById("memberInfo").innerText = "Member tidak ditemukan";
                 member = null;
+                selectedMemberFullHP = null; // Reset jika tidak ketemu
             }
         });
 }
