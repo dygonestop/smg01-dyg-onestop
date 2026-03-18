@@ -7,54 +7,185 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-/* Styling Navigasi Bawah */
-.bottom-navigation {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 65px;
-    background: white;
+/* Container Utama Header */
+.header-top-wrapper {
+    background: var(--primary);
+    padding: 15px 20px 25px 20px;
+    border-radius: 0 0 25px 25px;
+    box-shadow: 0 4px 15px rgba(27, 67, 50, 0.15);
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+}
+
+.nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Bagian Logo & Nama */
+.brand-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    width: 38px;
+    height: 38px;
+    background: #ffffff;
+    border-radius: 12px; /* Kotak membulat lebih modern dibanding bulat sempurna */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.brand-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-name {
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: -0.3px;
+}
+
+.brand-status {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.dot-online {
+    width: 6px;
+    height: 6px;
+    background: #55efc4; /* Warna hijau cerah */
+    border-radius: 50%;
+    display: inline-block;
+    animation: blink 1.5s infinite;
+}
+
+/* Bagian Antrean */
+.queue-container {
+    text-align: right;
+}
+
+.queue-label {
+    display: block;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 8px;
+    font-weight: 800;
+    margin-bottom: 2px;
+    letter-spacing: 1px;
+}
+
+.queue-badge {
+    background: #ffffff; /* Badge warna putih teks merah agar kontras */
+    color: var(--danger);
+    padding: 4px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Animasi Titik Online */
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+/* Container Utama Footer */
+#main-footer-container {
+    background: transparent; /* Transparan agar keranjang terlihat melayang */
+    pointer-events: none; /* Klik bisa tembus ke konten di belakang jika tidak ada elemen */
+}
+
+#main-footer-container > * {
+    pointer-events: auto; /* Aktifkan kembali klik untuk elemen di dalamnya */
+}
+
+/* Navigasi Utama (Paling Bawah) */
+#main-footer-container nav {
+    background: #ffffff;
+    height: 70px;
     display: flex;
     justify-content: space-around;
     align-items: center;
-    border-top: 1px solid #eee;
-    z-index: 1100; /* Lebih tinggi dari elemen lain */
-    padding-bottom: env(safe-area-inset-bottom); /* Untuk HP layar penuh */
+    border-top: 1px solid #f0f0f0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
-.nav-item {
+/* Item Menu Navigasi */
+.nav-menu-item {
     text-align: center;
-    color: var(--muted);
     flex: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #A0A0A0; /* Warna muted */
 }
 
-.nav-item span {
+.nav-menu-item i {
     font-size: 20px;
+    margin-bottom: 4px;
     display: block;
 }
 
-.nav-item p {
-    margin: 0;
-    font-size: 10px;
+.nav-menu-item div {
+    font-size: 9px;
     font-weight: 800;
+    letter-spacing: 0.5px;
 }
 
-/* MENYESUAIKAN POSISI KERANJANG (Bottom Bar) */
+/* Efek saat ditekan atau aktif */
+.nav-menu-item:active {
+    transform: scale(0.9);
+    color: var(--primary);
+}
+
+.nav-menu-item.active {
+    color: var(--primary);
+}
+
+/* BOTTOM BAR (Keranjang Pesanan) - Dibuat Melayang */
 .bottom-bar {
-    /* Geser posisi bottom-bar ke atas setinggi navigasi (65px) */
-    bottom: 65px !important; 
-    border-radius: 25px 25px 0 0;
+    margin: 0 15px 10px 15px; /* Memberi jarak agar melayang */
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    padding: 12px 20px !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12) !important;
+    border: 1px solid #f0f0f0;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Sesuaikan padding main-content agar tidak tertutup */
-.main-content {
-    padding-bottom: 250px !important;
+/* Harga di dalam keranjang */
+.price-total {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--primary);
 }
 
-/* Sembunyikan header yang sudah tidak diperlukan jika mau */
-.nav-row div:first-child {
-    display: none; /* Menyembunyikan tempat ikon hamburger lama */
+/* Tombol Order */
+.order-btn {
+    border-radius: 12px !important;
+    padding: 10px 20px !important;
+    font-size: 13px !important;
+    box-shadow: 0 4px 12px rgba(27, 67, 50, 0.2);
 }
 
     /* Agar container form aman dari tombol close */
@@ -258,17 +389,7 @@
     top: 0;
     z-index: 1100;
 }
-
-.nav-row { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 5px; /* Jarak dikurangi */
-}
         .brand-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; letter-spacing: -0.3px; }
-        .brand-icon { width: 26px; height: 26px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 10px; font-weight: 800; }
-        .queue-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
-
         /* TIMPA KODE LAMA ANDA DENGAN INI */
 .banner-container {
     width: 100%;
@@ -481,8 +602,10 @@ mark {
             transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column;
         }
-       .order-summary-mini.active {
-    bottom: 65px; /* Sama dengan tinggi Bottom Navigation */
+  /* Sesuaikan posisi Panel Rincian saat terbuka */
+.order-summary-mini.active {
+    bottom: 70px !important; /* Pas di atas navigasi menu */
+    border-radius: 25px 25px 0 0;
 }
         
         .sheet-header { padding: 12px 18px; text-align: center; background: white; border-radius: 25px 25px 0 0; border-bottom: 1px solid #F5F5F5; }
@@ -514,12 +637,8 @@ mark {
             font-size: 9px; font-weight: 700; display: none;
         }
 
-        .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
         .dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
         .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
-        .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
-        .order-btn:disabled { opacity: 0.5; }
-        
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 360px; padding: 25px; border-radius: 20px; text-align: center; }
 .summary-item.removing {
@@ -738,23 +857,39 @@ mark {
     </div>
 </div>
 
-<div class="bottom-navigation">
-    <div class="nav-item" onclick="openVoucherInfo()">
-        <span>🎫</span>
-        <p>Voucher</p>
+<div id="main-footer-container" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 3000;">
+
+    <div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)" style="display: none;">
+        <div>
+            <div id="dist-info" class="dist-info" style="font-size: 8px; font-weight: 800; color: #888;"></div>
+            <div id="ongkir-label" class="ongkir-tag" style="font-size: 10px; color: var(--success); font-weight: 800;"></div>
+            <div class="price-total">Rp <span id="miniPrice">0</span></div>
+        </div>
+        <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
     </div>
-    <div class="nav-item" onclick="openMemberModal()">
-        <span>🪙</span>
-        <p>Poin</p>
-    </div>
-    <div class="nav-item" onclick="openBantuan()">
-        <span>❓</span>
-        <p>Bantuan</p>
-    </div>
-    <div class="nav-item" onclick="openSaranKritik()">
-        <span>📝</span>
-        <p>Saran</p>
-    </div>
+
+    <nav>
+        <div class="nav-menu-item active" onclick="location.reload()">
+            <i class="fas fa-home"></i>
+            <div>HOME</div>
+        </div>
+        <div class="nav-menu-item" onclick="openVoucherInfo()">
+            <i class="fas fa-ticket-alt"></i>
+            <div>VOUCHER</div>
+        </div>
+        <div class="nav-menu-item" onclick="openMemberModal()">
+            <i class="fas fa-coins"></i>
+            <div>POIN</div>
+        </div>
+        <div class="nav-menu-item" onclick="openBantuan()">
+            <i class="fas fa-question-circle"></i>
+            <div>BANTUAN</div>
+        </div>
+        <div class="nav-menu-item" onclick="openSaranKritik()">
+            <i class="fas fa-comment-dots"></i>
+            <div>SARAN</div>
+        </div>
+    </nav>
 </div>
 <div class="nav-row">
     <div class="brand-logo"><div class="brand-icon">D+</div> cloudkitchen.dyg++</div>
