@@ -12,6 +12,21 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     
     <style>
+#bottomBarTrigger {
+    display: none; /* Sembunyikan di awal */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    /* Tambahkan animasi jika ingin halus */
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
     /* Agar container form aman dari tombol close */
     .custom-form-container {
         display: flex;
@@ -290,7 +305,14 @@
 
         /* --- Perubahan Area Merah (Input Form) --- */
         .main-content { padding: 0 18px 180px; }
-        .input-card { background: white; border-radius: 14px; padding: 7px 14px; margin-bottom: 4px; border: 1.2px solid #F0F0F0; transition: all 0.3s ease; }
+        .input-card { 
+    background: white; 
+    border-radius: 14px; 
+    padding: 10px 15px; /* Jarak padding ditambah */
+    margin-bottom: 10px; /* Jarak antar card ditambah */
+    border: 1.2px solid #F0F0F0; 
+    transition: all 0.3s ease; 
+}
         .input-card label { display: block; font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 1px; letter-spacing: 0.5px; }
         .input-card input, .input-card textarea { width: 100%; border: none; font-size: 13px; font-weight: 600; outline: none; background: transparent; color: var(--text); }
         .input-card input::placeholder, .input-card textarea::placeholder { font-weight: 400; color: #BBB; }
@@ -449,15 +471,16 @@ mark {
 
         #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; backdrop-filter: blur(2px); }
 
-/* Container Utama Footer */
+/* Update pada bagian CSS */
 #main-footer-container {
-    display: flex;
-    flex-direction: column; /* Keranjang di atas, Navigasi di bawah */
+    display: none; /* Sembunyikan kontainer utama saat pertama kali dimuat */
+    flex-direction: column;
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
     z-index: 9999;
+    transition: all 0.3s ease-in-out; /* Tambahkan efek transisi biar halus */
 }
 
 /* Memperbaiki Keranjang (Bottom Bar) */
@@ -479,40 +502,35 @@ mark {
     background: white !important;
     color: #1B4332 !important;
     font-weight: 800;
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+
+body { 
+    margin: 0; padding: 0; background: var(--bg); 
+    font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+    color: var(--text); 
+    overflow-x: hidden;
+    padding-bottom: 180px !important; /* Memberi jarak agar tidak tertutup footer */
 }
 
-/* Update padding body agar konten menu makanan tidak tertutup footer baru */
-body {
-    padding-bottom: 180px !important; /* Ruang untuk Keranjang + Nav Bar */
-}
-
-/* PERBAIKAN TOTAL .bottom-bar (Keranjang) */
 .bottom-bar {
-    /* Wajib matikan fixed agar dia mau masuk kontainer baru */
-    position: relative !important; 
-    bottom: auto !important;
-    left: auto !important;
+    position: relative !important;
     width: 100% !important;
-    
-    /* Ganti border-radius agar menyatu di dalam kontainer */
-    border-radius: 0 !important; 
-    
-    /* Gunakan flex agar isi keranjang (harga & tombol) rapi */
+    background: #1B4332 !important; /* Hijau brand */
+    color: white !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    padding: 10px 18px !important;
-    background: #1B4332 !important; /* Warna hijau brand */
-    color: white !important;
+    padding: 12px 20px !important;
+    border-radius: 20px 20px 0 0 !important;
+    box-shadow: 0 -8px 25px rgba(0,0,0,0.15) !important;
     cursor: pointer;
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.1) !important;
 }
 
-/* Penyesuaian text harga di dalam keranjang agar putih */
 .price-total {
     color: white !important;
-    font-size: 16px !important;
-    font-weight: 800;
+    font-size: 18px !important;
+    font-weight: 900;
 }
 
 /* Sembunyikan tulisan "LIHAT RINCIAN" di atas keranjang agar lebih bersih */
@@ -853,14 +871,22 @@ mark {
 
 <div id="main-footer-container" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 3000;">
 
-    <div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)" style="position: relative; border-radius: 20px 20px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); display: none;">
-        <div>
-            <div id="dist-info" class="dist-info"></div>
-            <div id="ongkir-label" class="ongkir-tag"></div>
-            <div class="price-total">Rp <span id="miniPrice">0</span></div>
+<div id="bottomBarTrigger" class="bottom-bar" onclick="toggleSummary()">
+    <div class="cart-info-left">
+        <div class="price-total">Rp <span id="miniPrice">0</span></div>
+        
+        <div style="font-size: 10px; color: rgba(255,255,255,0.8); font-weight: 700; margin-top: -2px;">
+            LIHAT RINCIAN <i class="fas fa-chevron-up" style="margin-left: 3px;"></i>
         </div>
-        <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
+        
+        <div id="dist-info" style="font-size: 10px; display:none;"></div>
+        <div id="ongkir-label" style="font-size: 10px; display:none;"></div>
     </div>
+    
+    <button class="order-btn" id="btnOrder" onclick="event.stopPropagation(); processOrder();">
+        PESAN SEKARANG
+    </button>
+</div>
 
     <nav style="background: white; display: flex; justify-content: space-around; align-items: center; height: 65px; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);">
         <div onclick="location.reload()" style="text-align: center; flex: 1; cursor: pointer;">
