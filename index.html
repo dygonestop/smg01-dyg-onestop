@@ -7,6 +7,56 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
+/* Styling Navigasi Bawah */
+.bottom-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 65px;
+    background: white;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid #eee;
+    z-index: 1100; /* Lebih tinggi dari elemen lain */
+    padding-bottom: env(safe-area-inset-bottom); /* Untuk HP layar penuh */
+}
+
+.nav-item {
+    text-align: center;
+    color: var(--muted);
+    flex: 1;
+}
+
+.nav-item span {
+    font-size: 20px;
+    display: block;
+}
+
+.nav-item p {
+    margin: 0;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+/* MENYESUAIKAN POSISI KERANJANG (Bottom Bar) */
+.bottom-bar {
+    /* Geser posisi bottom-bar ke atas setinggi navigasi (65px) */
+    bottom: 65px !important; 
+    border-radius: 25px 25px 0 0;
+}
+
+/* Sesuaikan padding main-content agar tidak tertutup */
+.main-content {
+    padding-bottom: 250px !important;
+}
+
+/* Sembunyikan header yang sudah tidak diperlukan jika mau */
+.nav-row div:first-child {
+    display: none; /* Menyembunyikan tempat ikon hamburger lama */
+}
+
     /* Agar container form aman dari tombol close */
     .custom-form-container {
         display: flex;
@@ -431,7 +481,9 @@ mark {
             transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column;
         }
-        .order-summary-mini.active { bottom: 0; }
+       .order-summary-mini.active {
+    bottom: 65px; /* Sama dengan tinggi Bottom Navigation */
+}
         
         .sheet-header { padding: 12px 18px; text-align: center; background: white; border-radius: 25px 25px 0 0; border-bottom: 1px solid #F5F5F5; }
         .sheet-handle { width: 40px; height: 4px; background: #E0E0E0; border-radius: 10px; margin: 0 auto 8px; }
@@ -686,17 +738,24 @@ mark {
     </div>
 </div>
 
-<div class="nav-row">
-    <div style="position: relative;">
-        <div onclick="toggleMenuDropdown()" style="cursor:pointer; padding: 5px; font-size: 20px;">☰</div>
-        
-        <div id="menuDropdown" style="display:none; position:absolute; top:35px; left:0; background:white; color:black; border-radius:12px; width:150px; box-shadow:0 8px 20px rgba(0,0,0,0.2); z-index:2000; overflow:hidden;">
-            <div onclick="openVoucherInfo()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
-            <div onclick="openMemberModal()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
-            <div onclick="openBantuan()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
-            <div onclick="openSaranKritik()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
-        </div>
+<div class="bottom-navigation">
+    <div class="nav-item" onclick="openVoucherInfo()">
+        <span>🎫</span>
+        <p>Voucher</p>
     </div>
+    <div class="nav-item" onclick="openMemberModal()">
+        <span>🪙</span>
+        <p>Poin</p>
+    </div>
+    <div class="nav-item" onclick="openBantuan()">
+        <span>❓</span>
+        <p>Bantuan</p>
+    </div>
+    <div class="nav-item" onclick="openSaranKritik()">
+        <span>📝</span>
+        <p>Saran</p>
+    </div>
+</div>
 
     <div class="brand-logo"><div class="brand-icon">D+</div> cloudkitchen.dyg++</div>
     <div class="queue-badge" id="noAntrean">#0</div>
