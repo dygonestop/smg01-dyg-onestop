@@ -1396,7 +1396,7 @@ ${m.deskripsi ? `
 }
 
 function updateCart(id, change) {
-    // 1. Validasi mode (misal: dine-in/takeaway)
+    // 1. Validasi mode - hanya untuk menambah (change > 0)
     if (change > 0 && !checkModeSelected()) {
         return; 
     }
@@ -1404,7 +1404,7 @@ function updateCart(id, change) {
     const item = menuData.find(m => m.id === id);
     if (!item) return;
 
-    // --- LOGIKA PENENTUAN VARIAN (Sama dengan renderMenu) ---
+    // --- LOGIKA PENENTUAN VARIAN ---
     const nl = item.nama.toLowerCase().trim();
     const kl = item.kat.toLowerCase();
     const noSuhuList = [
@@ -1422,13 +1422,11 @@ function updateCart(id, change) {
     const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(nl);
     
     const hasVariant = isNasi || isMieG || isMieR || isSuhu;
-    // --------------------------------------------------------
 
     if (change > 0) {
         // Tambah ke keranjang
         cart.push({ ...item, vN: null, vM: null, vR: null, vS: null, ex: 0 });
         
-        // HANYA tampilkan varian jika menu memang membutuhkan varian
         if (hasVariant) {
             const vDisplay = document.getElementById(`variant-display-${id}`);
             if (vDisplay) {
@@ -1450,18 +1448,16 @@ function updateCart(id, change) {
         let idx = cart.findLastIndex(c => c.id === id);
         if (idx !== -1) cart.splice(idx, 1);
         
-        // Sembunyikan varian jika qty jadi 0
         const currentQty = cart.filter(c => c.id === id).length;
         if (currentQty === 0) {
             const vDisplay = document.getElementById(`variant-display-${id}`);
             if (vDisplay) vDisplay.style.display = 'none';
         }
     }
-// ✅ WAJIB ADA: Panggil ini supaya keranjang hijau muncul/update angka harganya
-    refreshUI(); 
+    
+    // ✅ PERBAIKAN: refreshUI() HARUS dipanggil di AKHIR fungsi, di luar if-else
+    refreshUI();
 }
-
-
 
 // Fungsi baru untuk menangani klik pada tombol varian (Chip)
 function setVariant(id, type, val, extra = 0, event) {
