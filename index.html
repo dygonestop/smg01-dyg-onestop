@@ -454,33 +454,42 @@ mark {
 
         #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; backdrop-filter: blur(2px); }
 
-/* Update padding body agar konten menu makanan tidak tertutup footer baru */
-body {
-    padding-bottom: 180px !important; /* Ruang untuk Keranjang + Nav Bar */
+/* Container Utama Footer */
+#main-footer-container {
+    display: flex;
+    flex-direction: column; /* Keranjang di atas, Navigasi di bawah */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
 }
 
-/* PERBAIKAN TOTAL .bottom-bar (Keranjang) */
+/* Memperbaiki Keranjang (Bottom Bar) */
 .bottom-bar {
-    /* Wajib matikan fixed agar dia mau masuk kontainer baru */
-    position: relative !important; 
-    bottom: auto !important;
-    left: auto !important;
+    position: relative !important; /* Hapus fixed agar tidak lari */
     width: 100% !important;
-    
-    /* Ganti border-radius agar menyatu di dalam kontainer */
-    border-radius: 0 !important; 
-    
-    /* Gunakan flex agar isi keranjang (harga & tombol) rapi */
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 10px 18px !important;
     background: #1B4332 !important; /* Warna hijau brand */
     color: white !important;
-    cursor: pointer;
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.1) !important;
+    display: none; /* Default sembunyi, akan dibuka oleh JS refreshUI */
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px !important;
+    border-radius: 20px 20px 0 0 !important;
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.2);
 }
 
+/* Tombol Order saat aktif */
+.order-btn:not(:disabled) {
+    background: white !important;
+    color: #1B4332 !important;
+    font-weight: 800;
+}
+
+/* Padding body agar menu tidak tertutup */
+body {
+    padding-bottom: 180px !important;
+}
 /* Penyesuaian text harga di dalam keranjang agar putih */
 .price-total {
     color: white !important;
@@ -497,7 +506,6 @@ body {
         .dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
         .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
         .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
-        .order-btn:disabled { opacity: 0.5; }
         
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 360px; padding: 25px; border-radius: 20px; text-align: center; }
@@ -1494,54 +1502,62 @@ function setVariant(id, type, val, extra = 0, event) {
 }
 
 function refreshUI() {
-        let subtotal = 0; 
-        const counts = {};
-        cart.forEach(c => { 
-            subtotal += (c.harga + (c.ex || 0)); 
-            counts[c.id] = (counts[c.id] || 0) + 1; 
-        });
+    let subtotal = 0; 
+    const counts = {};
+    cart.forEach(c => { 
+        subtotal += (c.harga + (c.ex || 0)); 
+        counts[c.id] = (counts[c.id] || 0) + 1; 
+    });
 
-        menuData.forEach(m => {
-            const el = document.getElementById(`qty-${m.id}`);
-            if(el) {
-                const val = counts[m.id] || 0;
-                el.innerText = val;
-                el.previousElementSibling.disabled = val === 0;
-            }
-        });
+    menuData.forEach(m => {
+        const el = document.getElementById(`qty-${m.id}`);
+        if(el) {
+            const val = counts[m.id] || 0;
+            el.innerText = val;
+            el.previousElementSibling.disabled = val === 0;
+        }
+    });
 
-        const sInd = document.getElementById('swipeInd');
-        const distEl = document.getElementById('dist-info');
-        const ongEl = document.getElementById('ongkir-label');
-        const priceEl = document.getElementById('miniPrice');
+    const sInd = document.getElementById('swipeInd');
+    const distEl = document.getElementById('dist-info');
+    const ongEl = document.getElementById('ongkir-label');
+    const priceEl = document.getElementById('miniPrice');
+    const btnOrder = document.getElementById('btnOrder');
+    const bottomBar = document.getElementById('bottomBarTrigger'); // Elemen keranjang Anda
 
-        if (subtotal > 0) {
-            sInd.style.display = 'block';
-            if (currentMode === 'DELIVERY') {
-                let ongkir = calculateOngkir(userDist);
-                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
-                distEl.style.display = 'block';
-                distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
-                ongEl.style.display = 'block';
-                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
-            } else {
-                priceEl.innerText = subtotal.toLocaleString('id-ID');
-                distEl.style.display = 'none';
-                ongEl.style.display = 'none';
-            }
-            document.getElementById('btnOrder').disabled = false;
-            document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
+    if (subtotal > 0) {
+        // PERBAIKAN LAYER: Pastikan keranjang muncul di atas navigasi
+        if (bottomBar) bottomBar.style.display = 'flex'; 
+        
+        sInd.style.display = 'block';
+        if (currentMode === 'DELIVERY') {
+            let ongkir = calculateOngkir(userDist);
+            priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+            distEl.style.display = 'block';
+            distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
+            ongEl.style.display = 'block';
+            ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
         } else {
-            sInd.style.display = 'none';
+            priceEl.innerText = subtotal.toLocaleString('id-ID');
             distEl.style.display = 'none';
             ongEl.style.display = 'none';
-            priceEl.innerText = "0";
-            document.getElementById('btnOrder').disabled = true;
-            document.getElementById('btnOrder').innerText = 'PILIH MENU';
-            toggleSummary(false); // Tutup rincian jika item habis
         }
-        updateOrderSummary();
+        btnOrder.disabled = false;
+        btnOrder.innerText = 'PESAN SEKARANG';
+    } else {
+        // Sembunyikan keranjang jika tidak ada item
+        if (bottomBar) bottomBar.style.display = 'none';
+        
+        sInd.style.display = 'none';
+        distEl.style.display = 'none';
+        ongEl.style.display = 'none';
+        priceEl.innerText = "0";
+        btnOrder.disabled = true;
+        btnOrder.innerText = 'PILIH MENU';
+        toggleSummary(false); // Tutup rincian jika item habis
     }
+    updateOrderSummary();
+}
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
