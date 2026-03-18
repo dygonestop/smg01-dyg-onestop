@@ -199,11 +199,6 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { 
-            margin: 0; padding: 0; background: var(--bg); 
-            font-family: 'Inter', system-ui, -apple-system, sans-serif; color: var(--text); 
-            overflow-x: hidden;
-        }
 .header-top { 
     background: var(--primary); 
     padding: 10px 15px 25px; 
@@ -486,22 +481,44 @@ mark {
     font-weight: 800;
 }
 
-/* Padding body agar menu tidak tertutup */
+/* Update padding body agar konten menu makanan tidak tertutup footer baru */
 body {
-    padding-bottom: 180px !important;
+    padding-bottom: 180px !important; /* Ruang untuk Keranjang + Nav Bar */
 }
+
+/* PERBAIKAN TOTAL .bottom-bar (Keranjang) */
+.bottom-bar {
+    /* Wajib matikan fixed agar dia mau masuk kontainer baru */
+    position: relative !important; 
+    bottom: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    
+    /* Ganti border-radius agar menyatu di dalam kontainer */
+    border-radius: 0 !important; 
+    
+    /* Gunakan flex agar isi keranjang (harga & tombol) rapi */
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10px 18px !important;
+    background: #1B4332 !important; /* Warna hijau brand */
+    color: white !important;
+    cursor: pointer;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.1) !important;
+}
+
 /* Penyesuaian text harga di dalam keranjang agar putih */
 .price-total {
     color: white !important;
     font-size: 16px !important;
     font-weight: 800;
 }
-        
-        .swipe-hint {
-            position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
-            background: var(--primary); color: white; padding: 3px 10px; border-radius: 15px;
-            font-size: 9px; font-weight: 700; display: none;
-        }
+
+/* Sembunyikan tulisan "LIHAT RINCIAN" di atas keranjang agar lebih bersih */
+.swipe-hint {
+    display: none !important;
+}
 
         .dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
         .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
@@ -1501,54 +1518,62 @@ function setVariant(id, type, val, extra = 0, event) {
 }
 
 function refreshUI() {
-        let subtotal = 0; 
-        const counts = {};
-        cart.forEach(c => { 
-            subtotal += (c.harga + (c.ex || 0)); 
-            counts[c.id] = (counts[c.id] || 0) + 1; 
-        });
+    let subtotal = 0; 
+    const counts = {};
+    cart.forEach(c => { 
+        subtotal += (c.harga + (c.ex || 0)); 
+        counts[c.id] = (counts[c.id] || 0) + 1; 
+    });
 
-        menuData.forEach(m => {
-            const el = document.getElementById(`qty-${m.id}`);
-            if(el) {
-                const val = counts[m.id] || 0;
-                el.innerText = val;
-                el.previousElementSibling.disabled = val === 0;
-            }
-        });
+    menuData.forEach(m => {
+        const el = document.getElementById(`qty-${m.id}`);
+        if(el) {
+            const val = counts[m.id] || 0;
+            el.innerText = val;
+            el.previousElementSibling.disabled = val === 0;
+        }
+    });
 
-        const sInd = document.getElementById('swipeInd');
-        const distEl = document.getElementById('dist-info');
-        const ongEl = document.getElementById('ongkir-label');
-        const priceEl = document.getElementById('miniPrice');
+    const sInd = document.getElementById('swipeInd');
+    const distEl = document.getElementById('dist-info');
+    const ongEl = document.getElementById('ongkir-label');
+    const priceEl = document.getElementById('miniPrice');
+    const btnOrder = document.getElementById('btnOrder');
+    const bottomBar = document.getElementById('bottomBarTrigger'); // Elemen keranjang Anda
 
-        if (subtotal > 0) {
-            sInd.style.display = 'block';
-            if (currentMode === 'DELIVERY') {
-                let ongkir = calculateOngkir(userDist);
-                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
-                distEl.style.display = 'block';
-                distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
-                ongEl.style.display = 'block';
-                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
-            } else {
-                priceEl.innerText = subtotal.toLocaleString('id-ID');
-                distEl.style.display = 'none';
-                ongEl.style.display = 'none';
-            }
-            document.getElementById('btnOrder').disabled = false;
-            document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
+    if (subtotal > 0) {
+        // PERBAIKAN LAYER: Pastikan keranjang muncul di atas navigasi
+        if (bottomBar) bottomBar.style.display = 'flex'; 
+        
+        sInd.style.display = 'block';
+        if (currentMode === 'DELIVERY') {
+            let ongkir = calculateOngkir(userDist);
+            priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+            distEl.style.display = 'block';
+            distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
+            ongEl.style.display = 'block';
+            ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
         } else {
-            sInd.style.display = 'none';
+            priceEl.innerText = subtotal.toLocaleString('id-ID');
             distEl.style.display = 'none';
             ongEl.style.display = 'none';
-            priceEl.innerText = "0";
-            document.getElementById('btnOrder').disabled = true;
-            document.getElementById('btnOrder').innerText = 'PILIH MENU';
-            toggleSummary(false); // Tutup rincian jika item habis
         }
-        updateOrderSummary();
+        btnOrder.disabled = false;
+        btnOrder.innerText = 'PESAN SEKARANG';
+    } else {
+        // Sembunyikan keranjang jika tidak ada item
+        if (bottomBar) bottomBar.style.display = 'none';
+        
+        sInd.style.display = 'none';
+        distEl.style.display = 'none';
+        ongEl.style.display = 'none';
+        priceEl.innerText = "0";
+        btnOrder.disabled = true;
+        btnOrder.innerText = 'PILIH MENU';
+        toggleSummary(false); // Tutup rincian jika item habis
     }
+    updateOrderSummary();
+}
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
