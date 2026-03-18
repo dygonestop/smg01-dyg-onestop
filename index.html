@@ -449,12 +449,25 @@ mark {
 
         #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; backdrop-filter: blur(2px); }
 
-        .bottom-bar { 
-            position: fixed; bottom: 0; left: 0; right: 0; background: white; 
-            padding: 12px 20px 25px; border-radius: 25px 25px 0 0; 
-            box-shadow: 0 -8px 25px rgba(0,0,0,0.08); z-index: 1000; 
-            display: flex; justify-content: space-between; align-items: center; 
-        }
+/* Update padding body agar menu makanan tidak tertutup footer baru yang lebih tinggi */
+body {
+    padding-bottom: 170px !important;
+}
+
+/* MODIFIKASI .bottom-bar ASLI */
+.bottom-bar {
+    /* Ubah dari fixed ke relative agar dia mau masuk ke dalam kontainer baru */
+    position: relative !important; 
+    bottom: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    z-index: 10;
+    
+    /* Sisanya tetap gunakan style asli kamu (warna, padding, dll) */
+    background: white;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+}
         
         .swipe-hint {
             position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
@@ -685,19 +698,7 @@ mark {
         
     </div>
 </div>
-
 <div class="nav-row">
-    <div style="position: relative;">
-        <div onclick="toggleMenuDropdown()" style="cursor:pointer; padding: 5px; font-size: 20px;">☰</div>
-        
-        <div id="menuDropdown" style="display:none; position:absolute; top:35px; left:0; background:white; color:black; border-radius:12px; width:150px; box-shadow:0 8px 20px rgba(0,0,0,0.2); z-index:2000; overflow:hidden;">
-            <div onclick="openVoucherInfo()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
-            <div onclick="openMemberModal()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
-            <div onclick="openBantuan()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
-            <div onclick="openSaranKritik()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
-        </div>
-    </div>
-
     <div class="brand-logo"><div class="brand-icon">D+</div> cloudkitchen.dyg++</div>
     <div class="queue-badge" id="noAntrean">#0</div>
 </div>
@@ -805,14 +806,40 @@ mark {
     <div class="summary-scroll" id="summaryItems"></div>
 </div>
 
-<div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
-    <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
-    <div>
-        <div id="dist-info" class="dist-info"></div>
-        <div id="ongkir-label" class="ongkir-tag"></div>
-        <div class="price-total">Rp <span id="miniPrice">0</span></div>
+<div id="main-footer-container" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 3000;">
+
+    <div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
+        <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
+        <div>
+            <div id="dist-info" class="dist-info"></div>
+            <div id="ongkir-label" class="ongkir-tag"></div>
+            <div class="price-total">Rp <span id="miniPrice">0</span></div>
+        </div>
+        <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
     </div>
-    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
+
+    <nav id="new-bottom-nav" style="background: white; display: flex; justify-content: space-around; align-items: center; height: 65px; border-top: 1px solid #eee; padding-bottom: env(safe-area-inset-bottom);">
+        <div onclick="location.reload()" style="text-align: center; flex: 1; cursor: pointer;">
+            <i class="fas fa-home" style="color: #1B4332;"></i>
+            <div style="font-size: 10px; font-weight: 800; color: #1B4332;">HOME</div>
+        </div>
+        <div onclick="openVoucherInfo()" style="text-align: center; flex: 1; cursor: pointer;">
+            <i class="fas fa-ticket-alt" style="color: #666;"></i>
+            <div style="font-size: 10px; font-weight: 800; color: #666;">VOUCHER</div>
+        </div>
+        <div onclick="openMemberModal()" style="text-align: center; flex: 1; cursor: pointer;">
+            <i class="fas fa-coins" style="color: #666;"></i>
+            <div style="font-size: 10px; font-weight: 800; color: #666;">POIN</div>
+        </div>
+        <div onclick="openBantuan()" style="text-align: center; flex: 1; cursor: pointer;">
+            <i class="fas fa-question-circle" style="color: #666;"></i>
+            <div style="font-size: 10px; font-weight: 800; color: #666;">BANTUAN</div>
+        </div>
+        <div onclick="openSaranKritik()" style="text-align: center; flex: 1; cursor: pointer;">
+            <i class="fas fa-comment-dots" style="color: #666;"></i>
+            <div style="font-size: 10px; font-weight: 800; color: #666;">SARAN</div>
+        </div>
+    </nav>
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
@@ -1075,7 +1102,8 @@ function openMemberModal() {
     document.getElementById('m-view-input').style.display = 'block';
     document.getElementById('m-view-result').style.display = 'none';
     document.getElementById('m-view-reg').style.display = 'none';
-    document.getElementById('menuDropdown').style.display = 'none'; // Tutup hamburger
+    
+    // Baris menuDropdown dihapus karena kita tidak pakai hamburger menu lagi
 }
 
 function closeMemberModal() {
