@@ -1,1280 +1,818 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <style>
-        :root { 
-            --primary: #1B4332; 
-            --primary-light: #2D6A4F;
-            --accent: #F39C12; 
-            --bg: #F8FAFC; 
-            --surface: #FFFFFF; 
-            --text: #1E293B; 
-            --text-muted: #64748B;
-            --border: #E2E8F0;
-            --danger: #EF4444; 
-            --success: #10B981;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --radius-sm: 8px;
-            --radius: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 24px;
-        }
+    /* Agar container form aman dari tombol close */
+    .custom-form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        text-align: left;
+        margin-top: 20px; /* Memberi ruang untuk tombol X */
+    }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            outline: none;
-            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-        }
+    /* Tombol X di pojok kiri atas */
+    .close-btn {
+        position: absolute;
+        top: 15px;
+        left: 20px;
+        cursor: pointer;
+        font-size: 24px;
+        font-weight: bold;
+        color: #555;
+        z-index: 1000;
+    }
 
-        body { 
-            margin: 0; 
-            padding: 0; 
-            background: var(--bg); 
-            color: var(--text); 
-            overflow-x: hidden;
-            line-height: 1.5;
-        }
+    /* Memastikan Swal popup relatif agar posisi absolute tombol X akurat */
+    .swal2-popup {
+        position: relative !important;
+    }
+        .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .form-group label {
+        font-size: 12px;
+        font-weight: bold;
+        color: #333;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .form-group textarea {
+        height: 80px;
+        resize: none;
+    }
+    /* Mengatur agar pop-up selalu di tengah dengan lebar yang pas */
+    .swal2-popup {
+        width: 90% !important;
+        max-width: 400px !important;
+        border-radius: 20px !important;
+    }
 
-        /* Header Modern */
-        .header-top { 
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            padding: 16px 20px 24px; 
-            color: white;
-            border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-        }
+    /* Styling agar tombol pop-up seragam */
+    .btn-mitra-style {
+        padding: 10px 20px !important;
+        font-weight: bold !important;
+        border-radius: 8px !important;
+        width: 140px; 
+    }
+    /* Styling agar Form terlihat profesional & konsisten */
+    .custom-form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        text-align: left;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .form-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #333;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .form-group textarea {
+        height: 100px;
+        resize: none;
+    }
+    .swal2-popup {
+        width: 90% !important;
+        max-width: 400px !important;
+        border-radius: 20px !important;
+    }
 
-        .nav-row { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-        }
-
-        .brand-logo { 
-            font-weight: 800; 
-            font-size: 16px; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px;
-            letter-spacing: -0.5px;
-        }
-
-        .brand-icon { 
-            width: 32px; 
-            height: 32px; 
-            background: rgba(255,255,255,0.2); 
-            backdrop-filter: blur(10px);
-            border-radius: 10px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 900;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .queue-badge { 
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        /* Banner Clean */
-        .banner-container {
-            margin: -10px 16px 16px;
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            background: white;
-        }
-
-        #banner-track {
-            display: flex;
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .banner-slide {
-            min-width: 100%;
-            padding: 0;
-        }
-
-        .banner-slide img {
-            width: 100%;
-            height: 160px;
-            object-fit: cover;
-            display: block;
-        }
-
-        /* Service Grid Modern */
-        .service-mode {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            padding: 0 16px;
-            margin-bottom: 8px;
-        }
-
-        .service-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-        }
-
-        .service-btn .icon {
-            width: 56px;
-            height: 56px;
-            background: white;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 8px;
-            transition: all 0.2s ease;
-            border: 2px solid transparent;
-        }
-
-        .service-btn.active .icon {
-            background: var(--primary);
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .service-icon-img {
-            width: 28px;
-            height: 28px;
-            object-fit: contain;
-            transition: all 0.2s ease;
-        }
-
-        .service-btn.active .service-icon-img {
-            filter: brightness(0) invert(1);
-        }
-
-        .service-btn span {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-align: center;
-            transition: all 0.2s ease;
-        }
-
-        .service-btn.active span {
-            color: var(--primary);
-            font-weight: 700;
-        }
-
-        .service-btn.disabled {
-            opacity: 0.4;
-            pointer-events: none;
-        }
-
-        .service-btn.disabled .icon {
-            background: var(--bg);
-        }
-
-        /* Secondary Services */
-        .secondary-mode {
-            margin-top: 8px;
-            margin-bottom: 16px;
-        }
-
-        .secondary-mode .service-btn .icon {
-            width: 48px;
-            height: 48px;
-            background: transparent;
-            box-shadow: none;
-            border: 1px solid var(--border);
-        }
-
-        .secondary-mode .service-btn span {
-            font-size: 10px;
-        }
-
-        /* Map Clean */
-        #map { 
-            height: 120px; 
-            border-radius: var(--radius-lg);
-            margin: 0 16px 16px;
-            box-shadow: var(--shadow-sm);
-            border: none;
-        }
-
-        /* Main Content */
-        .main-content { 
-            padding: 0 16px 140px;
-        }
-
-        /* Input Cards Modern */
-        .input-card { 
-            background: white; 
-            border-radius: var(--radius);
-            padding: 14px 16px;
-            margin-bottom: 12px;
-            border: 1px solid var(--border);
-            transition: all 0.2s ease;
-        }
-
-        .input-card:focus-within {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
-        }
-
-        .input-card label { 
-            display: block; 
-            font-size: 11px; 
-            font-weight: 600; 
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 4px;
-            letter-spacing: 0.5px;
-        }
-
-        .input-card input, 
-        .input-card textarea, 
-        .input-card select {
-            width: 100%;
-            border: none;
-            font-size: 14px;
-            font-weight: 500;
-            outline: none;
-            background: transparent;
-            color: var(--text);
-            padding: 0;
-        }
-
-        .input-card input::placeholder, 
-        .input-card textarea::placeholder {
-            color: #94A3B8;
-            font-weight: 400;
-        }
-
-        /* Search Clean */
-        .search-wrapper { 
-            margin: 16px 0;
-            background: white;
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            padding: 0 14px;
-            display: flex;
-            align-items: center;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .search-wrapper i {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-right: 10px;
-        }
-
-        #searchMenu { 
-            width: 100%;
-            padding: 12px 0;
-            border: none;
-            font-size: 14px;
-            background: transparent;
-        }
-
-        /* Category Tabs */
-        .category-tabs { 
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            scrollbar-width: none;
-            margin-bottom: 16px;
-            padding-bottom: 4px;
-        }
-
-        .category-tabs::-webkit-scrollbar {
-            display: none;
-        }
-
-        .tab { 
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: white;
-            font-size: 12px;
-            font-weight: 600;
-            border: 1px solid var(--border);
-            white-space: nowrap;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: var(--text-muted);
-        }
-
-        .tab.active { 
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            box-shadow: var(--shadow-sm);
-        }
-
-        /* Sesuaikan di bagian <style> */
-.menu-grid {
+.menu-img{
+    width:100%;
+    height:110px;
+    object-fit:cover;
+    border-radius:12px;
+    margin-bottom:8px;
+}
+/* Styling Menu Games */
+.games-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1-fr); /* Tetap 4 kolom */
-    gap: 15px; /* Beri jarak antar fitur */
-    padding: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 10px 0;
+}
+.game-card {
+    background: #ffffff;
+    padding: 15px 5px;
+    border-radius: 15px;
+    border: 1px solid #ddd;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+.game-card:active { transform: scale(0.9); background: #f0f0f0; }
+.game-card img { width: 35px; height: 35px; margin-bottom: 8px; }
+.game-card span { display: block; font-size: 11px; font-weight: 900; color: var(--dark); }
+
+#game-frame-container {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    min-height: 500px; /* Memberikan tinggi minimal */
+    background: #fff; /* Pastikan background putih, bukan hitam */
 }
 
-.menu-item {
+#game-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+.info-btn {
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-size: 10px; /* Ukuran kecil agar tidak memenuhi layar */
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 4px;
+    display: inline-block;
+    transition: all 0.2s;
+}
+
+.info-btn:active {
+    background: var(--primary);
+    color: white;
+}
+/* Modal Pop-up Deskripsi */
+.desc-modal {
+    display: none; /* Tersembunyi saat awal */
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 99999; /* Pastikan angkanya sangat besar */
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.desc-card {
+    background: white;
+    width: 100%;
+    max-width: 320px;
+    padding: 25px;
+    border-radius: 25px;
+    text-align: center;
+    animation: popScale 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popScale {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+        :root { 
+            --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
+            --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
+            --soft: #F0F0F0; --danger: #D63031; --success: #00B894;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { 
+            margin: 0; padding: 0; background: var(--bg); 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; color: var(--text); 
+            overflow-x: hidden;
+        }
+.header-top { 
+    background: var(--primary); 
+    padding: 10px 15px 25px; 
+    color: white; 
+    border-radius: 0 0 25px 25px;
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+}
+
+.nav-row { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 5px; /* Jarak dikurangi */
+}
+        .brand-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; letter-spacing: -0.3px; }
+        .brand-icon { width: 26px; height: 26px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 10px; font-weight: 800; }
+        .queue-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+
+        /* TIMPA KODE LAMA ANDA DENGAN INI */
+.banner-container {
+    width: 100%;
+    padding: 0 15px;
+    box-sizing: border-box;
+    overflow: hidden; /* Penting untuk menyembunyikan sisa banner */
+    touch-action: pan-y; /* Memungkinkan scroll vertikal, tapi geser horizontal untuk banner */
+}
+
+#banner-track {
+    display: flex;
+    transition: transform 0.4s ease;
+    cursor: grab; /* Menandakan elemen bisa digeser */
+
+}.mode-item.disabled {
+    background: #F1F1F1;
+    color: #AAA;
+    border-color: #DDD;
+    pointer-events: auto;
+    position: relative;
+}
+/* TAMBAHKAN KODE INI */
+.mode-selection { /* Pastikan nama class pembungkus tombol Anda benar */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Membagi 3 kolom sama rata */
+    gap: 8px;
+    padding: 0 18px;
+}
+
+.mode-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
-    cursor: pointer;
-}
-
-.menu-icon {
-    width: 60px; /* Perbesar ukuran box icon */
-    height: 60px; /* Perbesar ukuran box icon */
-    background: white;
-    border-radius: 18px; /* Sudut agak membulat khas Gojek */
-    display: flex;
     justify-content: center;
-    align-items: center;
-    margin-bottom: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Beri shadow halus */
-    transition: transform 0.2s;
-}
-
-.menu-icon i {
-    font-size: 28px; /* Perbesar ukuran icon di dalamnya */
-    color: var(--primary);
-}
-
-.menu-item span {
+    height: 45px; /* Tinggi seragam agar presisi */
     font-size: 11px;
-    font-weight: 700;
-    color: #444;
+    border-radius: 8px;
+    padding: 5px;
+}
+.mode-item.disabled::after {
+    content: "Di luar jangkauan";
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: #999;
+}
+.mode-container.secondary {
+    padding-top: 0;
+    margin-top: -6px;
 }
 
-        .menu-item:active {
-            transform: scale(0.98);
-        }
-
-        .menu-img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .menu-content {
-            padding: 12px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .menu-info h4 { 
-            margin: 0 0 6px;
-            font-size: 13px;
-            font-weight: 700;
-            line-height: 1.4;
-            color: var(--text);
-        }
-
-        .menu-info .price { 
-            font-size: 14px;
-            font-weight: 800;
-            color: var(--primary);
-            margin-bottom: 8px;
-        }
-
-        .info-btn {
-            background: transparent;
-            color: var(--primary-light);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 4px 10px;
-            font-size: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 8px;
-            transition: all 0.2s ease;
-            display: inline-block;
-        }
-
-        .info-btn:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        /* Variant Grid Clean */
-        .variant-grid {
-            background: #F8FAFC;
-            padding: 10px;
-            border-radius: var(--radius);
-            margin-top: 8px;
-            display: none;
-        }
-
-        .variant-group { 
-            margin-bottom: 8px;
-        }
-
-        .variant-group:last-child {
-            margin-bottom: 0;
-        }
-
-        .variant-group span { 
-            font-size: 10px; 
-            font-weight: 700; 
-            color: var(--primary);
-            display: block;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .chips-area { 
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .chip {
-            background: white;
-            border: 1.5px solid var(--border);
-            color: var(--text);
-            padding: 5px 10px;
-            border-radius: 16px;
-            font-size: 11px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .chip:active {
-            transform: scale(0.95);
-        }
-
-        .chip.selected {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .variant-badge {
-            background: var(--accent);
-            color: white;
-            font-size: 9px;
-            padding: 2px 5px;
-            border-radius: 10px;
-            margin-left: 4px;
-            font-weight: 700;
-        }
-
-        /* Quantity Box Modern */
-        .qty-box { 
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #F1F5F9;
-            border-radius: 10px;
-            padding: 4px;
-            margin-top: auto;
-        }
-
-        .qty-btn { 
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            border: none;
-            background: white;
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .qty-btn:active {
-            transform: scale(0.9);
-            background: var(--primary);
-            color: white;
-        }
-
-        .qty-btn:disabled { 
-            background: #E2E8F0;
-            color: #94A3B8;
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-
-        .qty-box span {
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--text);
-            min-width: 24px;
-            text-align: center;
-        }
-
-        /* Bottom Bar Modern */
-        #main-footer-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            z-index: 3000;
-            background: white;
-            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-    pointer-events: none; /* Container tembus klik */
+.mode-item.alt {
+    background: #F6F6F6;
+    border: 1px dashed #DDD;
+    color: var(--muted);
+    font-weight: 800;
+}
+.mode-item.alt:active {
+    transform: scale(0.97);
 }
 
-        #bottomBarTrigger {
-            display: none;
-            background: var(--primary);
-            color: white;
-            padding: 14px 20px;
-            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-            cursor: pointer;
-pointer-events: auto; /* Tapi isi didalamnya bisa diklik */
-} 
+        .mode-container { display: flex; gap: 8px; overflow-x: auto; padding: 0 18px 12px; scrollbar-width: none; }
+        .mode-item { white-space: nowrap; padding: 10px 16px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1.2px solid #EFEFEF; cursor: pointer; }
+        .mode-item.active { background: #E8F5E9; border-color: var(--success); color: var(--primary); }
 
-        .cart-info-left {
-            flex: 1;
-        }
+        #map { height: 130px; border-radius: 18px; margin: 0 18px 10px; border: 1px solid #EFEFEF; }
 
-        .price-total {
-            font-size: 18px;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 2px;
-        }
+        /* --- Perubahan Area Merah (Input Form) --- */
+        .main-content { padding: 0 18px 180px; }
+        .input-card { background: white; border-radius: 14px; padding: 7px 14px; margin-bottom: 4px; border: 1.2px solid #F0F0F0; transition: all 0.3s ease; }
+        .input-card label { display: block; font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 1px; letter-spacing: 0.5px; }
+        .input-card input, .input-card textarea { width: 100%; border: none; font-size: 13px; font-weight: 600; outline: none; background: transparent; color: var(--text); }
+        .input-card input::placeholder, .input-card textarea::placeholder { font-weight: 400; color: #BBB; }
 
-        .cart-hint {
-            font-size: 11px;
-            color: rgba(255,255,255,0.8);
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .order-btn {
-            background: white;
-            color: var(--primary);
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow-sm);
-        pointer-events: auto; /* Tombol wajib bisa diklik */
-    cursor: pointer !important;
+/* --- Validasi & Animasi --- */
+.error-field { 
+    border: 2px solid var(--danger) !important; 
+    background-color: #FFF5F5 !important; 
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
 }
 
-        .order-btn:active {
-            transform: scale(0.95);
-        }
+@keyframes shake { 
+    0%, 100% { transform: translateX(0); } 
+    25% { transform: translateX(-6px); } 
+    50% { transform: translateX(6px); } 
+    75% { transform: translateX(-6px); } 
+}
 
-        .order-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+.pulse-attention {
+    animation: pulse-yellow 1.5s infinite;
+    border: 2px solid var(--accent) !important;
+}
 
-        /* Bottom Navigation */
-        .bottom-nav {
-            background: white;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            height: 64px;
-            border-top: 1px solid var(--border);
-            padding: 0 8px;
-        }
+@keyframes pulse-yellow {
+    0% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
+}
 
-        .nav-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            padding: 8px 0;
-            transition: all 0.2s ease;
-            border-radius: var(--radius);
-        }
+mark {
+    background-color: #FFEB3B;
+    color: black;
+    padding: 0 2px;
+    border-radius: 4px;
+    font-weight: 800;
+}
+        .search-wrapper { margin: 12px 0; background: white; border-radius: 12px; border: 1.2px solid var(--soft); padding: 0 10px; display: flex; align-items: center; }
+        #searchMenu { width: 100%; padding: 8px 0; border: none; font-size: 13px; background: transparent; }
 
-        .nav-item:active {
-            background: #F1F5F9;
-        }
+        .category-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-bottom: 12px; }
+        .tab { padding: 8px 15px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1px solid #F0F0F0; white-space: nowrap; }
+        .tab.active { background: var(--primary); color: white; }
 
-        .nav-item i {
-            font-size: 20px;
-            color: var(--text-muted);
-            transition: all 0.2s ease;
-        }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .menu-item { background: white; border-radius: 16px; padding: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between; }
+        .menu-info h4 { margin: 0 0 4px; font-size: 12px; font-weight: 800; min-height: 32px; line-height: 1.3; }
+        .menu-info .price { font-size: 13px; font-weight: 900; color: var(--primary); margin-bottom: 8px; }
+/* Container utama area varian */
+.variant-grid {
+    background: #fdfdfd;
+    padding: 12px;
+    border: 1px dashed var(--primary); /* Garis putus-putus hijau agar terlihat spesial */
+    border-radius: 12px;
+    margin-top: 10px;
+    animation: fadeIn 0.3s ease; /* Efek muncul halus */
+}
 
-        .nav-item.active i,
-        .nav-item:hover i {
-            color: var(--primary);
-        }
+.variant-group { 
+    margin-bottom: 10px; 
+}
 
-        .nav-item span {
-            font-size: 10px;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
+.variant-group span { 
+    font-size: 11px; 
+    font-weight: 800; 
+    color: var(--primary); 
+    display: block; 
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
 
-        .nav-item.active span {
-            color: var(--primary);
-            font-weight: 700;
-        }
+/* Container tombol-tombolnya */
+.chips-area { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 8px; 
+}
 
-        /* Order Summary Sheet */
+/* Gaya tombol (Chip) */
+.chip {
+    background: white;
+    border: 1.5px solid #ddd;
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+/* Efek saat ditekan sebentar */
+.chip:active {
+    transform: scale(0.95);
+}
+
+/* Animasi muncul */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+/* Gaya tombol (Chip) saat dipilih */
+.chip.selected {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+}
+
+/* Badge angka di samping teks varian */
+.variant-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 50%;
+    margin-left: 5px;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+.shake-ani {
+    animation: shake 0.2s ease-in-out 0s 3;
+}
+
+        .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 8px; padding: 4px; margin-top: 8px; }
+        .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
+        .qty-btn:disabled { background: #EEE; color: #CCC; }
+
         .order-summary-mini {
-            position: fixed;
-            bottom: -100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
-            z-index: 999;
-            max-height: 70vh;
-            transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex;
-            flex-direction: column;
+            position: fixed; bottom: -100%; left: 0; right: 0; 
+            background: white; border-radius: 25px 25px 0 0; 
+            box-shadow: 0 -10px 35px rgba(0,0,0,0.15); 
+            z-index: 999; max-height: 75vh; border-top: 1px solid #eee;
+            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column;
         }
-
-        .order-summary-mini.active {
-            bottom: 0;
-        }
-
-        .sheet-header {
-            padding: 16px 20px;
-            text-align: center;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-        }
-
-        .sheet-handle {
-            width: 36px;
-            height: 4px;
-            background: #CBD5E1;
-            border-radius: 10px;
-            margin: 0 auto 10px;
-        }
-
-        .sheet-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-muted);
-            letter-spacing: 1px;
-        }
-
-        .summary-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0 20px 120px;
-        }
-
-        .summary-item {
-            padding: 14px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .item-detail-name b {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 3px;
-            color: var(--text);
-        }
-
-        .item-detail-name span {
-            font-size: 11px;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .item-price {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--primary);
-            margin-top: 4px;
-        }
-
-        .mini-qty-box {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #F1F5F9;
-            padding: 6px 10px;
-            border-radius: 10px;
-        }
-
-        .mini-qty-btn {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-            border: none;
-            background: white;
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 12px;
-            cursor: pointer;
-            box-shadow: var(--shadow-sm);
-        }
-
-        #summaryOverlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.4);
-            display: none;
-            z-index: 998;
-            backdrop-filter: blur(4px);
-        }
-
-        /* Modals Modern */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 10001;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-card {
-            background: white;
-            width: 100%;
-            max-width: 360px;
-            padding: 24px;
-            border-radius: var(--radius-xl);
-            text-align: center;
-            box-shadow: var(--shadow-lg);
-            animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes modalPop {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .modal-card h3 {
-            font-weight: 800;
-            font-size: 18px;
-            margin-bottom: 12px;
-            color: var(--text);
-        }
-
-        .modal-card p {
-            font-size: 13px;
-            color: var(--text-muted);
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-secondary {
-            flex: 1;
-            padding: 12px;
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            background: white;
-            color: var(--text);
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-primary {
-            flex: 1;
-            padding: 12px;
-            border-radius: var(--radius);
-            border: none;
-            background: var(--primary);
-            color: white;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-primary:active,
-        .btn-secondary:active {
-            transform: scale(0.95);
-        }
-
-        /* Description Modal */
-        .desc-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            z-index: 99999;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            backdrop-filter: blur(4px);
-        }
-
-        .desc-card {
-            background: white;
-            width: 100%;
-            max-width: 320px;
-            padding: 24px;
-            border-radius: var(--radius-xl);
-            text-align: center;
-            animation: modalPop 0.3s ease;
-        }
-
-        .desc-card h3 {
-            margin-top: 0;
-            color: var(--primary);
-            font-weight: 800;
-            font-size: 18px;
-            margin-bottom: 12px;
-        }
-
-        .desc-card p {
-            font-size: 14px;
-            color: #475569;
-            line-height: 1.6;
-            margin: 0 0 20px;
-            white-space: pre-wrap;
-        }
-
-        /* Games Modal */
-        #modal-games {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: white;
-            z-index: 99999;
-            flex-direction: column;
-        }
-
-        .games-header {
-            padding: 16px 20px;
-            background: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .games-title {
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            color: var(--text);
-            font-size: 14px;
-        }
-
-        .games-grid {
-            padding: 24px 20px;
-            flex: 1;
-            overflow-y: auto;
-            background: var(--bg);
-        }
-
-        .game-item {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px;
-            background: white;
-            border-radius: var(--radius-lg);
-            margin-bottom: 12px;
-            box-shadow: var(--shadow-sm);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid var(--border);
-        }
-
-        .game-item:active {
-            transform: scale(0.98);
-            box-shadow: var(--shadow);
-        }
-
-        .game-item img {
-            width: 48px;
-            height: 48px;
-            object-fit: contain;
-        }
-
-        .game-item div div:first-child {
-            font-weight: 700;
-            font-size: 15px;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-
-        .game-item div div:last-child {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* Welcome Overlay */
-        #welcome-overlay {
-            position: fixed;
-            inset: 0;
-            background: white;
-            z-index: 10002;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 30px;
-        }
-
-        .welcome-content {
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .welcome-img-container {
-            width: 240px;
-            height: 240px;
-            margin-bottom: 30px;
-            border-radius: 50%;
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .welcome-img-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .welcome-title {
-            font-weight: 800;
-            font-size: 24px;
-            margin-bottom: 12px;
-            color: var(--text);
-            line-height: 1.3;
-        }
-
-        .welcome-subtitle {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-bottom: 32px;
-            line-height: 1.6;
-            padding: 0 10px;
-        }
-
-        .welcome-btn {
-            width: 100%;
-            padding: 16px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            font-weight: 700;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow);
-        }
-
-        .welcome-btn:active {
-            transform: scale(0.98);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .welcome-footer {
-            font-size: 11px;
-            color: #94A3B8;
-            letter-spacing: 0.5px;
-            margin-top: 24px;
-        }
-
-        /* Utility Classes */
-        .hidden { display: none !important; }
+        .order-summary-mini.active { bottom: 0; }
         
-        .section-title {
-            font-weight: 700;
-            font-size: 16px;
-            margin: 24px 0 12px;
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .sheet-header { padding: 12px 18px; text-align: center; background: white; border-radius: 25px 25px 0 0; border-bottom: 1px solid #F5F5F5; }
+        .sheet-handle { width: 40px; height: 4px; background: #E0E0E0; border-radius: 10px; margin: 0 auto 8px; }
+        .sheet-title { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: 0.8px; }
+
+        .summary-scroll { flex: 1; overflow-y: auto; padding: 8px 18px 140px; }
+        .summary-item { background: white; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F5F5F5; }
+
+        .item-detail-name { flex: 1; margin-right: 8px; }
+        .item-detail-name b { display: block; font-size: 13px; margin-bottom: 2px; }
+        .item-detail-name span { font-size: 10px; color: var(--muted); }
+
+        .mini-qty-box { display: flex; align-items: center; gap: 10px; background: #F8F9FA; padding: 5px 8px; border-radius: 10px; }
+        .mini-qty-btn { width: 26px; height: 26px; border-radius: 7px; border: none; background: white; color: var(--primary); font-weight: 800; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+
+        #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; backdrop-filter: blur(2px); }
+
+        .bottom-bar { 
+            position: fixed; bottom: 0; left: 0; right: 0; background: white; 
+            padding: 12px 20px 25px; border-radius: 25px 25px 0 0; 
+            box-shadow: 0 -8px 25px rgba(0,0,0,0.08); z-index: 1000; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        
+        .swipe-hint {
+            position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: white; padding: 3px 10px; border-radius: 15px;
+            font-size: 9px; font-weight: 700; display: none;
         }
 
-        .error-field {
-            border-color: var(--danger) !important;
-            background-color: #FEF2F2 !important;
-            animation: shake 0.4s ease;
-        }
+        .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
+        .dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
+        .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
+        .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
+        .order-btn:disabled { opacity: 0.5; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: white; width: 100%; max-width: 360px; padding: 25px; border-radius: 20px; text-align: center; }
+.summary-item.removing {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.25s ease;
+}
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-        }
+/* Efek stabilo kuning untuk teks yang cocok dengan pencarian */
+mark {
+    background-color: #FFEB3B; /* Warna kuning stabilo */
+    color: black;
+    padding: 0 2px;
+    border-radius: 2px;
+    font-weight: 800;
+}
+/* Animasi tombol saat ditekan (Touch Effect) */
+.order-btn:active, .modal-card button:active {
+    transform: scale(0.92); /* Mengecil sedikit */
+    filter: brightness(1.2); /* Menjadi lebih terang */
+    transition: transform 0.1s ease;
+}
 
-        mark {
-            background-color: #FEF08A;
-            color: var(--text);
-            padding: 0 2px;
-            border-radius: 2px;
-            font-weight: 600;
-        }
+/* Tambahan agar transisi kembali ke ukuran normal tidak kaku */
+.order-btn {
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
 
-        /* Responsive */
-        @media (max-width: 380px) {
-            .service-btn .icon {
-                width: 48px;
-                height: 48px;
-            }
-            .service-icon-img {
-                width: 24px;
-                height: 24px;
-            }
-            .menu-img {
-                height: 100px;
-            }
-        }
+/* === SUPER-APP GRID STYLE (4 Tombol per Baris) === */
+.service-mode {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 15px 12px;
+    justify-items: center;
+}
 
-        /* Animations */
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
+.service-btn {
+    width: 100%;
+    max-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative; /* Penting untuk posisi badge */
+}
 
-        .service-btn:not(.disabled) .icon {
-            animation: float 3s ease-in-out infinite;
-        }
+/* CONTAINER ICON */
+.service-btn .icon {
+    width: 70px;
+    height: 70px;
+    background: #FFFFFF;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: visible;
+    transition: all 0.3s ease;
+    animation: floatIcon 3s ease-in-out infinite;
+}
 
-        .service-btn.active .icon {
-            animation: none;
-        }
+.service-icon-img {
+    width: 170%; /* Ukuran ideal agar tidak 'bocor' keluar kotak */
+    height: 170%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+/* TEKS DI BAWAH ICON */
+.service-btn span {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text);
+    text-align: center;
+    white-space: nowrap;
+    letter-spacing: -0.2px;
+}
+
+/* === EFEK STATE (AKTIF & DISABLED) === */
+.service-btn.active .icon {
+    background: linear-gradient(135deg, #1B4332, #2D6A4F);
+    box-shadow: 0 15px 25px rgba(27,67,50,0.3);
+    transform: scale(1.1) translateY(-5px);
+}
+
+.service-btn.active .service-icon-img {
+    filter: brightness(0) invert(1);
+    transform: scale(1.1);
+}
+
+.service-btn.active span {
+    color: var(--primary);
+    font-weight: 900;
+}
+
+.service-btn.disabled .service-icon-img {
+    filter: grayscale(1);
+    opacity: 0.5;
+}
+
+.service-btn:active { transform: scale(0.9); }
+
+/* === BADGE SYSTEM (RINGKAS & CENTER) === */
+/* Properti umum untuk semua badge */
+.service-btn.disabled.too-far::after,
+.service-btn.disabled.too-close::after {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 3px 6px;
+    border-radius: 8px;
+    white-space: nowrap;
+    z-index: 10;
+    letter-spacing: 0.5px;
+    border: 1.5px solid white;
+    animation: badgePop 0.3s ease-out forwards;
+}
+
+/* Pembeda warna & isi konten */
+.service-btn.disabled.too-far::after {
+    content: "TERLALU JAUH";
+    background: #e74c3c;
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
+}
+
+.service-btn.disabled.too-close::after {
+    content: "TERLALU DEKAT";
+    background: #f39c12;
+    box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4);
+}
+
+/* === ANIMASI === */
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes badgePop {
+    0% { transform: translateX(-50%) scale(0) translateY(10px); opacity: 0; }
+    100% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
+}
+/* === FORM EXTRA RINGKAS === */
+.form-group {
+    margin-bottom: 4px;
+}
+
+.form-group label {
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    display: block;
+    color: #777;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 5px 7px;
+    font-size: 10.5px;
+    border-radius: 6px;
+    border: 1px solid #E2E2E2;
+    background: #FFFFFF;
+}
+
+/* textarea alamat jangan tinggi */
+.form-group textarea {
+    resize: none;
+}
+
+/* fokus tetap kelihatan */
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
+}
+
     </style>
 </head>
 <body>
 
-<!-- Welcome Overlay -->
-<div id="welcome-overlay">
-    <div class="welcome-content">
-        <div class="welcome-img-container">
-            <img src="welcome-nyepi.png" alt="Welcome">
+<div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
+    <div style="text-align: center; width: 100%; max-width: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+            
+            <div style="width: 280px; height: 280px; margin-bottom: 30px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                <img src="welcome-nyepi.png" alt="Welcome" 
+                     style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            
+            <h2 style="font-weight: 900; font-size: 24px; margin-bottom: 10px; color: #333;">Hei..Aku Siap Kasih yang Terbaik</h2>
+            
+            <p style="color: #666; font-size: 14px; margin-bottom: 35px; line-height: 1.6; padding: 0 10px;">
+                Izinkan lokasi biar aku bisa kasih yang terbaik. <br>
+                Klik mulai sekarang untuk pengalaman berbelanjamu disini.
+            </p>
+            
+            <button onclick="startApp()" class="order-btn" style="width: 100%; padding: 18px; font-weight: 800; border-radius: 12px; font-size: 16px;">
+                MULAI SEKARANG
+            </button>
         </div>
-        <h2 class="welcome-title">Hei..Aku Siap Kasih yang Terbaik</h2>
-        <p class="welcome-subtitle">
-            Izinkan lokasi biar aku bisa kasih yang terbaik.<br>
-            Klik mulai sekarang untuk pengalaman berbelanjamu.
-        </p>
-        <button onclick="startApp()" class="welcome-btn">MULAI SEKARANG</button>
-        <div class="welcome-footer">powered by <b>cloudkitchen.dyg++</b></div>
+
+        <div style="font-size: 10px; color: #999; letter-spacing: 1px; margin-top: 30px;">
+            powered by <b>cloudkitchen.dyg++</b>
+        </div>
+        
     </div>
 </div>
 
-<!-- Header -->
-<div class="header-top">
-    <div class="nav-row">
-        <div class="brand-logo">
-            <div class="brand-icon">D+</div>
-            cloudkitchen.dyg++
+<div class="nav-row">
+    <div style="position: relative;">
+        <div onclick="toggleMenuDropdown()" style="cursor:pointer; padding: 5px; font-size: 20px;">☰</div>
+        
+        <div id="menuDropdown" style="display:none; position:absolute; top:35px; left:0; background:white; color:black; border-radius:12px; width:150px; box-shadow:0 8px 20px rgba(0,0,0,0.2); z-index:2000; overflow:hidden;">
+            <div onclick="openVoucherInfo()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
+            <div onclick="openMemberModal()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
+            <div onclick="openBantuan()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
+            <div onclick="openSaranKritik()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
         </div>
-        <div class="queue-badge" id="noAntrean">#0</div>
     </div>
+
+    <div class="brand-logo"><div class="brand-icon">D+</div> cloudkitchen.dyg++</div>
+    <div class="queue-badge" id="noAntrean">#0</div>
 </div>
 
-<!-- Banner -->
 <div class="banner-container">
     <div id="banner-track"></div>
 </div>
 
-<!-- Service Selection -->
 <div class="service-mode" id="targetLayanan">
     <div id="mDineIn" class="service-btn" onclick="changeMode('DINE IN', this)">
-        <div class="icon"><img src="dine-in3.png" class="service-icon-img" alt="Dine In"></div>
+        <div class="icon"><img src="dine-in3.png" class="service-icon-img"></div>
         <span>Dine In</span>
     </div>
     <div id="mTakeAway" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
-        <div class="icon"><img src="take-away3.png" class="service-icon-img" alt="Take Away"></div>
+        <div class="icon"><img src="take-away3.png" class="service-icon-img"></div>
         <span>Take Away</span>
     </div>
     <div id="mDelivery" class="service-btn" onclick="changeMode('DELIVERY', this)">
-        <div class="icon"><img src="delivery3.png" class="service-icon-img" alt="Delivery"></div>
+        <div class="icon"><img src="delivery3.png" class="service-icon-img"></div>
         <span>Delivery</span>
     </div>
     <div id="mKatering" class="service-btn" onclick="changeMode('KATERING', this)">
-        <div class="icon"><img src="katering3.png" class="service-icon-img" alt="Katering"></div>
+        <div class="icon"><img src="katering3.png" class="service-icon-img"></div>
         <span>Katering</span>
     </div>
 </div>
 
-<!-- Secondary Services -->
-<div class="service-mode secondary-mode">
-    <div class="service-btn" onclick="window.open('https://whatsapp.com/channel/0029ValssX69Bb60shR04A1G', '_blank')">
-        <div class="icon"><img src="member3.png" class="service-icon-img" alt="Info"></div>
+<div class="service-mode secondary-mode" style="margin-top: -15px;">
+    <div class="service-btn secondary" onclick="window.open('https://whatsapp.com/channel/0029ValssX69Bb60shR04A1G', '_blank')">
+        <div class="icon"><img src="member3.png" class="service-icon-img"></div>
         <span>Info Promo</span>
     </div>
-    <div class="service-btn" onclick="openMitraOptions()">
-        <div class="icon"><img src="jadi-mitra3.png" class="service-icon-img" alt="Mitra"></div>
-        <span>Jadi Mitra</span>
-    </div>
-    <div class="service-btn" onclick="openIklanForm()">
-        <div class="icon"><img src="ngiklan3.png" class="service-icon-img" alt="Iklan"></div>
+
+    <div class="service-btn secondary" onclick="openMitraOptions()">
+    <div class="icon"><img src="jadi-mitra3.png" class="service-icon-img"></div>
+    <span>Jadi Mitra</span>
+</div>
+    <div class="service-btn secondary" onclick="openIklanForm()">
+        <div class="icon"><img src="ngiklan3.png" class="service-icon-img"></div>
         <span>NgIKLAN</span>
     </div>
-    <div class="service-btn" onclick="openGamesHub()">
-        <div class="icon"><img src="games3.png" class="service-icon-img" alt="Games"></div>
+    <div class="service-btn secondary" onclick="openGamesHub()">
+        <div class="icon"><img src="games3.png" class="service-icon-img"></div>
         <span>Games</span>
     </div>
 </div>
 
-<!-- Map -->
 <div id="map"></div>
 
-<!-- Main Content -->
 <div class="main-content">
-    <!-- Customer Info -->
-    <div class="input-card" id="wrapName">
+    <div id="wrapName" class="input-card">
         <label>Nama Anda</label>
-        <input type="text" id="custName" placeholder="Masukkan nama lengkap...">
+        <input type="text" id="custName" placeholder="Masukkan nama...">
     </div>
     
     <div id="boxMeja">
-        <div class="input-card" id="wrapMeja">
+        <div id="wrapMeja" class="input-card">
             <label>Nomor Meja</label>
             <input type="number" id="tableNo" placeholder="Contoh: 08">
         </div>
     </div>
-    
-    <div id="boxAlamat" class="hidden">
-        <div class="input-card" id="wrapAddr">
+    <div id="boxAlamat" style="display:none;">
+        <div id="wrapAddr" class="input-card">
             <label>Alamat Pengiriman</label>
             <textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea>
         </div>
     </div>
 
-    <div id="boxKateringInfo" class="hidden">
+    <div id="boxKateringInfo" style="display: none; margin-bottom: 15px;">
         <div class="input-card">
-            <label>Tanggal Pengiriman (Minimal Besok)</label>
-            <input type="date" id="tglKatering">
+            <label style="font-size: 11px; font-weight: 800; color: var(--muted); margin-bottom: 5px; display: block;">TANGGAL PENGIRIMAN (Minimal Besok)</label>
+            <input type="date" id="tglKatering" class="input-field" style="width: 100%;">
         </div>
     </div>
 
-    <div class="input-card" id="wrapNote">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <label>Catatan Tambahan</label>
-            <span style="font-size: 10px; color: var(--text-muted); font-weight: 500;">Opsional</span>
-        </div>
-        <textarea id="orderNote" placeholder="Contoh: Pedas sedang, tanpa timun..." rows="1" 
-            style="min-height: 40px; resize: none; overflow: hidden;" 
-            oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+    <div id="wrapNote" class="input-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+        <label style="margin-bottom: 0;">Catatan Tambahan</label>
+        <span style="font-size: 10px; color: var(--muted); font-weight: normal;">(Opsional)</span>
     </div>
+    <textarea id="orderNote" 
+              placeholder="Contoh: Pedas sedang, tanpa timun..." 
+              rows="1" 
+              style="min-height: 40px; resize: none; overflow: hidden; line-height: 1.5; border: none; width: 100%; padding: 0; font-family: inherit;" 
+              oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+</div>
 
-    <!-- Menu Section -->
-    <div class="section-title">🍴 Menu Kami</div>
+    <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Geser Kekanan lihat kategori </div>
     
     <div class="search-wrapper">
-        <i class="fas fa-search"></i>
-        <input type="text" id="searchMenu" placeholder="Cari menu kesukaanmu..." oninput="filterMenu()">
+        <input type="text" id="searchMenu" placeholder="ketik menu kesukaanmu..." oninput="filterMenu()">
     </div>
 
     <div class="category-tabs" id="cat-tabs"></div>
-    <div class="menu-grid" id="menu-container">
-        <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
-            Memuat menu...
-        </div>
+    <div class="menu-grid" id="menu-container">Memuat menu...</div>
+
     </div>
-</div>
-
-<!-- Order Summary Overlay -->
 <div id="summaryOverlay" onclick="toggleSummary(false)"></div>
-
-<!-- Order Summary Panel -->
 <div id="orderSummaryPanel" class="order-summary-mini">
     <div class="sheet-header" onclick="toggleSummary(false)">
         <div class="sheet-handle"></div>
         <div class="sheet-title">RINCIAN PESANAN</div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
-            Klik tanda − sampai 0 untuk hapus
-        </div>
+        <div style="font-size: 9px; color: var(--muted); margin-top: 4px;">Klik tanda − sampai 0 untuk hapus</div>
     </div>
     <div class="summary-scroll" id="summaryItems"></div>
 </div>
 
-<!-- Main Footer -->
-<div id="main-footer-container">
-    <div id="bottomBarTrigger" class="bottom-bar" onclick="toggleSummary()">
-        <div class="cart-info-left">
-            <div class="price-total">Rp <span id="miniPrice">0</span></div>
-            <div class="cart-hint">
-                LIHAT RINCIAN <i class="fas fa-chevron-up" style="font-size: 10px;"></i>
-            </div>
-            <div id="dist-info" style="font-size: 11px; margin-top: 4px; display: none;"></div>
-            <div id="ongkir-label" style="font-size: 11px; display: none;"></div>
-        </div>
-        <button class="order-btn" id="btnOrder" onclick="event.stopPropagation(); processOrder();">
-            PESAN
-        </button>
+<div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
+    <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
+    <div>
+        <div id="dist-info" class="dist-info"></div>
+        <div id="ongkir-label" class="ongkir-tag"></div>
+        <div class="price-total">Rp <span id="miniPrice">0</span></div>
     </div>
-
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="location.reload()">
-            <i class="fas fa-home"></i>
-            <span>Home</span>
-        </div>
-        <div class="nav-item" onclick="openVoucherInfo()">
-            <i class="fas fa-ticket-alt"></i>
-            <span>Voucher</span>
-        </div>
-        <div class="nav-item" onclick="openMemberModal()">
-            <i class="fas fa-coins"></i>
-            <span>Poin</span>
-        </div>
-        <div class="nav-item" onclick="openBantuan()">
-            <i class="fas fa-question-circle"></i>
-            <span>Bantuan</span>
-        </div>
-        <div class="nav-item" onclick="openSaranKritik()">
-            <i class="fas fa-comment-dots"></i>
-            <span>Saran</span>
-        </div>
-    </nav>
+    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
