@@ -1277,162 +1277,69 @@ pointer-events: auto; /* Tapi isi didalamnya bisa diklik */
     </nav>
 </div>
 
-<!-- Confirmation Modal -->
 <div id="modalConfirm" class="modal-overlay">
     <div class="modal-card">
-        <h3>Kirim Pesanan?</h3>
-        <p>Pastikan Pesananmu Sudah Sempurna! ✅<br><br>
-        Klik LIHAT RINCIAN di bar bawah untuk memastikan varian menu, nasi, dan nomor meja tidak ada yang terlewat.</p>
-        <div class="modal-actions">
-            <button onclick="closeModal()" class="btn-secondary">Batal</button>
-            <button onclick="submitOrder()" class="btn-primary">Kirim Pesan</button>
+        <h3 style="font-weight: 900; margin-bottom: 8px; font-size: 18px;">Kirim Pesanan?</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">"Pastikan Pesananmu Sudah Sempurna! ✅"
+
+Klik LIHAT RINCIAN di bar bawah untuk memastikan varian menu, nasi, dan nomor meja tidak ada yang terlewat.
+
+Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pesanan segera meluncur ke mejamu! 🚀</p>
+        <div style="display: flex; gap: 8px;">
+            <button onclick="closeModal()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700; font-size:13px;">Batal</button>
+            <button onclick="submitOrder()" style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700; font-size:13px;">Kirim Pesan</button>
         </div>
     </div>
 </div>
 
-<!-- Description Modal -->
 <div id="modalDesc" class="desc-modal" onclick="closeDesc()">
     <div class="desc-card" onclick="event.stopPropagation()">
-        <h3 id="descTitle"></h3>
-        <p id="descContent"></p>
-        <button onclick="closeDesc()" class="btn-primary" style="width: 100%;">TUTUP</button>
+        <h3 id="descTitle" style="margin-top:0; color:var(--primary); font-weight:900;"></h3>
+        <p id="descContent" style="font-size: 14px; color: #555; line-height: 1.6; margin: 15px 0 20px; white-space: pre-wrap;"></p>
+        <button onclick="closeDesc()" style="width:100%; padding:14px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:800; font-size:14px;">TUTUP</button>
     </div>
 </div>
-
-<!-- Coming Soon Modal -->
-<div id="modalComingSoon" class="modal-overlay">
-    <div class="modal-card">
-        <div style="font-size: 48px; margin-bottom: 12px;">🚧</div>
-        <h3>Sedang Dalam Pengembangan</h3>
-        <p>Fitur ini belum tersedia.<br>Kembali lagi besok ya 🙏</p>
-        <button onclick="closeComingSoon()" class="btn-primary" style="width: 100%;">Kembali</button>
-    </div>
-</div>
-
-<!-- Member Modal -->
-<div id="modalMember" class="modal-overlay">
-    <div class="modal-card" style="max-width: 380px; padding: 0; overflow: hidden;">
-        <div style="background: var(--primary); color: white; padding: 28px; text-align: center;">
-            <div style="font-size: 40px; margin-bottom: 8px;">🪙</div>
-            <h3 style="margin: 0; font-weight: 800; font-size: 18px; letter-spacing: 0.5px;">CEK POIN MEMBER</h3>
-            <p style="margin: 8px 0 0; font-size: 11px; opacity: 0.9;">WAJIB DIAWALI 628 (TANPA 0 / +)</p>
-        </div>
-        
-        <div id="m-view-input" style="padding: 24px;">
-            <div style="margin-bottom: 16px;">
-                <label style="font-size: 11px; font-weight: 700; color: var(--danger); display: block; margin-bottom: 6px;">
-                    FORMAT: 628xxxxxxxx
-                </label>
-                <input type="text" id="m-phone" inputmode="numeric" placeholder="Contoh: 62812345678" 
-                    style="width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: var(--radius); 
-                    font-size: 16px; font-weight: 600; text-align: center; outline: none; transition: all 0.2s;">
-            </div>
-            <button onclick="apiCekMember()" class="btn-primary" style="width: 100%; margin-bottom: 12px;">
-                CEK POIN SAYA
-            </button>
-            <button onclick="closeMemberModal()" style="background: none; border: none; color: var(--text-muted); 
-                font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;">Tutup</button>
-        </div>
-
-        <div id="m-view-result" class="hidden" style="padding: 24px; text-align: center;">
-            <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Halo,</p>
-            <h4 id="m-res-nama" style="margin: 4px 0 16px; font-weight: 800; font-size: 20px; color: var(--primary);">...</h4>
-            <div style="background: var(--bg); border: 2px dashed var(--primary); padding: 24px; border-radius: var(--radius-lg); margin-bottom: 20px;">
-                <div id="m-res-poin" style="font-size: 42px; font-weight: 800; color: var(--primary);">0</div>
-                <p style="margin: 4px 0 0; font-size: 11px; font-weight: 700; color: var(--primary); opacity: 0.7;">TOTAL POIN</p>
-            </div>
-            <button onclick="closeMemberModal()" class="btn-secondary" style="width: 100%;">OKE</button>
-        </div>
-
-        <div id="m-view-reg" class="hidden" style="padding: 24px;">
-            <p style="font-size: 14px; font-weight: 700; color: var(--danger); margin-bottom: 16px; text-align: center;">
-                Nomor Belum Terdaftar!
-            </p>
-            <input type="text" id="m-reg-nama" placeholder="Tulis Nama Anda" 
-                style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); 
-                margin-bottom: 10px; font-size: 14px;">
-            
-            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                <input type="email" id="m-reg-email" placeholder="Email Verifikasi" 
-                    style="flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px;">
-                <button id="btn-kirim-otp" onclick="requestOTP()" 
-                    style="padding: 12px 16px; background: var(--primary); color: white; border: none; 
-                    border-radius: var(--radius); font-size: 12px; font-weight: 700; white-space: nowrap;">
-                    KIRIM OTP
-                </button>
-            </div>
-
-            <div id="m-otp-box" class="hidden" style="background: #FEF2F2; padding: 16px; border-radius: var(--radius); margin-bottom: 16px;">
-                <p style="font-size: 11px; font-weight: 700; color: var(--danger); margin: 0 0 8px; text-align: center;">
-                    KODE OTP DIKIRIM KE EMAIL
-                </p>
-                <div style="display: flex; gap: 8px; justify-content: center;">
-                    <input type="number" id="m-otp-code" placeholder="4 Digit" 
-                        style="width: 80px; padding: 10px; border: 2px solid var(--primary); border-radius: var(--radius); 
-                        text-align: center; font-size: 18px; font-weight: 700;">
-                    <button onclick="verifyOTP()" 
-                        style="background: var(--accent); color: white; border: none; padding: 10px 16px; 
-                        border-radius: var(--radius); font-weight: 700; font-size: 12px;">VERIFIKASI</button>
-                </div>
-            </div>
-
-            <button id="btn-final-daftar" onclick="apiDaftarMember()" disabled 
-                style="width: 100%; padding: 14px; background: var(--primary); color: white; border: none; 
-                border-radius: var(--radius); font-weight: 700; font-size: 14px; opacity: 0.5; transition: all 0.2s;">
-                DAFTAR JADI MEMBER
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Games Modal -->
-<div id="modal-games">
-    <div class="games-header">
+<div id="modal-games" class="modal" style="display:none; position:fixed; inset:0; background:#fff; z-index:99999; flex-direction:column;">
+    <div style="padding: 15px; background: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0;">
         <div style="display: flex; align-items: center; gap: 12px;">
-            <button onclick="resetGameMenu()" id="btn-back-games" class="hidden" 
-                style="background: #F1F5F9; border: none; border-radius: 8px; padding: 8px 14px; 
-                cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text);">KEMBALI</button>
-            <span class="games-title">dyg++ ENTERTAINMENT</span>
+            <button onclick="resetGameMenu()" id="btn-back-games" style="display:none; background:#f5f5f5; border:none; border-radius:8px; padding: 0 15px; height:35px; cursor:pointer; font-size: 11px; font-weight: 800; color: #555; letter-spacing: 0.5px;">KEMBALI</button>
+            <span style="font-weight: 900; letter-spacing: 1px; color: #333; font-size: 13px;">dyg++ ENTERTAINMENT</span>
         </div>
-        <button onclick="closeGames()" 
-            style="background: #FEF2F2; border: none; color: var(--danger); padding: 8px 16px; 
-            border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer;">TUTUP</button>
+        <button onclick="closeGames()" style="background:#fff5f5; border:none; color:#ff4d4d; padding: 8px 15px; border-radius:10px; font-weight:bold;">TUTUP</button>
     </div>
 
-    <div id="games-menu" class="games-grid">
-        <div style="max-width: 400px; margin: 0 auto; width: 100%;">
-            <h2 style="text-align: center; font-size: 18px; margin-bottom: 24px; color: var(--text-muted); font-weight: 600;">
-                PILIH PERMAINAN
-            </h2>
+    <div id="games-menu" style="padding: 30px 20px; flex: 1; overflow-y: auto; background: #fafafa;">
+        <div style="max-width: 400px; margin: 0 auto;">
+            <h2 style="text-align:center; font-size: 16px; margin-bottom: 30px; color:#555;">PILIH PERMAINAN</h2>
             
-            <div class="game-item" onclick="startUrlGame('matematika')">
-                <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png" alt="Math">
+            <div class="game-item" onclick="startUrlGame('matematika')" style="display:flex; align-items:center; gap:20px; padding:18px; background:white; border-radius:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); cursor:pointer;">
+                <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png" style="width:45px;">
                 <div>
-                    <div>Matematika Dulu</div>
-                    <div>Berhitung dulu biar pinter</div>
+                    <div style="font-weight:900; font-size:15px;">matematika dulu</div>
+                    <div style="font-size:11px; color:#999;">Berhitung Dulu biar pinter</div>
                 </div>
             </div>
 
-            <div class="game-item" onclick="startUrlGame('feeder')">
-                <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png" alt="Feeder">
+            <div class="game-item" onclick="startUrlGame('feeder')" style="display:flex; align-items:center; gap:20px; padding:18px; background:white; border-radius:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); cursor:pointer;">
+                <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png" style="width:45px;">
                 <div>
-                    <div>Feeder Strategy</div>
-                    <div>Makan yang banyak biar kenyang</div>
+                    <div style="font-weight:900; font-size:15px;">feeder STRATEGY</div>
+                    <div style="font-size:11px; color:#999;">Makan yang banyak biar kenyang</div>
                 </div>
             </div>
 
-            <div class="game-item" onclick="startUrlGame('snake')">
-                <img src="https://cdn-icons-png.flaticon.com/512/3501/3501170.png" alt="Snake">
+            <div class="game-item" onclick="startUrlGame('snake')" style="display:flex; align-items:center; gap:20px; padding:18px; background:white; border-radius:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); cursor:pointer;">
+                <img src="https://cdn-icons-png.flaticon.com/512/3501/3501170.png" style="width:45px;">
                 <div>
-                    <div>Classic Snake</div>
-                    <div>Game ular legendaris yang adiktif</div>
+                    <div style="font-weight:900; font-size:15px;">CLASSIC SNAKE</div>
+                    <div style="font-size:11px; color:#999;">Game ular legendaris yang adiktif</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="game-frame-container" class="hidden" style="flex: 1; width: 100%; background: white;">
-        <iframe id="game-iframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+    <div id="game-frame-container" style="display:none; flex: 1; width:100%; height:100%; background:#fff;">
+    <iframe id="game-iframe" src="" allow="autoplay; fullscreen; gamepad" style="width:100%; height:100%; border:none;"></iframe>
     </div>
 </div>
 
