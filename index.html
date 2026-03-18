@@ -328,22 +328,45 @@
             box-shadow: var(--shadow-sm);
         }
 
-        /* Menu Grid Modern */
-        .menu-grid { 
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
+        /* Sesuaikan di bagian <style> */
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1-fr); /* Tetap 4 kolom */
+    gap: 15px; /* Beri jarak antar fitur */
+    padding: 10px;
+}
 
-        .menu-item { 
-            background: white;
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            transition: all 0.2s ease;
-        }
+.menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+}
+
+.menu-icon {
+    width: 60px; /* Perbesar ukuran box icon */
+    height: 60px; /* Perbesar ukuran box icon */
+    background: white;
+    border-radius: 18px; /* Sudut agak membulat khas Gojek */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Beri shadow halus */
+    transition: transform 0.2s;
+}
+
+.menu-icon i {
+    font-size: 28px; /* Perbesar ukuran icon di dalamnya */
+    color: var(--primary);
+}
+
+.menu-item span {
+    font-size: 11px;
+    font-weight: 700;
+    color: #444;
+}
 
         .menu-item:active {
             transform: scale(0.98);
@@ -522,7 +545,8 @@
             background: white;
             border-radius: var(--radius-xl) var(--radius-xl) 0 0;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-        }
+    pointer-events: none; /* Container tembus klik */
+}
 
         #bottomBarTrigger {
             display: none;
@@ -531,7 +555,8 @@
             padding: 14px 20px;
             border-radius: var(--radius-xl) var(--radius-xl) 0 0;
             cursor: pointer;
-        }
+pointer-events: auto; /* Tapi isi didalamnya bisa diklik */
+} 
 
         .cart-info-left {
             flex: 1;
@@ -564,7 +589,9 @@
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: var(--shadow-sm);
-        }
+        pointer-events: auto; /* Tombol wajib bisa diklik */
+    cursor: pointer !important;
+}
 
         .order-btn:active {
             transform: scale(0.95);
