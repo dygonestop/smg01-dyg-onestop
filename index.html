@@ -1253,9 +1253,10 @@ async function startApp() {
         document.getElementById("noAntrean").innerText = "#" + antrean;
         document.getElementById('welcome-overlay').style.display = 'none';
 
-        currentMode = null;
-        document.querySelectorAll('.service-btn')
-            .forEach(btn => btn.classList.remove('active'));
+// 🛠️ PERBAIKAN: JANGAN reset currentMode ke null di sini.
+        // Biarkan mode yang sudah dipilih user tetap aktif.
+        // Cukup panggil refreshUI untuk memastikan keranjang sinkron dengan data terbaru.
+        refreshUI();
 
     }, (err) => {
         // ❗ GPS GAGAL → BANNER TETAP ADA
@@ -1264,9 +1265,9 @@ async function startApp() {
         document.getElementById("noAntrean").innerText = "#" + antrean;
         document.getElementById('welcome-overlay').style.display = 'none';
 
-        currentMode = null;
-        document.querySelectorAll('.service-btn')
-            .forEach(btn => btn.classList.remove('active'));
+        // ✅ PERBAIKAN: Di sini juga jangan reset ke null.
+        // Biarkan user tetap bisa pesan (Dine-in/Takeaway) meski GPS gagal.
+        refreshUI();
     }, { enableHighAccuracy: true });
 }
 
@@ -1456,8 +1457,11 @@ function updateCart(id, change) {
             if (vDisplay) vDisplay.style.display = 'none';
         }
     }
-    refreshUI();
+// ✅ WAJIB ADA: Panggil ini supaya keranjang hijau muncul/update angka harganya
+    refreshUI(); 
 }
+
+
 
 // Fungsi baru untuk menangani klik pada tombol varian (Chip)
 function setVariant(id, type, val, extra = 0, event) {
