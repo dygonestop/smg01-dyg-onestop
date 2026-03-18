@@ -620,7 +620,7 @@ const totalDiskon = Number(r.totalDiskon || 0);
 
 // 2. RUMUS YANG BENAR: Hanya uang tunai yang masuk ke perhitungan laci
 // QRIS dan CARD tidak boleh masuk ke sini karena tidak ada fisiknya di laci
-const cashSeharusnya = modalAwal + totalCash - totalPengeluaran - totalDiskon;
+const cashSeharusnya = Number(r.cashSeharusnya);
 
 // 3. Hitung Selisih
 const selisih = uangLaci - cashSeharusnya;
