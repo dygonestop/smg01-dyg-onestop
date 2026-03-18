@@ -517,8 +517,10 @@ body {
 
 /* Sembunyikan tulisan "LIHAT RINCIAN" di atas keranjang agar lebih bersih */
 .swipe-hint {
-    display: none !important;
-}
+            position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: white; padding: 3px 10px; border-radius: 15px;
+            font-size: 9px; font-weight: 700; display: none;
+        }
 
         .dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
         .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
@@ -1615,7 +1617,6 @@ function refreshUI() {
         updateOrderSummary();
     }
 }
-
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
         if (cart.length === 0) {
