@@ -12,7 +12,8 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .main-container { height: calc(100vh - 45px); display: flex; }
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 4px; align-content: start; }
-    .menu-card { 
+    .menu-card {
+position: relative; 
     height: 115px; /* Sedikit lebih pendek dari sebelumnya agar proporsional */
     display: flex;
     flex-direction: column;
@@ -21,7 +22,16 @@
     border-radius: 6px;
     background: white;
 }
-
+.click-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    cursor: pointer;
+}
+.menu-card button {
+    position: relative;
+    z-index: 20; /* Tombol plus tetap di atas agar bisa diklik terpisah jika perlu */
+}
     .menu-card:active { transform: scale(0.97); }
         input, select { outline: none; }
         /* Style untuk tombol disabled */
@@ -408,10 +418,12 @@ function renderMenu() {
         if ((filter === "ALL" || m.kategori === filter) && m.nama.toLowerCase().includes(search)) {
             const qty = cart[i] ? cart[i].qty : 0;
             
-            // Perubahan: Tambahkan class 'relative' di div utama .menu-card
             html += `
-            <div class="menu-card shadow-sm flex flex-col justify-between relative">
-                <div onclick="addItem(${i})" class="cursor-pointer flex flex-col flex-1 overflow-hidden">
+            <div class="menu-card shadow-sm flex flex-col justify-between relative active:scale-95 transition-transform">
+                
+                <div onclick="addItem(${i})" class="absolute inset-0 z-10 cursor-pointer"></div>
+
+                <div class="flex flex-col flex-1 overflow-hidden pointer-events-none">
                     ${m.gambar ? `<div class="h-9 w-full mb-1 flex items-center justify-center bg-slate-50 rounded overflow-hidden shrink-0">
                         <img src="${m.gambar}" class="w-full h-full object-cover" onerror="this.style.display='none'">
                     </div>` : ''}
@@ -420,15 +432,23 @@ function renderMenu() {
                     <div class="font-bold text-slate-800 text-[7px] leading-[9px] line-clamp-2 px-0.5 mb-auto">${m.nama}</div>
                 </div>
                 
-                <div class="flex justify-between items-center border-t pt-1 shrink-0 px-0.5">
+                <div class="flex justify-between items-center border-t pt-1 shrink-0 px-0.5 z-20">
                     <div class="text-[8px] font-black text-slate-900 truncate pr-1">Rp${m.harga.toLocaleString()}</div>
                     <div class="flex items-center gap-1 shrink-0">
-                        ${qty > 0 ? `<button onclick="event.stopPropagation(); removeItem(${i})" class="w-4 h-4 bg-slate-100 rounded text-[8px] font-bold border border-slate-300">-</button>` : ''}
-                        <button onclick="event.stopPropagation(); addItem(${i})" class="w-4 h-4 bg-blue-600 text-white rounded text-[8px] font-bold">+</button>
+                        ${qty > 0 ? `
+                            <button onclick="event.stopPropagation(); removeItem(${i})" 
+                                    class="w-5 h-5 bg-slate-100 rounded text-[10px] flex items-center justify-center font-bold border border-slate-300 active:bg-slate-300">
+                                -
+                            </button>` : ''}
+                        
+                        <button onclick="event.stopPropagation(); addItem(${i})" 
+                                class="w-5 h-5 bg-blue-600 text-white rounded text-[10px] flex items-center justify-center font-bold active:bg-blue-800 shadow-sm">
+                            +
+                        </button>
                     </div>
                 </div>
                 
-                ${qty > 0 ? `<div class="absolute -top-1 -right-1 bg-red-600 text-white text-[7px] w-4 h-4 rounded-full flex items-center justify-center font-bold border border-white z-20 shadow-sm">${qty}</div>` : ''}
+                ${qty > 0 ? `<div class="absolute -top-1 -right-1 bg-red-600 text-white text-[7px] w-4 h-4 rounded-full flex items-center justify-center font-bold border border-white z-30 shadow-sm">${qty}</div>` : ''}
             </div>`;
         }
     });
