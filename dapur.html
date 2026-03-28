@@ -15,6 +15,9 @@
         .btn{ width:100%; padding:16px; border:none; border-radius:12px; background:var(--main); color:white; font-weight:900; cursor:pointer; }
         .processing { background: #f59e0b !important; }
         .slide-out-left { transform: translateX(-150%); opacity: 0; transition: 0.5s; }
+.items {
+    white-space: pre-line;
+}
     </style>
 </head>
 <body>
@@ -50,17 +53,25 @@ async function loadOrders() {
 
 function render(active){
     const box = document.getElementById("list");
-    box.innerHTML = active.map(o => `
+    box.innerHTML = active.map(o => {
+        // Memisahkan tiap menu dan membungkusnya agar rapi
+        const itemsHtml = o.Pesanan.split('\n')
+            .map(item => `<div style="border-bottom: 1px dashed #ccc; padding: 4px 0;">${item}</div>`)
+            .join("");
+
+        return `
         <div class="card" id="c-${o.row}">
             <div class="no">#${o.Antrean}</div>
             <div style="font-weight:900; font-size:20px;">${o.Nama}</div>
-            <div style="font-size:12px; background:#eee; padding:4px 8px; border-radius:8px; display:inline-block;">${o.Mode} ${o.Meja ? `| MEJA: ${o.Meja}` : ''}</div>
-            <div class="items">${o.Pesanan.replace(/\n/g, '<br>')}</div>
-            ${o.Catatan ? `<div style="background:#FFF9C4; padding:8px; border-left:4px solid #FBC02D; font-size:12px;">⚠️ <strong>Catatan:</strong> ${o.Catatan}</div>` : ''}
+            <div style="font-size:12px; background:#eee; padding:4px 8px; border-radius:8px; display:inline-block;">
+                ${o.Mode} ${o.Meja ? `| MEJA: ${o.Meja}` : ''}
+            </div>
+            <div class="items">${itemsHtml}</div>
+            ${o.Catatan ? `<div style="background:#FFF9C4; padding:8px; border-left:4px solid #FBC02D; font-size:12px; margin-top:10px;">⚠️ <strong>Catatan:</strong> ${o.Catatan}</div>` : ''}
             <button class="btn" style="margin-top:15px;" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
-        </div>`).join("");
+        </div>`;
+    }).join("");
 }
-
 async function finish(row) {
     if (processingRows.has(String(row))) return;
     const card = document.getElementById("c-" + row);
@@ -84,17 +95,25 @@ function printOrder(o) {
     let txt = `      dyg++ KITCHEN\n================================\n`;
     txt += `Antrean : #${o.Antrean}\nNama    : ${o.Nama}\nLayanan : ${o.Mode}\n`;
     if (o.Meja) txt += `Meja    : ${o.Meja}\n`;
-    txt += `Waktu   : ${new Date().toLocaleTimeString()}\n--------------------------------\nPESANAN:\n${o.Pesanan}\n`;
+    txt += `Waktu   : ${new Date().toLocaleTimeString()}\n--------------------------------\nPESANAN:\n`;
+
+    // Format: [SKU] -- 1x Nama Menu
+    // Lalu tambah spasi dan garis putus 2 sesuai permintaan
+    const daftarMenu = o.Pesanan.split("\n").map(item => {
+        if (!item.trim()) return "";
+        return `${item}\n  - - - - - - - - - - - - - - -`; 
+    }).filter(line => line !== "").join("\n");
+
+    txt += `${daftarMenu}\n`;
+    
     if (o.Catatan) txt += `--------------------------------\nCATATAN:\n${o.Catatan}\n`;
     txt += `--------------------------------\n\n\n\n`;
 
+    // Kirim ke printer RawBT
     if (/Android/i.test(navigator.userAgent)) {
         window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(txt)));
     } else {
-        const pW = window.open('', '_blank', 'width=300,height=500');
-        pW.document.write(`<pre style="font-family: monospace;">${txt}</pre>`);
-        pW.document.write('<script>window.print(); window.close();<\/script>');
-        pW.document.close();
+        console.log("Preview Cetak:\n" + txt);
     }
 }
 
