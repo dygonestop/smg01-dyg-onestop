@@ -3,171 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAPUR PRO | dyg++</title>
+    <title>DAPUR ULTRA | dyg++</title>
     <style>
-        :root{ --main:#1B4332; --danger:#c0392b; --bg:#f2f4f7; --new:#e74c3c; }
-        body{ margin:0; background:var(--bg); font-family:'Segoe UI',Arial,sans-serif; }
-        .header{ margin:15px; padding:15px 20px; background:white; border-radius:14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,.05); position:sticky; top:15px; z-index:100; }
-        .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:15px; padding:15px; }
-        .card{ background:white; border-radius:16px; padding:18px; border-top:8px solid var(--main); animation:pop .3s ease; transition:0.4s; position:relative; }
-        .card.new{ border-top-color: var(--new); box-shadow: 0 0 15px rgba(231,76,60,0.3); }
-        .no{ font-size:42px; font-weight:900; color:var(--main); }
-        .items{ margin:14px 0; font-family:'Courier New',monospace; font-weight:900; font-size:16px; line-height:1.4; }
-        .sku{ color:var(--danger); font-weight:bold; }
-        .btn{ width:100%; padding:18px; border:none; border-radius:12px; background:var(--main); color:white; font-weight:900; cursor:pointer; font-size:16px; }
-        .btn:disabled{ background:#ccc; }
-        @keyframes pop { from{transform:scale(0.9); opacity:0;} to{transform:scale(1); opacity:1;} }
+        :root{ --main:#1B4332; --danger:#c0392b; --bg:#f0f2f5; }
+        body{ margin:0; background:var(--bg); font-family:'Segoe UI',Tahoma,sans-serif; overflow-x:hidden; }
+        .header{ margin:15px; padding:15px 25px; background:white; border-radius:15px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 12px rgba(0,0,0,0.1); position:sticky; top:15px; z-index:1000; }
+        .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:20px; padding:20px; }
+        .card{ background:white; border-radius:20px; padding:20px; border-top:10px solid var(--main); box-shadow:0 6px 15px rgba(0,0,0,0.05); transition:0.3s; position:relative; animation:fadeIn 0.5s ease; }
+        .card.new-order{ border-top-color:#e74c3c; animation:pulse 1.5s infinite; }
+        .no-antrean{ font-size:48px; font-weight:900; color:var(--main); line-height:1; }
+        .items-box{ margin:15px 0; font-family:'Courier New', monospace; font-size:16px; font-weight:bold; color:#333; }
+        .sku-tag{ color:var(--danger); background:#ffebeb; padding:2px 6px; border-radius:4px; margin-right:5px; }
+        .btn-finish{ width:100%; padding:18px; border:none; border-radius:12px; background:var(--main); color:white; font-size:18px; font-weight:900; cursor:pointer; margin-top:10px; }
+        .btn-finish:active{ transform:scale(0.98); }
+        @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(231,76,60,0.4);} 70%{box-shadow:0 0 0 20px rgba(231,76,60,0);} 100%{box-shadow:0 0 0 0 rgba(231,76,60,0);} }
+        @keyframes fadeIn { from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
     </style>
 </head>
-<body onclick="enableAudio()">
+<body>
 
 <div class="header">
     <div>
-        <h2 style="margin:0">👨‍🍳 MONITOR DAPUR</h2>
-        <div id="status">● Menghubungkan...</div>
+        <h1 style="margin:0; color:var(--main)">DAPUR dyg++</h1>
+        <div id="status-koneksi">● Menghubungkan...</div>
     </div>
-    <div id="sku-status" style="font-size:11px; color:#999">Sync SKU...</div>
+    <div id="status-sku" style="text-align:right; font-weight:bold; color:#777">Memuat SKU...</div>
 </div>
 
-<div class="grid" id="list"></div>
+<div class="grid" id="container-antrean"></div>
+
+<audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
 <script>
 const CONFIG = {
-    // GANTI URL INI DENGAN HASIL DEPLOY TERBARU
-    API_URL: "https://script.google.com/macros/s/AKfycbybc-ZfXX_phRICW4v1BykKkd3L8CaWr4VuRPwj45GugNtBWaPPHG7FVnL9QI-3Xp8N1A/exec",
+    API: "https://script.google.com/macros/s/AKfycbzrhl2pCdKNVtcMHOxPt5Q-qRGqK2ShLZy14ctXlAsW67fkOqfr-T7A-Da70u8OVPMVlg/exec",
     TOKEN: "dyg-access-v2",
-    REFRESH: 7000,
-    SOUND: "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+    DELAY: 7000
 };
 
-let skuMap = {};
-let previousIds = new Set();
-let isAudioEnabled = false;
-const audio = new Audio(CONFIG.SOUND);
+let skuDatabase = {};
+let knownIds = new Set();
+let firstLoad = true;
 
-function enableAudio() {
-    isAudioEnabled = true;
-    audio.play().then(() => { audio.pause(); audio.currentTime = 0; });
+// Fungsi Anti-Blokir Suara
+function unlockAudio() {
+    const sound = document.getElementById('notif-sound');
+    sound.play().then(() => {
+        sound.pause();
+        sound.currentTime = 0;
+        console.log("Audio Unlocked!");
+    }).catch(() => console.log("Menunggu interaksi untuk unlock audio..."));
 }
 
-async function fetchSKU() {
+// Jalankan unlock saat klik apapun
+document.body.addEventListener('click', unlockAudio, {once: true});
+
+async function syncSKU() {
     try {
-        const r = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getMenu`);
-        const data = await r.json();
-        data.forEach(item => skuMap[item.name] = item.sku);
-        document.getElementById('sku-status').innerText = "SKU Aktif ✅";
-    } catch(e) { document.getElementById('sku-status').innerText = "SKU Gagal ❌"; }
-}
-
-function getSku(name) {
-    let clean = name.replace(/^\d+x\s+/i, "").trim().toLowerCase();
-    return skuMap[clean] || "??";
-}
-
-async function loadOrders() {
-    const statusEl = document.getElementById("status");
-    try {
-        const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`);
-        const text = await res.text();
-        
-        let data;
-        try { data = JSON.parse(text); } catch(e) { throw new Error("Format Server Salah"); }
-
-        if (data.status === "error") throw new Error(data.message);
-
-        statusEl.innerText = "● TERHUBUNG";
-        statusEl.style.color = "green";
-
-        // Cek Pesanan Baru untuk Bunyi
-        const currentIds = new Set(data.map(o => String(o.row)));
-        let hasNew = [...currentIds].some(id => !previousIds.has(id));
-        
-        if (hasNew && previousIds.size > 0 && isAudioEnabled) {
-            audio.play().catch(e => console.log("Sound blocked"));
-        }
-        
-        previousIds = currentIds;
-        render(data);
-    } catch(e) {
-        statusEl.innerText = "● ERROR: " + e.message;
-        statusEl.style.color = "red";
+        const res = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getMenu`);
+        const data = await res.json();
+        skuDatabase = {};
+        data.forEach(item => {
+            skuDatabase[item.name.toLowerCase().trim()] = item.sku;
+        });
+        document.getElementById('status-sku').innerHTML = "SKU AKTIF ✅";
+    } catch (e) {
+        document.getElementById('status-sku').innerHTML = "SKU ERROR ❌";
     }
 }
 
-function render(orders) {
-    const box = document.getElementById("list");
+function extractSKU(fullText) {
+    if(!fullText) return "??";
+    // Bersihkan angka depan: "1x Nasi" -> "nasi", "2 x Es Teh" -> "es teh"
+    const cleanName = fullText.replace(/^\d+\s*[xX]\s*/, "").trim().toLowerCase();
+    return skuDatabase[cleanName] || "??";
+}
+
+async function refreshDapur() {
+    const container = document.getElementById('container-antrean');
+    const status = document.getElementById('status-koneksi');
+
+    try {
+        const res = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getAntrean`);
+        const orders = await res.json();
+
+        status.innerHTML = "● TERHUBUNG";
+        status.style.color = "green";
+
+        // Cek Pesanan Baru
+        let hasNewOrder = false;
+        orders.forEach(o => {
+            if (!knownIds.has(o.row)) {
+                if (!firstLoad) hasNewOrder = true;
+                knownIds.add(o.row);
+            }
+        });
+
+        if (hasNewOrder) {
+            const sound = document.getElementById('notif-sound');
+            sound.play().catch(() => console.log("Klik layar 1x agar suara aktif otomatis"));
+        }
+        
+        firstLoad = false;
+        renderOrders(orders);
+
+    } catch (e) {
+        status.innerHTML = "● DISCONNECT";
+        status.style.color = "red";
+    }
+}
+
+function renderOrders(orders) {
+    const container = document.getElementById('container-antrean');
     if (orders.length === 0) {
-        box.innerHTML = "<div style='padding:20px'>Menunggu pesanan baru...</div>";
+        container.innerHTML = "<h3 style='opacity:0.5; padding:20px'>Belum ada antrean...</h3>";
         return;
     }
 
-    box.innerHTML = orders.map(o => {
-        const items = o.Pesanan.split('\n').map(i => {
-            if(!i.trim()) return "";
-            return `<div><span class="sku">[${getSku(i)}]</span> ${i}</div>`;
-        }).join("");
+    container.innerHTML = orders.map(o => {
+        const itemsHtml = o.Pesanan.split('\n').filter(i => i.trim()).map(i => {
+            return `<div><span class="sku-tag">[${extractSKU(i)}]</span> ${i}</div>`;
+        }).join('');
 
         return `
-            <div class="card" id="row-${o.row}">
-                <div class="no">#${o.Antrean}</div>
-                <div style="font-weight:bold; font-size:18px">${o.Nama}</div>
-                <div style="color:#666; font-size:13px">${o.Mode} ${o.Meja ? '| Meja: '+o.Meja : ''}</div>
-                <div class="items">${items}</div>
-                ${o.Catatan ? `<div style="background:#fff3cd; padding:8px; border-radius:5px; font-size:12px">Catatan: ${o.Catatan}</div>` : ''}
-                <button class="btn" style="margin-top:15px" onclick="finish('${o.row}')">SELESAI & CETAK</button>
+            <div class="card" id="card-${o.row}">
+                <div class="no-antrean">#${o.Antrean}</div>
+                <div style="font-size:20px; font-weight:bold; margin-top:5px">${o.Nama}</div>
+                <div style="font-size:14px; color:#666">${o.Mode} ${o.Meja ? '• Meja '+o.Meja : ''}</div>
+                <hr>
+                <div class="items-box">${itemsHtml}</div>
+                ${o.Catatan ? `<div style="background:#fff9c4; padding:10px; border-radius:8px; font-size:13px"><b>Note:</b> ${o.Catatan}</div>` : ''}
+                <button class="btn-finish" onclick="selesai('${o.row}')">SELESAI & PRINT</button>
             </div>
         `;
-    }).join("");
+    }).join('');
 }
 
-async function finish(row) {
-    const btn = document.querySelector(`#row-${row} .btn`);
+async function selesai(row) {
+    const btn = document.querySelector(`#card-${row} .btn-finish`);
     btn.disabled = true;
-    btn.innerText = "Mencetak...";
+    btn.innerHTML = "Memproses...";
 
     try {
-        const order = (await (await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`)).json()).find(o => String(o.row) === String(row));
-        
-        // Update di GAS
-        const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
-        const result = await res.json();
+        // Ambil data antrean terakhir untuk diprint
+        const resAntrean = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getAntrean`);
+        const orders = await resAntrean.json();
+        const dataOrder = orders.find(o => String(o.row) === String(row));
 
-        if (result.status === "success") {
-            printOrder(order);
-            document.getElementById(`row-${row}`).style.opacity = "0";
-            setTimeout(loadOrders, 500);
-        }
-    } catch(e) {
-        alert("Gagal update!");
+        // Update status di server
+        await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
+        
+        if (dataOrder) cetakStruk(dataOrder);
+
+        document.getElementById(`card-${row}`).style.opacity = "0";
+        setTimeout(refreshDapur, 500);
+    } catch (e) {
+        alert("Gagal update data!");
         btn.disabled = false;
+        btn.innerHTML = "SELESAI & PRINT";
     }
 }
 
-function printOrder(o) {
-    let txt = `      dyg++ KITCHEN\n================================\n`;
-    txt += `Antrean : #${o.Antrean}\nNama    : ${o.Nama}\nLayanan : ${o.Mode}\n`;
-    if (o.Meja) txt += `Meja    : ${o.Meja}\n`;
-    txt += `--------------------------------\nPESANAN:\n`;
+function cetakStruk(o) {
+    let p = `      dyg++ KITCHEN\n================================\n`;
+    p += `Antrean : #${o.Antrean}\nNama    : ${o.Nama}\nLayanan : ${o.Mode}\n`;
+    if(o.Meja) p += `Meja    : ${o.Meja}\n`;
+    p += `--------------------------------\nPESANAN:\n`;
 
-    const daftarMenu = o.Pesanan.split("\n").map(item => {
-        if (!item.trim()) return "";
-        return `[${getSku(item)}] -- ${item}\n  - - - - - - - - - - - - - - -`; 
-    }).filter(line => line !== "").join("\n");
+    o.Pesanan.split('\n').filter(i => i.trim()).forEach(i => {
+        p += `[${extractSKU(i)}] -- ${i}\n  - - - - - - - - - - - - - - -\n`;
+    });
 
-    txt += `${daftarMenu}\n\n--------------------------------\n\n\n\n`;
+    if(o.Catatan) p += `--------------------------------\nNOTE: ${o.Catatan}\n`;
+    p += `\n\n\n\n`;
 
     if (/Android/i.test(navigator.userAgent)) {
-        window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(txt)));
+        window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(p)));
     } else {
-        console.log(txt);
+        console.log(p);
     }
 }
 
-// START
-fetchSKU().then(() => {
-    loadOrders();
-    setInterval(loadOrders, CONFIG.REFRESH);
-});
+// Inisialisasi
+syncSKU();
+setInterval(refreshDapur, CONFIG.DELAY);
+refreshDapur();
 </script>
+
 </body>
 </html>
