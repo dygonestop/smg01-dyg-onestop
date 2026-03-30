@@ -37,7 +37,7 @@
 
 <script>
 const CONFIG = {
-    API_URL: "https://script.google.com/macros/s/AKfycbx_nO7T7qYxuZ0EZaSgScc2I4iE8-Sy9ZJ7uz0DocH2MEVpoDDY-XsWvTcXaD6bOuUiWg/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbwiv2B1L0rJszK2CYGpl0jBwAYO97Ru4fDq6ZS4RIGQvS4OiBLFBhDS1nkNqWZ2wcpcSA/exec",
     SKU_SOURCE: "https://docs.google.com/spreadsheets/d/1u-U7K-ZQoVDM61pnut6MHX3S7igsSab4Ff9EB17s2b4/gviz/tq?tqx=out:csv&gid=2132421401",
     TOKEN: "dyg-access-v2",
     REFRESH: 8000,
@@ -71,23 +71,20 @@ function parseCSV(text) {
 
 async function fetchSkuDatabase() {
     try {
-        const response = await fetch(CONFIG.SKU_SOURCE);
-        const csvText = await response.text();
-        const rows = parseCSV(csvText);
+        // Langsung panggil action getMenu dari GAS kamu
+        const response = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getMenu`);
+        const result = await response.json();
         
-        // Fix 1: Slice(1) to skip header | Fix 2: Duplicate check
-        rows.slice(1).forEach(row => {
-            if (row[1] && row[5]) {
-                const name = row[1].trim().toLowerCase();
-                const sku = row[5].trim();
-                if (skuDatabase[name] && skuDatabase[name] !== sku) {
-                    console.warn("Duplicate SKU mapping for:", name);
-                }
-                skuDatabase[name] = sku;
+        // Simpan ke database lokal di browser
+        result.forEach(item => {
+            if (item.name && item.sku) {
+                skuDatabase[item.name.trim().toLowerCase()] = item.sku.toString().trim();
             }
         });
-        document.getElementById('sku-info').innerText = "Database SKU Terhubung";
+        
+        document.getElementById('sku-info').innerText = "SKU Terhubung (via GAS)";
     } catch (e) {
+        console.error("Gagal muat SKU:", e);
         document.getElementById('sku-info').innerText = "Gagal Muat SKU";
     }
 }
