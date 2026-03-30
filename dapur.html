@@ -3,122 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAPUR | dyg++</title>
+    <title>DAPUR PRO | dyg++</title>
     <style>
-        :root{ --main:#1B4332; --danger:#c0392b; --bg:#f2f4f7; }
-        body{ margin:0; background:var(--bg); font-family:Segoe UI,Arial,sans-serif; }
-        .header{ margin:15px; padding:15px 20px; background:white; border-radius:14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,.05); }
+        :root{ --main:#1B4332; --danger:#c0392b; --bg:#f2f4f7; --new:#e74c3c; }
+        body{ margin:0; background:var(--bg); font-family:'Segoe UI',Arial,sans-serif; overflow-x: hidden; }
+        .header{ margin:15px; padding:15px 20px; background:white; border-radius:14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,.05); position: sticky; top: 15px; z-index: 100; }
         .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:15px; padding:15px; }
-        .card{ background:white; border-radius:16px; padding:18px; border-top:8px solid var(--main); animation:pop .3s ease; }
+        .card{ background:white; border-radius:16px; padding:18px; border-top:8px solid var(--main); animation:pop .3s ease; transition: 0.5s; position: relative; }
+        .card.new{ border-top-color: var(--new); animation:pulse 1s ease infinite; }
         .no{ font-size:38px; font-weight:900; color:var(--main); }
-        .items{ margin:14px 0; font-family:Courier New,monospace; font-weight:900; }
-        .btn{ width:100%; padding:16px; border:none; border-radius:12px; background:var(--main); color:white; font-weight:900; cursor:pointer; }
-        .processing { background: #f59e0b !important; }
-        .slide-out-left { transform: translateX(-150%); opacity: 0; transition: 0.5s; }
-.items {
-    white-space: pre-line;
-}
+        .items{ margin:14px 0; font-family:'Courier New',monospace; font-weight:900; white-space: pre-line; }
+        .item-row{ border-bottom: 1px dashed #ccc; padding: 6px 0; color: #333; font-size: 15px; }
+        .sku-tag { color: #c0392b; margin-right: 5px; font-weight: bold; }
+        .btn{ width:100%; padding:16px; border:none; border-radius:12px; background:var(--main); color:white; font-weight:900; cursor:pointer; font-size: 16px; transition: 0.2s; }
+        .btn:disabled { background: #94a3b8 !important; cursor: not-allowed; opacity: 0.7; }
+        .slide-out-left { transform: translateX(-150%); opacity: 0; pointer-events: none; }
+        
+        @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { box-shadow: 0 0 15px rgba(231, 76, 60, 0.4); } }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div><h2 style="margin:0">👨‍🍳 MONITOR DAPUR</h2><div id="status">● Menghubungkan...</div></div>
+    <div>
+        <h2 style="margin:0">👨‍🍳 MONITOR DAPUR</h2>
+        <div id="status" style="color: #666;">● Menghubungkan...</div>
+    </div>
+    <div id="sku-info" style="font-size: 10px; color: #999; text-align: right;">Memuat Database SKU...</div>
 </div>
+
 <div class="grid" id="list"></div>
 
 <script>
 const CONFIG = {
     API_URL: "https://script.google.com/macros/s/AKfycbx_nO7T7qYxuZ0EZaSgScc2I4iE8-Sy9ZJ7uz0DocH2MEVpoDDY-XsWvTcXaD6bOuUiWg/exec",
+    SKU_SOURCE: "https://docs.google.com/spreadsheets/d/1u-U7K-ZQoVDM61pnut6MHX3S7igsSab4Ff9EB17s2b4/gviz/tq?tqx=out:csv&gid=2132421401",
     TOKEN: "dyg-access-v2",
-    REFRESH: 8000 
+    REFRESH: 8000,
+    SOUND_URL: "https://www.soundjay.com/buttons/sounds/button-3.mp3"
 };
 
 let currentOrders = [];
+let skuDatabase = {};
+let isLoading = false;
 let processingRows = new Set();
+let previousOrderIds = new Set();
+const notifSound = new Audio(CONFIG.SOUND_URL);
+
+// Audio Policy Fix
+document.body.addEventListener('click', () => { notifSound.play().catch(()=>{}); }, { once: true });
+
+function parseCSV(text) {
+    return text.split('\n').filter(r => r.trim()).map(row => {
+        const result = [];
+        let current = '';
+        let insideQuotes = false;
+        for (let char of row) {
+            if (char === '"') insideQuotes = !insideQuotes;
+            else if (char === ',' && !insideQuotes) { result.push(current); current = ''; }
+            else current += char;
+        }
+        result.push(current);
+        return result;
+    });
+}
+
+async function fetchSkuDatabase() {
+    try {
+        const response = await fetch(CONFIG.SKU_SOURCE);
+        const csvText = await response.text();
+        const rows = parseCSV(csvText);
+        
+        // Fix 1: Slice(1) to skip header | Fix 2: Duplicate check
+        rows.slice(1).forEach(row => {
+            if (row[1] && row[5]) {
+                const name = row[1].trim().toLowerCase();
+                const sku = row[5].trim();
+                if (skuDatabase[name] && skuDatabase[name] !== sku) {
+                    console.warn("Duplicate SKU mapping for:", name);
+                }
+                skuDatabase[name] = sku;
+            }
+        });
+        document.getElementById('sku-info').innerText = "Database SKU Terhubung";
+    } catch (e) {
+        document.getElementById('sku-info').innerText = "Gagal Muat SKU";
+    }
+}
+
+function getSku(menuName) {
+    const cleanName = menuName
+        .replace(/^\d+\s*x\s*/i, "") 
+        .replace(/\s+/g, " ")       
+        .trim()
+        .toLowerCase();
+    return skuDatabase[cleanName] || "??";
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return String(text).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]);
+}
+
+function toBase64Unicode(str) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode('0x' + p1)));
+}
 
 async function loadOrders() {
+    if (isLoading) return;
+    isLoading = true;
     try {
         const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`);
         const data = await res.json();
+        
+        // Fix 4: Validate Array
+        if (!Array.isArray(data)) throw new Error("Invalid API Data");
+
+        // Fix 6: Sorting by Antrean Number
+        data.sort((a, b) => Number(a.Antrean || 0) - Number(b.Antrean || 0));
+
+        // Fix 3: Accurate ID Comparison (Anti-Flicker)
+        const newIds = data.map(o => o.row).join(',');
+        const oldIds = currentOrders.map(o => o.row).join(',');
+        
+        if (newIds === oldIds) {
+            isLoading = false;
+            return;
+        }
+
         document.getElementById("status").innerText = "● TERHUBUNG";
         document.getElementById("status").style.color = "green";
+        
+        const hasNew = data.some(o => !previousOrderIds.has(String(o.row)));
+        if (hasNew && previousOrderIds.size > 0) {
+            notifSound.currentTime = 0;
+            notifSound.play().catch(() => {});
+        }
+
         currentOrders = data;
         render(data);
     } catch(e) {
         document.getElementById("status").innerText = "● OFFLINE";
-        document.getElementById("status").style.color = "red";
-    }
+    } finally { isLoading = false; }
 }
 
 function render(active){
     const box = document.getElementById("list");
+    if(active.length === 0) {
+        box.innerHTML = '<div style="padding:20px; color:#666;">Belum ada pesanan...</div>';
+        previousOrderIds.clear();
+        return;
+    }
+
+    const newOrderIds = new Set();
     box.innerHTML = active.map(o => {
-        // Memisahkan tiap menu dan membungkusnya agar rapi
-        const itemsHtml = o.Pesanan.split('\n')
-            .map(item => `<div style="border-bottom: 1px dashed #ccc; padding: 4px 0;">${item}</div>`)
-            .join("");
+        const rowId = String(o.row);
+        newOrderIds.add(rowId);
+        
+        const isNew = !previousOrderIds.has(rowId);
+        const isCurrentlyProcessing = processingRows.has(rowId);
+        const menuArray = o.Pesanan ? String(o.Pesanan).split('\n') : [];
+
+        const itemsHtml = menuArray.map(item => {
+            if (!item.trim()) return '';
+            const sku = getSku(item);
+            return `<div class="item-row"><span class="sku-tag">[${sku}]</span> ${escapeHtml(item)}</div>`;
+        }).join("");
+
+        const displayItems = itemsHtml || '<div class="item-row"><i>Tidak ada item pesanan</i></div>';
 
         return `
-        <div class="card" id="c-${o.row}">
-            <div class="no">#${o.Antrean}</div>
-            <div style="font-weight:900; font-size:20px;">${o.Nama}</div>
-            <div style="font-size:12px; background:#eee; padding:4px 8px; border-radius:8px; display:inline-block;">
-                ${o.Mode} ${o.Meja ? `| MEJA: ${o.Meja}` : ''}
+        <div class="card ${isNew ? 'new' : ''} ${isCurrentlyProcessing ? 'slide-out-left' : ''}" id="c-${rowId}">
+            <div class="no">#${escapeHtml(o.Antrean)}</div>
+            <div style="font-weight:900; font-size:20px;">${escapeHtml(o.Nama)}</div>
+            <div style="font-size:12px; margin-bottom:10px; background:#eee; padding:2px 8px; border-radius:5px; display:inline-block;">
+                ${escapeHtml(o.Mode)} ${o.Meja ? '| Meja: '+escapeHtml(o.Meja) : ''}
             </div>
-            <div class="items">${itemsHtml}</div>
-            ${o.Catatan ? `<div style="background:#FFF9C4; padding:8px; border-left:4px solid #FBC02D; font-size:12px; margin-top:10px;">⚠️ <strong>Catatan:</strong> ${o.Catatan}</div>` : ''}
-            <button class="btn" style="margin-top:15px;" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
+            <div class="items">${displayItems}</div>
+            ${o.Catatan ? `<div style="background:#FFF9C4; padding:8px; border-left:4px solid #FBC02D; font-size:12px; margin-top:10px; border-radius:4px;">⚠️ ${escapeHtml(o.Catatan)}</div>` : ''}
+            <button class="btn" id="btn-submit-${rowId}" onclick="finish('${rowId}')" ${isCurrentlyProcessing ? 'disabled' : ''} 
+                style="background:var(--main); color:white; margin-top:15px; width:100%; padding:14px; border-radius:12px; font-weight:bold;">
+                ${isCurrentlyProcessing ? '⏳ MEMPROSES...' : '✔ SELESAI & CETAK'}
+            </button>
         </div>`;
     }).join("");
-}
-async function finish(row) {
-    if (processingRows.has(String(row))) return;
-    const card = document.getElementById("c-" + row);
-    const order = currentOrders.find(o => o.row == row);
-    
-    processingRows.add(String(row));
-    card.querySelector('.btn').innerText = '⏳ MEMPROSES...';
 
-    const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
-    if ((await res.text()).toLowerCase().includes("success")) {
-        printOrder(order);
-        card.classList.add("slide-out-left");
-        setTimeout(() => { loadOrders(); }, 500);
-    } else {
+    previousOrderIds = newOrderIds;
+}
+
+async function finish(rowId) {
+    if (processingRows.has(rowId)) return;
+    
+    // Fix 5: Hard Lock all buttons to prevent spam tap
+    const btn = document.getElementById(`btn-submit-${rowId}`);
+    if(btn) btn.disabled = true;
+
+    const order = currentOrders.find(o => String(o.row) === rowId);
+    if (!order) return;
+
+    processingRows.add(rowId);
+    render(currentOrders);
+
+    try {
+        const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${rowId}`);
+        const result = await res.text();
+        if (result.toLowerCase().includes("success")) {
+            printOrder(order);
+            setTimeout(() => { 
+                processingRows.delete(rowId); 
+                loadOrders(); 
+            }, 600);
+        } else { throw new Error(); }
+    } catch (e) {
         alert("Gagal update status!");
+        processingRows.delete(rowId);
+        render(currentOrders);
     }
-    processingRows.delete(String(row));
 }
 
 function printOrder(o) {
     let txt = `      dyg++ KITCHEN\n================================\n`;
     txt += `Antrean : #${o.Antrean}\nNama    : ${o.Nama}\nLayanan : ${o.Mode}\n`;
     if (o.Meja) txt += `Meja    : ${o.Meja}\n`;
-    txt += `Waktu   : ${new Date().toLocaleTimeString()}\n--------------------------------\nPESANAN:\n`;
+    txt += `--------------------------------\nPESANAN:\n`;
 
-    // Format: [SKU] -- 1x Nama Menu
-    // Lalu tambah spasi dan garis putus 2 sesuai permintaan
-    const daftarMenu = o.Pesanan.split("\n").map(item => {
+    const menuArray = o.Pesanan ? String(o.Pesanan).split('\n') : [];
+    const daftarMenu = menuArray.map(item => {
         if (!item.trim()) return "";
-        return `${item}\n  - - - - - - - - - - - - - - -`; 
+        const sku = getSku(item);
+        // Format: [10] -- 1x Nama Menu + Garis putus-putus
+        return `[${sku}] -- ${item}\n  - - - - - - - - - - - - - - -`; 
     }).filter(line => line !== "").join("\n");
 
-    txt += `${daftarMenu}\n`;
-    
-    if (o.Catatan) txt += `--------------------------------\nCATATAN:\n${o.Catatan}\n`;
-    txt += `--------------------------------\n\n\n\n`;
+    txt += `${daftarMenu}\n\n--------------------------------\n\n\n\n`;
 
-    // Kirim ke printer RawBT
     if (/Android/i.test(navigator.userAgent)) {
-        window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(txt)));
+        try {
+            window.location.href = "rawbt:base64," + toBase64Unicode(txt);
+        } catch(e) {
+            alert("Gagal kirim ke printer RawBT.");
+        }
     } else {
-        console.log("Preview Cetak:\n" + txt);
+        console.log("Struk:\n", txt);
     }
 }
 
-loadOrders();
-setInterval(loadOrders, CONFIG.REFRESH);
+async function autoLoad() {
+    await loadOrders();
+    setTimeout(autoLoad, CONFIG.REFRESH);
+}
+
+// Inisialisasi
+fetchSkuDatabase().then(() => {
+    autoLoad();
+});
 </script>
 </body>
 </html>
