@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAPUR ULTRA | Mie Lik Prabu</title>
+    <title>DAPUR ULTRA | DOYONG OK</title>
     <style>
         :root{ --main:#1B4332; --danger:#c0392b; --bg:#f0f2f5; --warning:#f1c40f; }
         body{ margin:0; background:var(--bg); font-family:'Segoe UI',Tahoma,sans-serif; overflow-x:hidden; }
         .header{ margin:15px; padding:15px 25px; background:white; border-radius:15px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 12px rgba(0,0,0,0.1); position:sticky; top:15px; z-index:1000; }
         .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:20px; padding:20px; }
         .card{ background:white; border-radius:20px; padding:20px; border-top:10px solid var(--main); box-shadow:0 6px 15px rgba(0,0,0,0.05); transition:0.3s; position:relative; animation:fadeIn 0.5s ease; }
-        .no-antrean{ font-size:48px; font-weight:900; color:var(--main); line-height:1; }
-        .items-box{ margin:15px 0; font-family:'Courier New', monospace; font-size:16px; font-weight:bold; color:#333; }
-        .sku-tag{ color:var(--danger); background:#ffebeb; padding:2px 6px; border-radius:4px; margin-right:5px; font-size: 14px; }
-        .btn-finish{ width:100%; padding:18px; border:none; border-radius:12px; background:var(--main); color:white; font-size:18px; font-weight:900; cursor:pointer; margin-top:10px; transition: 0.2s; }
-        .btn-finish:disabled{ background:#ccc; cursor:not-allowed; }
-        .btn-finish:active{ transform:scale(0.95); }
-        .note-box{ background:#fff9c4; padding:10px; border-radius:8px; font-size:13px; border-left:4px solid var(--warning); margin-top:10px; }
+        .no-antrean{ font-size:52px; font-weight:900; color:var(--main); line-height:1; }
+        .items-box{ margin:15px 0; font-family:'Courier New', monospace; font-size:17px; font-weight:bold; color:#111; }
+        .sku-tag{ color:white; background:var(--danger); padding:2px 8px; border-radius:4px; margin-right:5px; font-size: 14px; font-weight: bold; }
+        .btn-finish{ width:100%; padding:20px; border:none; border-radius:12px; background:var(--main); color:white; font-size:20px; font-weight:900; cursor:pointer; margin-top:10px; transition: 0.2s; box-shadow: 0 4px 0 #0d2b20; }
+        .btn-finish:disabled{ background:#ccc; box-shadow:none; transform:translateY(4px); cursor:not-allowed; }
+        .btn-finish:active{ transform:translateY(2px); box-shadow: 0 2px 0 #0d2b20; }
+        .note-box{ background:#fff9c4; padding:12px; border-radius:8px; font-size:14px; border-left:5px solid var(--warning); margin-top:10px; font-weight: bold; color: #444; }
         @keyframes fadeIn { from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
     </style>
 </head>
@@ -45,7 +45,7 @@ let skuDatabase = {};
 let currentOrders = [];
 let isProcessing = false; 
 
-// Auto-sync SKU dari Kolom F Spreadsheet
+// 1. Sync SKU dari Kolom F Spreadsheet
 async function syncSKU() {
     try {
         const res = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getMenu`);
@@ -53,7 +53,6 @@ async function syncSKU() {
         skuDatabase = {};
         data.forEach(item => {
             if(item.name) {
-                // Simpan mapping Nama -> SKU
                 skuDatabase[item.name.toString().trim().toLowerCase()] = item.sku;
             }
         });
@@ -63,21 +62,20 @@ async function syncSKU() {
     }
 }
 
-// Ekstraksi SKU yang cerdas (Mendukung varian & qty)
+// 2. Ekstraksi SKU Pintar (Tetap tampilkan Nama + Varian)
 function extractSKU(fullText) {
     if(!fullText) return "??";
-    // 1. Hilangkan Qty (1x, 2 x, dll)
-    // 2. Ambil nama utama sebelum tanda kurung/catatan tambahan
-    let cleanName = fullText.replace(/^\d+\s*[xX]\s*/, "")
-                            .split('(')[0]
+    let cleanName = fullText.replace(/^\d+\s*[xX]\s*/, "") // Buang Qty
+                            .split('(')[0]                // Buang Varian untuk cari SKU
                             .trim()
                             .toLowerCase();
     
     return skuDatabase[cleanName] || "??";
 }
 
+// 3. Refresh Otomatis Antrean
 async function refreshDapur() {
-    if (isProcessing) return; // Mencegah bentrok saat sedang proses 'Selesai'
+    if (isProcessing) return; 
 
     const status = document.getElementById('status-koneksi');
     try {
@@ -87,9 +85,11 @@ async function refreshDapur() {
         status.innerHTML = "● TERHUBUNG";
         status.style.color = "green";
 
-        // Notifikasi suara jika ada pesanan baru masuk
+        // Sound Galak jika ada pesanan baru
         if (orders.length > currentOrders.length && currentOrders.length !== 0) {
-            document.getElementById('notif-sound').play().catch(() => {});
+            const sound = document.getElementById('notif-sound');
+            sound.currentTime = 0;
+            sound.play().catch(e => console.log("Audio diblokir browser, klik layar 1x"));
         }
         
         currentOrders = orders;
@@ -103,65 +103,63 @@ async function refreshDapur() {
 function renderOrders(orders) {
     const container = document.getElementById('container-antrean');
     if (!orders || orders.length === 0) {
-        container.innerHTML = "<h3 style='opacity:0.3; padding:20px; text-align:center; width:100%'>Menunggu pesanan masuk...</h3>";
+        container.innerHTML = "<h2 style='opacity:0.2; width:100%; text-align:center; margin-top:50px'>BELUM ADA PESANAN...</h2>";
         return;
     }
 
     container.innerHTML = orders.map(o => {
         const itemsHtml = o.Pesanan.split('\n').filter(i => i.trim()).map(i => {
             const sku = extractSKU(i);
-            return `<div><span class="sku-tag">[${sku}]</span> ${i}</div>`;
+            return `<div><span class="sku-tag">${sku}</span> ${i}</div>`;
         }).join('');
 
         return `
             <div class="card" id="card-${o.row}">
                 <div class="no-antrean">#${o.Antrean}</div>
-                <div style="font-size:22px; font-weight:900; margin-top:5px">${o.Nama}</div>
-                <div style="font-size:14px; color:#666; margin-bottom:10px">
+                <div style="font-size:24px; font-weight:900; margin-top:5px; color:#333">${o.Nama}</div>
+                <div style="font-size:15px; color:#555; margin-bottom:10px">
                     <b>${o.Mode}</b> ${o.Meja ? ' • Meja '+o.Meja : ''}
                 </div>
-                <hr style="border:0; border-top:1px dashed #ddd">
+                <hr style="border:0; border-top:2px dashed #eee">
                 <div class="items-box">${itemsHtml}</div>
-                ${o.Catatan ? `<div class="note-box"><b>Note:</b> ${o.Catatan}</div>` : ''}
+                ${o.Catatan ? `<div class="note-box">INSTRUKSI: ${o.Catatan}</div>` : ''}
                 <button class="btn-finish" onclick="selesai('${o.row}')">SELESAI & PRINT</button>
             </div>
         `;
     }).join('');
 }
 
+// 4. Fungsi Selesai & Print (Sekali Klik Langsung Jalan)
 async function selesai(row) {
-    if (isProcessing) return; // Anti-double click
+    if (isProcessing) return; 
     isProcessing = true; 
 
     const btn = document.querySelector(`#card-${row} .btn-finish`);
     const card = document.getElementById(`card-${row}`);
-    
-    // Ambil data langsung dari memori (mencegah bug 'Gagal Memuat Data')
     const dataOrder = currentOrders.find(o => String(o.row) === String(row));
 
     btn.disabled = true;
-    btn.innerHTML = "Memproses...";
+    btn.innerHTML = "MENCETAK...";
 
     try {
-        // 1. Eksekusi Print (RawBT)
+        // Eksekusi Print Duluan agar cepat
         if (dataOrder) cetakStruk(dataOrder);
 
-        // 2. Update status ke GAS
+        // Update ke GAS
         const response = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
         
         if (response.ok) {
-            card.style.opacity = "0.5";
-            card.style.transform = "scale(0.9)";
-            // Beri jeda sedikit agar user melihat transisi sebelum hilang
+            card.style.opacity = "0";
+            card.style.transform = "scale(0.8)";
             setTimeout(() => {
                 isProcessing = false;
                 refreshDapur(); 
-            }, 600);
+            }, 500);
         } else {
-            throw new Error("Update Gagal");
+            throw new Error();
         }
     } catch (e) {
-        alert("Koneksi bermasalah. Silakan klik ulang.");
+        alert("Gagal koneksi ke server. Klik ulang!");
         btn.disabled = false;
         btn.innerHTML = "SELESAI & PRINT";
         isProcessing = false;
@@ -169,10 +167,10 @@ async function selesai(row) {
 }
 
 function cetakStruk(o) {
-    let p = `      Mie Lik Prabu\n================================\n`;
+    let p = `      DOYONG OK\n================================\n`;
     p += `Antrean : #${o.Antrean}\nNama    : ${o.Nama}\nLayanan : ${o.Mode}\n`;
     if(o.Meja) p += `Meja    : ${o.Meja}\n`;
-    p += `--------------------------------\nPESANAN:\n`;
+    p += `--------------------------------\n`;
 
     o.Pesanan.split('\n').filter(i => i.trim()).forEach(i => {
         const sku = extractSKU(i);
@@ -182,21 +180,20 @@ function cetakStruk(o) {
     if(o.Catatan) p += `--------------------------------\nNOTE: ${o.Catatan}\n`;
     p += `\n\n\n\n`;
 
-    // Kirim ke App RawBT Android
     if (/Android/i.test(navigator.userAgent)) {
         window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(p)));
     } else {
-        console.log("Struk Printer:\n", p);
+        console.log("SIMULASI PRINT:\n", p);
     }
 }
 
-// Inisialisasi awal
+// 5. Unlock Audio browser (WAJIB KLIK 1X SAAT BUKA)
 document.body.addEventListener('click', () => {
-    document.getElementById('notif-sound').play().then(() => {
-        document.getElementById('notif-sound').pause();
-    }).catch(e => {});
+    const sound = document.getElementById('notif-sound');
+    sound.play().then(() => { sound.pause(); sound.currentTime = 0; }).catch(e => {});
 }, {once: true});
 
+// Init
 syncSKU();
 setInterval(refreshDapur, CONFIG.DELAY);
 refreshDapur();
