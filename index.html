@@ -8,7 +8,30 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
+/* Tambahkan di bagian <style> */
 
+/* Efek berdetak merah untuk form input */
+.input-card.red-pulse {
+    animation: redPulse 1s ease-in-out infinite;
+    border: 2px solid #e74c3c !important;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.5) !important;
+    transform: scale(1.02);
+    z-index: 100;
+    position: relative;
+}
+
+@keyframes redPulse {
+    0%, 100% { 
+        box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        border-color: #e74c3c;
+        transform: scale(1.02);
+    }
+    50% { 
+        box-shadow: 0 0 25px rgba(231, 76, 60, 0.9);
+        border-color: #ff0000;
+        transform: scale(1.05);
+    }
+}
 /* Container Utama Header */
 .header-top-wrapper {
     background: var(--primary);
@@ -2051,30 +2074,27 @@ function changeMode(m, el) {
         }
     }
 
-    // 6. POP-UP INSTRUKSI (Menunggu klik dari user)
+    // ✅ 6. MATIKAN INTRO MODE - Semua tampilan normal kembali
+    document.body.classList.remove('intro-mode');
+    document.body.classList.add('normal-mode');
+
+    // ✅ 7. POP UP + SCROLL + EFEK BERDETAK MERAH (BERSAMAAN)
     Swal.fire({
         title: 'Layanan Dipilih!',
         text: 'Silakan masukkan data di kolom yang tersedia, kemudian lanjut pilih menu!',
         icon: 'success',
         confirmButtonText: 'Siap',
         confirmButtonColor: '#1B4332',
-        // timer dan timerProgressBar dihapus agar user harus klik tombol
-    }).then((result) => {
-        // 7. AUTO-SCROLL BERJALAN SETELAH USER KLIK 'SIAP'
-        if (result.isConfirmed) {
-            const targetElement = document.getElementById('searchMenu');
-            if (targetElement) {
-                targetElement.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
-                });
-            }
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        // ✅ Jalankan saat popup muncul
+        didOpen: () => {
+            activateRedPulse(m);
         }
     });
 
     if (typeof refreshUI === "function") refreshUI();
-}
-    function initMap(lat, lng) {
+}    function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("Doyong").openPopup();
@@ -2539,7 +2559,66 @@ function openBantuan() {
         }
     });
 }
+// ✅ FUNGSI BARU: Scroll dan efek berdetak merah
+function activateRedPulse(mode) {
+    // Tentukan elemen target berdasarkan mode
+    let targetElements = [];
+    
+    // Selalu highlight nama
+    const namaInput = document.getElementById('custName');
+    if (namaInput) {
+        targetElements.push(namaInput.closest('.input-card'));
+    }
+    
+    // Highlight sesuai mode
+    if (mode === 'DINE IN') {
+        const mejaInput = document.getElementById('tableNo');
+        if (mejaInput) {
+            targetElements.push(mejaInput.closest('.input-card'));
+        }
+    } 
+    else if (mode === 'DELIVERY' || mode === 'KATERING') {
+        const alamatInput = document.getElementById('addressDetail');
+        if (alamatInput) {
+            targetElements.push(alamatInput.closest('.input-card'));
+        }
+        
+        if (mode === 'KATERING') {
+            const tglInput = document.getElementById('tglKatering');
+            if (tglInput) {
+                targetElements.push(tglInput.closest('.input-card'));
+            }
+        }
+    }
 
+    // Scroll ke elemen pertama (nama)
+    if (targetElements.length > 0) {
+        setTimeout(() => {
+            targetElements[0].scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }, 100);
+    }
+
+    // Tambahkan efek red pulse berurutan
+    targetElements.forEach((el, index) => {
+        setTimeout(() => {
+            el.classList.add('red-pulse');
+        }, index * 200 + 300); // Delay 200ms antar elemen, mulai setelah scroll
+    });
+
+    // Hapus efek red pulse saat popup ditutup (tombol "Siap" diklik)
+    Swal.getConfirmButton().addEventListener('click', () => {
+        targetElements.forEach(el => {
+            el.classList.remove('red-pulse');
+        });
+        
+        // Focus ke input pertama
+        const firstInput = targetElements[0]?.querySelector('input, textarea');
+        if (firstInput) firstInput.focus();
+    });
+}
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
