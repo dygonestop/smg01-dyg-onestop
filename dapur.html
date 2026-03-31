@@ -11,8 +11,12 @@
         .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:20px; padding:20px; }
         .card{ background:white; border-radius:20px; padding:20px; border-top:10px solid var(--main); box-shadow:0 6px 15px rgba(0,0,0,0.05); transition:0.3s; position:relative; animation:fadeIn 0.5s ease; }
         .no-antrean{ font-size:52px; font-weight:900; color:var(--main); line-height:1; }
-        .items-box{ margin:15px 0; font-family:'Courier New', monospace; font-size:17px; font-weight:bold; color:#111; }
-        .sku-tag{ color:white; background:var(--danger); padding:2px 8px; border-radius:4px; margin-right:5px; font-size: 14px; font-weight: bold; }
+        .items-box{ margin:15px 0; font-family:'Courier New', monospace; font-size:16px; font-weight:bold; color:#111; }
+        .item-row{ margin-bottom: 12px; padding: 5px 0; border-bottom: 1px solid #eee; }
+        /* Style SKU biar murni Kode Saja */
+        .sku-murni{ color:white; background:var(--danger); padding:2px 8px; border-radius:4px; font-size: 16px; font-weight: 900; display: inline-block; margin-bottom: 4px; }
+        .nama-varian{ display: block; font-size: 15px; color: #333; margin-left: 2px; }
+        
         .btn-finish{ width:100%; padding:20px; border:none; border-radius:12px; background:var(--main); color:white; font-size:20px; font-weight:900; cursor:pointer; margin-top:10px; transition: 0.2s; box-shadow: 0 4px 0 #0d2b20; }
         .btn-finish:disabled{ background:#ccc; box-shadow:none; transform:translateY(4px); cursor:not-allowed; }
         .btn-finish:active{ transform:translateY(2px); box-shadow: 0 2px 0 #0d2b20; }
@@ -45,7 +49,6 @@ let skuDatabase = {};
 let currentOrders = [];
 let isProcessing = false; 
 
-// 1. Sync SKU dari Kolom F Spreadsheet
 async function syncSKU() {
     try {
         const res = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getMenu`);
@@ -53,6 +56,7 @@ async function syncSKU() {
         skuDatabase = {};
         data.forEach(item => {
             if(item.name) {
+                // Mapping Nama Menu (Kecil) -> SKU Asli
                 skuDatabase[item.name.toString().trim().toLowerCase()] = item.sku;
             }
         });
@@ -62,18 +66,17 @@ async function syncSKU() {
     }
 }
 
-// 2. Ekstraksi SKU Pintar (Tetap tampilkan Nama + Varian)
-function extractSKU(fullText) {
+// Fungsi murni ambil SKU tanpa varian
+function getPureSKU(fullText) {
     if(!fullText) return "??";
-    let cleanName = fullText.replace(/^\d+\s*[xX]\s*/, "") // Buang Qty
-                            .split('(')[0]                // Buang Varian untuk cari SKU
-                            .trim()
-                            .toLowerCase();
+    let menuOnly = fullText.replace(/^\d+\s*[xX]\s*/, "") // Buap Qty (1x)
+                           .split('(')[0]                // Buang Varian (Pedas)
+                           .trim()
+                           .toLowerCase();
     
-    return skuDatabase[cleanName] || "??";
+    return skuDatabase[menuOnly] || "??";
 }
 
-// 3. Refresh Otomatis Antrean
 async function refreshDapur() {
     if (isProcessing) return; 
 
@@ -81,15 +84,13 @@ async function refreshDapur() {
     try {
         const res = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getAntrean`);
         const orders = await res.json();
-
         status.innerHTML = "● TERHUBUNG";
         status.style.color = "green";
 
-        // Sound Galak jika ada pesanan baru
         if (orders.length > currentOrders.length && currentOrders.length !== 0) {
             const sound = document.getElementById('notif-sound');
             sound.currentTime = 0;
-            sound.play().catch(e => console.log("Audio diblokir browser, klik layar 1x"));
+            sound.play().catch(e => {});
         }
         
         currentOrders = orders;
@@ -109,8 +110,12 @@ function renderOrders(orders) {
 
     container.innerHTML = orders.map(o => {
         const itemsHtml = o.Pesanan.split('\n').filter(i => i.trim()).map(i => {
-            const sku = extractSKU(i);
-            return `<div><span class="sku-tag">${sku}</span> ${i}</div>`;
+            const skuCode = getPureSKU(i);
+            return `
+                <div class="item-row">
+                    <span class="sku-murni">${skuCode}</span>
+                    <span class="nama-varian">${i}</span>
+                </div>`;
         }).join('');
 
         return `
@@ -129,7 +134,6 @@ function renderOrders(orders) {
     }).join('');
 }
 
-// 4. Fungsi Selesai & Print (Sekali Klik Langsung Jalan)
 async function selesai(row) {
     if (isProcessing) return; 
     isProcessing = true; 
@@ -142,10 +146,8 @@ async function selesai(row) {
     btn.innerHTML = "MENCETAK...";
 
     try {
-        // Eksekusi Print Duluan agar cepat
         if (dataOrder) cetakStruk(dataOrder);
 
-        // Update ke GAS
         const response = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
         
         if (response.ok) {
@@ -155,11 +157,9 @@ async function selesai(row) {
                 isProcessing = false;
                 refreshDapur(); 
             }, 500);
-        } else {
-            throw new Error();
-        }
+        } else { throw new Error(); }
     } catch (e) {
-        alert("Gagal koneksi ke server. Klik ulang!");
+        alert("Gagal koneksi server!");
         btn.disabled = false;
         btn.innerHTML = "SELESAI & PRINT";
         isProcessing = false;
@@ -173,8 +173,8 @@ function cetakStruk(o) {
     p += `--------------------------------\n`;
 
     o.Pesanan.split('\n').filter(i => i.trim()).forEach(i => {
-        const sku = extractSKU(i);
-        p += `[${sku}] ${i}\n`;
+        const sku = getPureSKU(i);
+        p += `[${sku}] ${i}\n`; // Di struk juga SKU murni di depan
     });
 
     if(o.Catatan) p += `--------------------------------\nNOTE: ${o.Catatan}\n`;
@@ -182,18 +182,14 @@ function cetakStruk(o) {
 
     if (/Android/i.test(navigator.userAgent)) {
         window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(p)));
-    } else {
-        console.log("SIMULASI PRINT:\n", p);
     }
 }
 
-// 5. Unlock Audio browser (WAJIB KLIK 1X SAAT BUKA)
 document.body.addEventListener('click', () => {
     const sound = document.getElementById('notif-sound');
     sound.play().then(() => { sound.pause(); sound.currentTime = 0; }).catch(e => {});
 }, {once: true});
 
-// Init
 syncSKU();
 setInterval(refreshDapur, CONFIG.DELAY);
 refreshDapur();
