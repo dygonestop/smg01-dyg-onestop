@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAPUR ULTRA | dyg++</title>
+    <title>DAPUR ULTRA | Mie Lik Prabu</title>
     <style>
-        :root{ --main:#1B4332; --danger:#c0392b; --bg:#f0f2f5; }
+        :root{ --main:#1B4332; --danger:#c0392b; --bg:#f0f2f5; --warning:#f1c40f; }
         body{ margin:0; background:var(--bg); font-family:'Segoe UI',Tahoma,sans-serif; overflow-x:hidden; }
         .header{ margin:15px; padding:15px 25px; background:white; border-radius:15px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 12px rgba(0,0,0,0.1); position:sticky; top:15px; z-index:1000; }
         .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:20px; padding:20px; }
         .card{ background:white; border-radius:20px; padding:20px; border-top:10px solid var(--main); box-shadow:0 6px 15px rgba(0,0,0,0.05); transition:0.3s; position:relative; animation:fadeIn 0.5s ease; }
-        .card.new-order{ border-top-color:#e74c3c; animation:pulse 1.5s infinite; }
         .no-antrean{ font-size:48px; font-weight:900; color:var(--main); line-height:1; }
         .items-box{ margin:15px 0; font-family:'Courier New', monospace; font-size:16px; font-weight:bold; color:#333; }
-        .sku-tag{ color:var(--danger); background:#ffebeb; padding:2px 6px; border-radius:4px; margin-right:5px; }
-        .btn-finish{ width:100%; padding:18px; border:none; border-radius:12px; background:var(--main); color:white; font-size:18px; font-weight:900; cursor:pointer; margin-top:10px; }
-        .btn-finish:active{ transform:scale(0.98); }
-        @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(231,76,60,0.4);} 70%{box-shadow:0 0 0 20px rgba(231,76,60,0);} 100%{box-shadow:0 0 0 0 rgba(231,76,60,0);} }
+        .sku-tag{ color:var(--danger); background:#ffebeb; padding:2px 6px; border-radius:4px; margin-right:5px; font-size: 14px; }
+        .btn-finish{ width:100%; padding:18px; border:none; border-radius:12px; background:var(--main); color:white; font-size:18px; font-weight:900; cursor:pointer; margin-top:10px; transition: 0.2s; }
+        .btn-finish:disabled{ background:#ccc; cursor:not-allowed; }
+        .btn-finish:active{ transform:scale(0.95); }
+        .note-box{ background:#fff9c4; padding:10px; border-radius:8px; font-size:13px; border-left:4px solid var(--warning); margin-top:10px; }
         @keyframes fadeIn { from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
     </style>
 </head>
@@ -38,33 +38,24 @@
 const CONFIG = {
     API: "https://script.google.com/macros/s/AKfycbzrhl2pCdKNVtcMHOxPt5Q-qRGqK2ShLZy14ctXlAsW67fkOqfr-T7A-Da70u8OVPMVlg/exec",
     TOKEN: "dyg-access-v2",
-    DELAY: 7000
+    DELAY: 7000 
 };
 
 let skuDatabase = {};
-let knownIds = new Set();
-let firstLoad = true;
+let currentOrders = [];
+let isProcessing = false; 
 
-// Fungsi Anti-Blokir Suara
-function unlockAudio() {
-    const sound = document.getElementById('notif-sound');
-    sound.play().then(() => {
-        sound.pause();
-        sound.currentTime = 0;
-        console.log("Audio Unlocked!");
-    }).catch(() => console.log("Menunggu interaksi untuk unlock audio..."));
-}
-
-// Jalankan unlock saat klik apapun
-document.body.addEventListener('click', unlockAudio, {once: true});
-
+// Auto-sync SKU dari Kolom F Spreadsheet
 async function syncSKU() {
     try {
         const res = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getMenu`);
         const data = await res.json();
         skuDatabase = {};
         data.forEach(item => {
-            skuDatabase[item.name.toLowerCase().trim()] = item.sku;
+            if(item.name) {
+                // Simpan mapping Nama -> SKU
+                skuDatabase[item.name.toString().trim().toLowerCase()] = item.sku;
+            }
         });
         document.getElementById('status-sku').innerHTML = "SKU AKTIF ✅";
     } catch (e) {
@@ -72,17 +63,23 @@ async function syncSKU() {
     }
 }
 
+// Ekstraksi SKU yang cerdas (Mendukung varian & qty)
 function extractSKU(fullText) {
     if(!fullText) return "??";
-    // Bersihkan angka depan: "1x Nasi" -> "nasi", "2 x Es Teh" -> "es teh"
-    const cleanName = fullText.replace(/^\d+\s*[xX]\s*/, "").trim().toLowerCase();
+    // 1. Hilangkan Qty (1x, 2 x, dll)
+    // 2. Ambil nama utama sebelum tanda kurung/catatan tambahan
+    let cleanName = fullText.replace(/^\d+\s*[xX]\s*/, "")
+                            .split('(')[0]
+                            .trim()
+                            .toLowerCase();
+    
     return skuDatabase[cleanName] || "??";
 }
 
 async function refreshDapur() {
-    const container = document.getElementById('container-antrean');
-    const status = document.getElementById('status-koneksi');
+    if (isProcessing) return; // Mencegah bentrok saat sedang proses 'Selesai'
 
+    const status = document.getElementById('status-koneksi');
     try {
         const res = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getAntrean`);
         const orders = await res.json();
@@ -90,23 +87,13 @@ async function refreshDapur() {
         status.innerHTML = "● TERHUBUNG";
         status.style.color = "green";
 
-        // Cek Pesanan Baru
-        let hasNewOrder = false;
-        orders.forEach(o => {
-            if (!knownIds.has(o.row)) {
-                if (!firstLoad) hasNewOrder = true;
-                knownIds.add(o.row);
-            }
-        });
-
-        if (hasNewOrder) {
-            const sound = document.getElementById('notif-sound');
-            sound.play().catch(() => console.log("Klik layar 1x agar suara aktif otomatis"));
+        // Notifikasi suara jika ada pesanan baru masuk
+        if (orders.length > currentOrders.length && currentOrders.length !== 0) {
+            document.getElementById('notif-sound').play().catch(() => {});
         }
         
-        firstLoad = false;
+        currentOrders = orders;
         renderOrders(orders);
-
     } catch (e) {
         status.innerHTML = "● DISCONNECT";
         status.style.color = "red";
@@ -115,24 +102,27 @@ async function refreshDapur() {
 
 function renderOrders(orders) {
     const container = document.getElementById('container-antrean');
-    if (orders.length === 0) {
-        container.innerHTML = "<h3 style='opacity:0.5; padding:20px'>Belum ada antrean...</h3>";
+    if (!orders || orders.length === 0) {
+        container.innerHTML = "<h3 style='opacity:0.3; padding:20px; text-align:center; width:100%'>Menunggu pesanan masuk...</h3>";
         return;
     }
 
     container.innerHTML = orders.map(o => {
         const itemsHtml = o.Pesanan.split('\n').filter(i => i.trim()).map(i => {
-            return `<div><span class="sku-tag">[${extractSKU(i)}]</span> ${i}</div>`;
+            const sku = extractSKU(i);
+            return `<div><span class="sku-tag">[${sku}]</span> ${i}</div>`;
         }).join('');
 
         return `
             <div class="card" id="card-${o.row}">
                 <div class="no-antrean">#${o.Antrean}</div>
-                <div style="font-size:20px; font-weight:bold; margin-top:5px">${o.Nama}</div>
-                <div style="font-size:14px; color:#666">${o.Mode} ${o.Meja ? '• Meja '+o.Meja : ''}</div>
-                <hr>
+                <div style="font-size:22px; font-weight:900; margin-top:5px">${o.Nama}</div>
+                <div style="font-size:14px; color:#666; margin-bottom:10px">
+                    <b>${o.Mode}</b> ${o.Meja ? ' • Meja '+o.Meja : ''}
+                </div>
+                <hr style="border:0; border-top:1px dashed #ddd">
                 <div class="items-box">${itemsHtml}</div>
-                ${o.Catatan ? `<div style="background:#fff9c4; padding:10px; border-radius:8px; font-size:13px"><b>Note:</b> ${o.Catatan}</div>` : ''}
+                ${o.Catatan ? `<div class="note-box"><b>Note:</b> ${o.Catatan}</div>` : ''}
                 <button class="btn-finish" onclick="selesai('${o.row}')">SELESAI & PRINT</button>
             </div>
         `;
@@ -140,51 +130,73 @@ function renderOrders(orders) {
 }
 
 async function selesai(row) {
+    if (isProcessing) return; // Anti-double click
+    isProcessing = true; 
+
     const btn = document.querySelector(`#card-${row} .btn-finish`);
+    const card = document.getElementById(`card-${row}`);
+    
+    // Ambil data langsung dari memori (mencegah bug 'Gagal Memuat Data')
+    const dataOrder = currentOrders.find(o => String(o.row) === String(row));
+
     btn.disabled = true;
     btn.innerHTML = "Memproses...";
 
     try {
-        // Ambil data antrean terakhir untuk diprint
-        const resAntrean = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getAntrean`);
-        const orders = await resAntrean.json();
-        const dataOrder = orders.find(o => String(o.row) === String(row));
-
-        // Update status di server
-        await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
-        
+        // 1. Eksekusi Print (RawBT)
         if (dataOrder) cetakStruk(dataOrder);
 
-        document.getElementById(`card-${row}`).style.opacity = "0";
-        setTimeout(refreshDapur, 500);
+        // 2. Update status ke GAS
+        const response = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`);
+        
+        if (response.ok) {
+            card.style.opacity = "0.5";
+            card.style.transform = "scale(0.9)";
+            // Beri jeda sedikit agar user melihat transisi sebelum hilang
+            setTimeout(() => {
+                isProcessing = false;
+                refreshDapur(); 
+            }, 600);
+        } else {
+            throw new Error("Update Gagal");
+        }
     } catch (e) {
-        alert("Gagal update data!");
+        alert("Koneksi bermasalah. Silakan klik ulang.");
         btn.disabled = false;
         btn.innerHTML = "SELESAI & PRINT";
+        isProcessing = false;
     }
 }
 
 function cetakStruk(o) {
-    let p = `      dyg++ KITCHEN\n================================\n`;
+    let p = `      Mie Lik Prabu\n================================\n`;
     p += `Antrean : #${o.Antrean}\nNama    : ${o.Nama}\nLayanan : ${o.Mode}\n`;
     if(o.Meja) p += `Meja    : ${o.Meja}\n`;
     p += `--------------------------------\nPESANAN:\n`;
 
     o.Pesanan.split('\n').filter(i => i.trim()).forEach(i => {
-        p += `[${extractSKU(i)}] -- ${i}\n  - - - - - - - - - - - - - - -\n`;
+        const sku = extractSKU(i);
+        p += `[${sku}] ${i}\n`;
     });
 
     if(o.Catatan) p += `--------------------------------\nNOTE: ${o.Catatan}\n`;
     p += `\n\n\n\n`;
 
+    // Kirim ke App RawBT Android
     if (/Android/i.test(navigator.userAgent)) {
         window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(p)));
     } else {
-        console.log(p);
+        console.log("Struk Printer:\n", p);
     }
 }
 
-// Inisialisasi
+// Inisialisasi awal
+document.body.addEventListener('click', () => {
+    document.getElementById('notif-sound').play().then(() => {
+        document.getElementById('notif-sound').pause();
+    }).catch(e => {});
+}, {once: true});
+
 syncSKU();
 setInterval(refreshDapur, CONFIG.DELAY);
 refreshDapur();
