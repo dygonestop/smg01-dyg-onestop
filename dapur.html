@@ -40,7 +40,7 @@
 
 <script>
 const CONFIG = {
-    API: "https://script.google.com/macros/s/AKfycbzrhl2pCdKNVtcMHOxPt5Q-qRGqK2ShLZy14ctXlAsW67fkOqfr-T7A-Da70u8OVPMVlg/exec",
+    API: "https://script.google.com/macros/s/AKfycbx1Y645ZLRBCOfRvrFoAcoBFXYQ54ldELBl3YN3_kEOmOtzgAaNgM1CwTv4wrv2XoUzHQ/exec",
     TOKEN: "dyg-access-v2",
     DELAY: 7000 
 };
@@ -49,19 +49,26 @@ let skuDatabase = {};
 let currentOrders = [];
 let isProcessing = false; 
 
+// Di fungsi syncSKU, tambahkan:
 async function syncSKU() {
     try {
         const res = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getMenu`);
         const data = await res.json();
+        
+        console.log("Raw menu data:", data); // Lihat data asli dari server
+        
         skuDatabase = {};
         data.forEach(item => {
             if(item.name) {
-                // Mapping Nama Menu (Kecil) -> SKU Asli
                 skuDatabase[item.name.toString().trim().toLowerCase()] = item.sku;
             }
         });
-        document.getElementById('status-sku').innerHTML = "SKU AKTIF ✅";
+        
+        console.log("SKU Database:", skuDatabase); // Lihat mapping final
+        
+        document.getElementById('status-sku').innerHTML = `SKU AKTIF ✅ (${Object.keys(skuDatabase).length} items)`;
     } catch (e) {
+        console.error("SKU Sync Error:", e);
         document.getElementById('status-sku').innerHTML = "SKU ERROR ❌";
     }
 }
@@ -69,14 +76,34 @@ async function syncSKU() {
 // Fungsi murni ambil SKU tanpa varian
 function getPureSKU(fullText) {
     if(!fullText) return "??";
-    let menuOnly = fullText.replace(/^\d+\s*[xX]\s*/, "") // Buap Qty (1x)
-                           .split('(')[0]                // Buang Varian (Pedas)
-                           .trim()
-                           .toLowerCase();
     
-    return skuDatabase[menuOnly] || "??";
+    // Bersihkan teks pesanan
+    let menuOnly = fullText
+        .replace(/^\d+\s*[xX]\s*/, "")           // Hapus "1x ", "2x " di awal
+        .split('(')[0]                          // Hapus varian dalam kurung (Pedas)
+        .replace(/\s*\+\s*teh\s*$/i, '')       // Hapus + Teh
+        .replace(/\s*\+\s*kremesan\s*$/i, '')   // Hapus + Kremesan
+        .replace(/[,\s]+/g, ' ')                // Normalisasi koma & spasi
+        .toLowerCase()
+        .trim();
+    
+    console.log("Looking for SKU:", menuOnly, "| in database:", Object.keys(skuDatabase).slice(0, 10));
+    
+    // Exact match
+    if (skuDatabase[menuOnly]) return skuDatabase[menuOnly];
+    
+    // Partial match (jika exact tidak ketemu)
+    for (let [key, sku] of Object.entries(skuDatabase)) {
+        // Cek apakah key database mengandung menu pesanan atau sebaliknya
+        if (key.includes(menuOnly) || menuOnly.includes(key)) {
+            console.log("Partial match found:", key, "=>", sku);
+            return sku;
+        }
+    }
+    
+    console.warn("SKU not found for:", menuOnly);
+    return "??";
 }
-
 async function refreshDapur() {
     if (isProcessing) return; 
 
@@ -193,6 +220,8 @@ document.body.addEventListener('click', () => {
 syncSKU();
 setInterval(refreshDapur, CONFIG.DELAY);
 refreshDapur();
+
+
 </script>
 
 </body>
