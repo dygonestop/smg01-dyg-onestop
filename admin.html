@@ -189,21 +189,27 @@ async function submitOrder() {
     const btn = document.getElementById("btnSubmitOrder");
     const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
     
-    // --- LOGIKA DISKON (POIN ATAU VOUCHER) ---
+    // --- LOGIKA DISKON (POIN, VOUCHER, ATAU AUTO MEMBER 5%) ---
     let totalDiskon = 0;
     let labelDiskon = "Diskon"; 
     
     if (redeemQty > 0) {
-        totalDiskon = pointDiscount; // Diambil dari variabel global yang sudah dikali 10
+        totalDiskon = pointDiscount; 
         labelDiskon = "Diskon Poin";
     } else {
         const vInput = document.getElementById("voucher");
         if (vInput && vInput.value.trim() !== "") {
             totalDiskon = typeof hitungVoucher === 'function' ? hitungVoucher(vInput.value.trim()) : 0;
             labelDiskon = "Diskon Voucher";
+        } 
+        // --- TAMBAHKAN BLOK INI AGAR DISKON 5% TERSIMPAN & TERCETAK ---
+        else if (member && totalKotor >= 10000) {
+            let hitung5Persen = Math.floor(totalKotor * 0.05);
+            totalDiskon = Math.min(hitung5Persen, 10000); // Maksimal 10rb
+            labelDiskon = "Member 5%";
         }
+        // -------------------------------------------------------------
     }
-    // -----------------------------------------
 
     const totalBersihAwal = totalKotor - totalDiskon;
     
