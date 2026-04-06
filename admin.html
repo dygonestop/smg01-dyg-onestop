@@ -514,24 +514,28 @@ function renderCart() {
         </div>`;
     });
 
-    // --- LOGIKA DISKON OTOMATIS & ANTI BENTROK ---
+// --- LOGIKA DISKON OTOMATIS & ANTI BENTROK (REVISI: MINIMAL & MAKSIMAL) ---
     let totalDiskon = 0;
     let labelDiskon = "DISKON";
 
     if (voucherDiscount > 0) {
-        // Jika ada voucher, ini yang dipakai
         totalDiskon = voucherDiscount;
         labelDiskon = "VOUCHER";
     } else if (pointDiscount > 0) {
-        // Jika tidak ada voucher tapi ada tukar poin, poin yang dipakai
         totalDiskon = pointDiscount;
         labelDiskon = "TUKAR POIN";
-    } else if (member) {
-        // Jika tidak ada voucher/poin DAN dia adalah member, kasih 5%
-        totalDiskon = Math.floor(totalKotor * 0.05);
+    } else if (member && totalKotor >= 10000) { // Cek minimal belanja 10rb
+        // Hitung 5%
+        let hitungDiskon = Math.floor(totalKotor * 0.05);
+        
+        // Cek maksimal diskon 10rb
+        totalDiskon = Math.min(hitungDiskon, 10000); 
+        
         labelDiskon = "MEMBER 5%";
+    } else {
+        totalDiskon = 0;
     }
-    // ---------------------------------------------
+    // -----------------------------------------------------------------------
 
     // 3. Hitung Sisa Bayar Setelah Diskon
     let sisaBayar = Math.max(0, totalKotor - totalDiskon);
