@@ -120,6 +120,7 @@ const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xf
 const TOKEN = "dyg-access-v2";
 let pointDiscount = 0;   // Diskon dari Poin Member
 let voucherDiscount = 0; // Diskon dari Voucher CSV
+let memberDiscount = 0;
 let VOUCHER_LIST = []; // Variabel penampung data voucher 
 let MENU = [], cart = {}, member = null, redeemQty = 0, shiftOpen = false, pendingOrder = null;
 let selectedMemberFullHP = null;
@@ -513,30 +514,48 @@ function renderCart() {
         </div>`;
     });
 
+    // --- LOGIKA DISKON OTOMATIS & ANTI BENTROK ---
+    let totalDiskon = 0;
+    let labelDiskon = "DISKON";
+
+    if (voucherDiscount > 0) {
+        // Jika ada voucher, ini yang dipakai
+        totalDiskon = voucherDiscount;
+        labelDiskon = "VOUCHER";
+    } else if (pointDiscount > 0) {
+        // Jika tidak ada voucher tapi ada tukar poin, poin yang dipakai
+        totalDiskon = pointDiscount;
+        labelDiskon = "TUKAR POIN";
+    } else if (member) {
+        // Jika tidak ada voucher/poin DAN dia adalah member, kasih 5%
+        totalDiskon = Math.floor(totalKotor * 0.05);
+        labelDiskon = "MEMBER 5%";
+    }
+    // ---------------------------------------------
+
     // 3. Hitung Sisa Bayar Setelah Diskon
-    const totalDiskon = pointDiscount + voucherDiscount;
     let sisaBayar = Math.max(0, totalKotor - totalDiskon);
 
-    // 4. LOGIKA PEMBULATAN (IDEMU: 500 ke atas naik, di bawah 500 turun)
+    // 4. LOGIKA PEMBULATAN
     let sisa = sisaBayar % 1000;
     let bersihFinal = sisa >= 500 ? sisaBayar + (1000 - sisa) : sisaBayar - sisa;
 
     // 5. UPDATE UI
     list.innerHTML = html;
-    
-    // PENTING: Tampilkan bersihFinal (yang sudah bulat) ke layar
     document.getElementById("total").innerText = bersihFinal.toLocaleString();
 
     // 6. Kelola Tampilan Diskon
     const discWrapper = document.getElementById("pointDiscWrapper");
     if (totalDiskon > 0) {
         discWrapper.classList.remove("hidden");
+        // Update label agar tahu diskon berasal dari mana
+        discWrapper.querySelector('span').innerText = labelDiskon; 
         document.getElementById("pointDiscNominal").innerText = totalDiskon.toLocaleString();
     } else {
         discWrapper.classList.add("hidden");
     }
 
-    // 7. Render box pembayaran (Akan otomatis menyesuaikan nominal bersihFinal)
+    // 7. Render box pembayaran
     if (document.getElementById("metode").value === "CASH") renderCash();
 }
 
@@ -773,7 +792,14 @@ function cekMember() {
     const noInput = document.getElementById("nohp").value.trim();
     const no = noInput.slice(-4); 
     
-    if (no.length < 4) return;
+    if (no.length < 4) {
+        // Jika input dihapus/kurang dari 4 digit, reset status member & update harga
+        member = null;
+        selectedMemberFullHP = null;
+        document.getElementById("memberInfo").innerText = "";
+        renderCart(); 
+        return;
+    }
     
     document.getElementById("memberInfo").innerText = "Mencari...";
     
@@ -782,12 +808,16 @@ function cekMember() {
         .then(d => {
             if (d.exists) {
                 member = d;
-                selectedMemberFullHP = d.noHP; // 🔥 SIMPAN NO HP FULL DISINI
+                selectedMemberFullHP = d.noHP; // SIMPAN NO HP FULL DISINI
                 
                 document.getElementById("memberInfo").innerHTML = `
                     <span onclick="bukaTukarPoin()" class="text-blue-600 font-bold cursor-pointer underline">
                         ✅ ${d.nama} (${d.poin} P)
                     </span>`;
+                
+                // --- UPDATE HARGA OTOMATIS (DISKON 5% AKTIF) ---
+                renderCart(); 
+                // -----------------------------------------------
                 
                 if (parseInt(d.poin) >= 500) {
                     bukaTukarPoin();
@@ -796,10 +826,13 @@ function cekMember() {
                 document.getElementById("memberInfo").innerText = "Member tidak ditemukan";
                 member = null;
                 selectedMemberFullHP = null; // Reset jika tidak ketemu
+                
+                // --- UPDATE HARGA OTOMATIS (DISKON 5% MATI) ---
+                renderCart();
+                // ----------------------------------------------
             }
         });
 }
-
 // Fungsi baru untuk menangani logika klik pada nama member
 function bukaTukarPoin() {
     if (!member) return;
