@@ -603,19 +603,18 @@ function hitungKembali() {
 async function prosesSimpanKeCloud() {
     console.log("Mengirim transaksi:", pendingOrder.trxId); 
 
-    // 1. Parameter Action & Token tetap di URL (agar Switch Case di GAS jalan)
+    async function prosesSimpanKeCloud() {
     const urlWithAuth = API_URL + "?token=" + TOKEN + "&action=processPayment";
-
-    // 2. Data Transaksi dikirim lewat Body (Metode POST) menggunakan FormData
     const formData = new FormData();
     formData.append("total", pendingOrder.total);
-    formData.append("nominalVoucher", pendingOrder.nominalVoucher);
     formData.append("noWA", pendingOrder.noWA);
+    formData.append("nominalVoucher", pendingOrder.nominalVoucher);
     formData.append("pesanan", pendingOrder.pesanan);
     formData.append("method", pendingOrder.metode);
     formData.append("trxId", pendingOrder.trxId);
     formData.append("redeemQty", pendingOrder.redeemQty || 0);
     formData.append("pembulatan", pendingOrder.pembulatan || 0);
+formData.append("vCode", pendingOrder.vCode || "");
 
     try {
         const response = await fetch(urlWithAuth, {
