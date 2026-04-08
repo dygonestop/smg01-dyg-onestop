@@ -113,7 +113,7 @@ position: relative;
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbw-2ivbmc-G-o9mWN9UPLEJMPoYyKknSucHuOQOIl5cR-h_9FG4ZjoZsjc9OtPF4ZoYyw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzWIDPozVSZPUDxBqy5JG7y50N9fKpK-3v2yA9tRbCcUwXkAMo_ArP0Nt77LHnw7kYEnA/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -189,35 +189,34 @@ async function submitOrder() {
     const btn = document.getElementById("btnSubmitOrder");
     const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
     
-    // --- LOGIKA DISKON (POIN, VOUCHER, ATAU AUTO MEMBER 5%) ---
-    let totalDiskon = 0;
+    // 1. HITUNG DISKON MURNI
+    let totalDiskonMurni = 0;
     let labelDiskon = "Diskon"; 
     
     if (redeemQty > 0) {
-        totalDiskon = pointDiscount; 
+        totalDiskonMurni = pointDiscount; 
         labelDiskon = "Diskon Poin";
     } else {
         const vInput = document.getElementById("voucher");
         if (vInput && vInput.value.trim() !== "") {
-            totalDiskon = typeof hitungVoucher === 'function' ? hitungVoucher(vInput.value.trim()) : 0;
+            totalDiskonMurni = typeof hitungVoucher === 'function' ? hitungVoucher(vInput.value.trim()) : 0;
             labelDiskon = "Diskon Voucher";
         } 
-        // --- TAMBAHKAN BLOK INI AGAR DISKON 5% TERSIMPAN & TERCETAK ---
         else if (member && totalKotor >= 10000) {
             let hitung5Persen = Math.floor(totalKotor * 0.05);
-            totalDiskon = Math.min(hitung5Persen, 10000); // Maksimal 10rb
+            totalDiskonMurni = Math.min(hitung5Persen, 10000); 
             labelDiskon = "Member 5%";
         }
-        // -------------------------------------------------------------
     }
 
-    const totalBersihAwal = totalKotor - totalDiskon;
-    
-    // --- TAMBAHAN LOGIKA PEMBULATAN ---
+    // 2. HITUNG PEMBULATAN (Agar Total Bersih Bulat ke 1000 terdekat)
+    const totalBersihAwal = totalKotor - totalDiskonMurni;
     let sisa = totalBersihAwal % 1000;
-    const totalBersih = sisa >= 500 ? totalBersihAwal + (1000 - sisa) : totalBersihAwal - sisa;
-    const nilaiPembulatan = totalBersih - totalBersihAwal;
-    // ----------------------------------
+    const totalBersihFinal = sisa >= 500 ? totalBersihAwal + (1000 - sisa) : totalBersihAwal - sisa;
+    const nilaiPembulatan = totalBersihFinal - totalBersihAwal;
+    
+    // 3. DISKON UNTUK KOLOM D (Diskon Murni + Pembulatan)
+    const diskonFinalSheet = totalKotor - totalBersihFinal;
 
     const trxId = "TRX-" + Date.now();
     const pesanan = Object.values(cart)
@@ -226,18 +225,19 @@ async function submitOrder() {
     
     btn.innerText = "MENCETAK..."; btn.disabled = true;
 
-    // Ganti baris noWA di dalam object pendingOrder
-pendingOrder = { 
-    total: totalBersih, 
-    noWA: selectedMemberFullHP || document.getElementById("nohp").value || "-", // 🔥 PRIORITASKAN FULL HP
-    pesanan, 
-    metode: m, 
-    trxId,
-    redeemQty: redeemQty,
-    nominalVoucher: (redeemQty > 0) ? 0 : totalDiskon 
-};
+    // 4. DATA UNTUK CLOUD
+    pendingOrder = { 
+        total: totalBersihFinal,      // Masuk ke Kolom C
+        noWA: selectedMemberFullHP || document.getElementById("nohp").value || "-",
+        pesanan, 
+        metode: m, 
+        trxId,
+        redeemQty: redeemQty,
+        nominalVoucher: diskonFinalSheet, // Masuk ke Kolom D
+        pembulatan: nilaiPembulatan
+    };
 
-    // --- FORMULASI STRUK (STRUKTUR TETAP SAMA) ---
+    // --- FORMULASI STRUK (STRUKTUR SEMULA) ---
     let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
     esc += "Alamat: UNNES, Gunungpati, Semarang\n";
     esc += "NPWPD  : P.1.9032024.14.11\n";
@@ -251,7 +251,9 @@ pendingOrder = {
     
     esc += "--------------------------------\n";
     esc += "Total Kotor   : Rp " + totalKotor.toLocaleString() + "\n";
-    esc += `${labelDiskon.padEnd(14)}: Rp ${totalDiskon.toLocaleString()}\n`; 
+    
+    // Menampilkan Diskon (Poin/Voucher/Member)
+    esc += `${labelDiskon.padEnd(14)}: Rp ${totalDiskonMurni.toLocaleString()}\n`; 
     
     if (nilaiPembulatan !== 0) {
         esc += "Pembulatan    : Rp " + (nilaiPembulatan > 0 ? "+" : "") + nilaiPembulatan.toLocaleString() + "\n";
@@ -259,40 +261,38 @@ pendingOrder = {
 
     esc += "Metode        : " + m + "\n";
     
-    let namaMember = "-";
-    let poinDapat = "-";
+    let namaMemberStr = "-";
+    let poinDapat = 0;
     let poinAkumulasi = "-";
-    let voucher = "-";
+    let voucherStr = "-";
 
     if (member) {
-        namaMember = member.nama || "-";
-        poinDapat = Math.floor(totalBersih / 20000) * 100;
+        namaMemberStr = member.nama || "-";
+        poinDapat = Math.floor(totalBersihFinal / 20000) * 100;
         poinAkumulasi = (Number(member.poin || 0) + poinDapat - redeemQty);
     }
 
-    if (redeemQty > 0) {
-        voucher = redeemQty;
-    }
+    if (redeemQty > 0) { voucherStr = redeemQty; }
 
-    esc += "Nama Member   : " + namaMember + "\n";
-    esc += "Poin Didapat  : " + (poinDapat === "-" ? "-" : "+" + poinDapat) + "\n";
+    esc += "Nama Member   : " + namaMemberStr + "\n";
+    esc += "Poin Didapat  : " + (poinDapat === 0 ? "-" : "+" + poinDapat) + "\n";
     esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
-    esc += "Voucher       : " + voucher + "\n";
+    esc += "Voucher       : " + voucherStr + "\n";
     
-    // Bagian diskon dan pembulatan tetap sesuai permintaan Anda
-    esc += "Diskon        : Rp " + (totalDiskon ? totalDiskon.toLocaleString() : "-") + "\n";
+    // Baris Diskon & Pembulatan (Sesuai aslinya)
+    esc += "Diskon        : Rp " + (totalDiskonMurni ? totalDiskonMurni.toLocaleString() : "-") + "\n";
     esc += "Pembulatan    : " + (nilaiPembulatan ? "Rp " + nilaiPembulatan.toLocaleString() : "-") + "\n";
     
-    const pb1 = Math.round(totalBersih * 0.10);
+    const pb1 = Math.round(totalBersihFinal * 0.10);
     esc += "PB1 (10%)     : Rp " + pb1.toLocaleString() + " (Tanggung Resto)\n";
     esc += "--------------------------------\n";
-    esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersih.toLocaleString() + "\x1B\x21\x00\n";
+    esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersihFinal.toLocaleString() + "\x1B\x21\x00\n";
     
     if (m === "CASH") {
         const bVal = Number(document.getElementById("bayar").value);
         esc += "--------------------------------\n";
         esc += "Bayar         : Rp " + bVal.toLocaleString() + "\n";
-        esc += "Kembali       : Rp " + (bVal - totalBersih).toLocaleString() + "\n";
+        esc += "Kembali       : Rp " + (bVal - totalBersihFinal).toLocaleString() + "\n";
     }
     
     esc += "--------------------------------\n";
@@ -488,7 +488,7 @@ function updateUI() {
 }
 
 function renderCart() {
-    // 1. Validasi voucher otomatis (Update nilai voucherDiscount)
+    // 1. Validasi voucher otomatis
     validateAndApplyVoucher();
 
     const list = document.getElementById("cartList");
@@ -499,6 +499,8 @@ function renderCart() {
         list.innerHTML = '<div class="text-center text-slate-300 text-[10px] mt-10">Kosong</div>';
         document.getElementById("total").innerText = "0";
         document.getElementById("pointDiscWrapper").classList.add("hidden");
+        // Sembunyikan pembulatan jika kosong
+        if(document.getElementById("roundWrapper")) document.getElementById("roundWrapper").classList.add("hidden");
         document.getElementById("cashBox").innerHTML = "";
         return;
     }
@@ -520,7 +522,7 @@ function renderCart() {
         </div>`;
     });
 
-// --- LOGIKA DISKON OTOMATIS & ANTI BENTROK (REVISI: MINIMAL & MAKSIMAL) ---
+    // 3. LOGIKA DISKON
     let totalDiskon = 0;
     let labelDiskon = "DISKON";
 
@@ -530,25 +532,17 @@ function renderCart() {
     } else if (pointDiscount > 0) {
         totalDiskon = pointDiscount;
         labelDiskon = "TUKAR POIN";
-    } else if (member && totalKotor >= 10000) { // Cek minimal belanja 10rb
-        // Hitung 5%
+    } else if (member && totalKotor >= 10000) {
         let hitungDiskon = Math.floor(totalKotor * 0.05);
-        
-        // Cek maksimal diskon 10rb
         totalDiskon = Math.min(hitungDiskon, 10000); 
-        
         labelDiskon = "MEMBER 5%";
-    } else {
-        totalDiskon = 0;
     }
-    // -----------------------------------------------------------------------
-
-    // 3. Hitung Sisa Bayar Setelah Diskon
-    let sisaBayar = Math.max(0, totalKotor - totalDiskon);
 
     // 4. LOGIKA PEMBULATAN
+    let sisaBayar = Math.max(0, totalKotor - totalDiskon);
     let sisa = sisaBayar % 1000;
     let bersihFinal = sisa >= 500 ? sisaBayar + (1000 - sisa) : sisaBayar - sisa;
+    let nilaiPembulatan = bersihFinal - sisaBayar;
 
     // 5. UPDATE UI
     list.innerHTML = html;
@@ -558,14 +552,25 @@ function renderCart() {
     const discWrapper = document.getElementById("pointDiscWrapper");
     if (totalDiskon > 0) {
         discWrapper.classList.remove("hidden");
-        // Update label agar tahu diskon berasal dari mana
         discWrapper.querySelector('span').innerText = labelDiskon; 
         document.getElementById("pointDiscNominal").innerText = totalDiskon.toLocaleString();
     } else {
         discWrapper.classList.add("hidden");
     }
 
-    // 7. Render box pembayaran
+    // 7. TAMPILKAN PEMBULATAN DI LAYAR (Penting agar kasir tidak bingung)
+    // Pastikan Anda punya elemen dengan ID "roundWrapper" dan "roundNominal" di HTML Anda
+    const roundWrapper = document.getElementById("roundWrapper");
+    if (roundWrapper) {
+        if (nilaiPembulatan !== 0) {
+            roundWrapper.classList.remove("hidden");
+            document.getElementById("roundNominal").innerText = (nilaiPembulatan > 0 ? "+" : "") + nilaiPembulatan.toLocaleString();
+        } else {
+            roundWrapper.classList.add("hidden");
+        }
+    }
+
+    // 8. Render box pembayaran
     if (document.getElementById("metode").value === "CASH") renderCash();
 }
 
@@ -597,21 +602,19 @@ function hitungKembali() {
 
 async function prosesSimpanKeCloud() {
     console.log("Mengirim No WA:", pendingOrder.noWA); // 🧪 CEK DI KONSOL
-
-    const p = new URLSearchParams({
+   const p = new URLSearchParams({
         token: TOKEN, 
         action: "processPayment",
-        total: pendingOrder.total, 
+        total: pendingOrder.total,        // Kolom C
+        nominalVoucher: pendingOrder.nominalVoucher, // Kolom D
+        noWA: pendingOrder.noWA,
         pesanan: pendingOrder.pesanan,
-        method: pendingOrder.metode, 
+        method: pendingOrder.metode,
         trxId: pendingOrder.trxId,
-        noWA: pendingOrder.noWA, // 🔥 AKAN MENGIRIM NO FULL (0812...)
-        redeemQty: redeemQty
+        redeemQty: pendingOrder.redeemQty || 0,
+        pembulatan: pendingOrder.pembulatan || 0
     });
-    try {
-        const res = await fetch(`${API_URL}?${p.toString()}`);
-        return res.ok;
-    } catch (e) { return false; }
+    // fetch(API_URL + "?" + p.toString())...
 }
 
 let modeShift = ""; 
