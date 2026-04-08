@@ -113,7 +113,7 @@ position: relative;
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzWIDPozVSZPUDxBqy5JG7y50N9fKpK-3v2yA9tRbCcUwXkAMo_ArP0Nt77LHnw7kYEnA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyfMbaP7K-hE99WYDIcNU-X33P-oTRmR7xJ6Poz5656swfKzd5O_u0ORJXASTFPRNUYLA/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -601,20 +601,38 @@ function hitungKembali() {
 }
 
 async function prosesSimpanKeCloud() {
-    console.log("Mengirim No WA:", pendingOrder.noWA); // 🧪 CEK DI KONSOL
-   const p = new URLSearchParams({
-        token: TOKEN, 
-        action: "processPayment",
-        total: pendingOrder.total,        // Kolom C
-        nominalVoucher: pendingOrder.nominalVoucher, // Kolom D
-        noWA: pendingOrder.noWA,
-        pesanan: pendingOrder.pesanan,
-        method: pendingOrder.metode,
-        trxId: pendingOrder.trxId,
-        redeemQty: pendingOrder.redeemQty || 0,
-        pembulatan: pendingOrder.pembulatan || 0
-    });
-    // fetch(API_URL + "?" + p.toString())...
+    console.log("Mengirim transaksi:", pendingOrder.trxId); 
+
+    // 1. Parameter Action & Token tetap di URL (agar Switch Case di GAS jalan)
+    const urlWithAuth = API_URL + "?token=" + TOKEN + "&action=processPayment";
+
+    // 2. Data Transaksi dikirim lewat Body (Metode POST) menggunakan FormData
+    const formData = new FormData();
+    formData.append("total", pendingOrder.total);
+    formData.append("nominalVoucher", pendingOrder.nominalVoucher);
+    formData.append("noWA", pendingOrder.noWA);
+    formData.append("pesanan", pendingOrder.pesanan);
+    formData.append("method", pendingOrder.metode);
+    formData.append("trxId", pendingOrder.trxId);
+    formData.append("redeemQty", pendingOrder.redeemQty || 0);
+    formData.append("pembulatan", pendingOrder.pembulatan || 0);
+
+    try {
+        const response = await fetch(urlWithAuth, {
+            method: "POST",
+            body: formData
+        });
+        
+        const result = await response.text();
+        console.log("Respon Server:", result); // Harus muncul "Success"
+        
+        if (result === "Success") {
+            console.log("Transaksi berhasil dicatat di Cloud!");
+        }
+    } catch (err) {
+        console.error("Gagal kirim ke Cloud:", err);
+        alert("Gagal simpan ke cloud, cek koneksi!");
+    }
 }
 
 let modeShift = ""; 
