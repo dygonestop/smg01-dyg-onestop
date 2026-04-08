@@ -602,8 +602,6 @@ function hitungKembali() {
 
 async function prosesSimpanKeCloud() {
     console.log("Mengirim transaksi:", pendingOrder.trxId); 
-
-    async function prosesSimpanKeCloud() {
     const urlWithAuth = API_URL + "?token=" + TOKEN + "&action=processPayment";
     const formData = new FormData();
     formData.append("total", pendingOrder.total);
