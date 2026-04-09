@@ -8,6 +8,31 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
+.menu-item {
+    position: relative; /* Penting agar badge menempel di pojok item */
+}
+
+.menu-badge {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    z-index: 5;
+    background: #555;
+    color: white;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 900;
+    border-radius: 5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    pointer-events: none; /* Agar tidak mengganggu klik foto */
+}
+
+/* Variasi Warna */
+.badge-rekomend { background: #e74c3c !important; }
+.badge-new { background: #2ecc71 !important; }
+.badge-limit { background: #f39c12 !important; }
+
 /* Tambahkan di bagian <style> */
 
 /* Efek berdetak merah untuk form input */
@@ -1128,7 +1153,7 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
 // Tambahkan 'antrean = 0' di deretan variabel global
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz6MuVDzN2tRfswcR2c09Hz02pTf1aMbsbTub4vqhPihTt_ZLADP367vohxoYvNb6diEw/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbx5HvU5GWXVg4RHpK11nslayvHHss60Q6T1rNgq8yErCoG4Eu8vJmgc0_QMUbMC8uEHow/exec',
  	MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
 BANNER_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=452967385&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
@@ -1518,10 +1543,24 @@ function renderMenu(filterKat = 'ALL') {
         const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
         const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(m.nama);
 
-return `
-        <div class="menu-item">
+// --- LOGIKA BADGE BARU ---
+        let badgeHtml = '';
+        if (m.badge && m.badge.trim() !== "") {
+            let bClass = "menu-badge";
+            let bText = m.badge.toLowerCase();
+            
+            // Pewarnaan otomatis berdasarkan isi kolom G
+            if (bText.includes("rekomend")) bClass += " badge-rekomend";
+            else if (bText.includes("new")) bClass += " badge-new";
+            else if (bText.includes("stok") || bText.includes("limit")) bClass += " badge-limit";
+            
+            badgeHtml = `<div class="${bClass}">${m.badge}</div>`;
+        }
+        // -------------------------
 
-    ${m.foto ? `<img src="${m.foto}" class="menu-img">` : ''}
+        return `
+        <div class="menu-item">
+            ${badgeHtml} ${m.foto ? `<img src="${m.foto}" class="menu-img">` : ''}
 
     <div class="menu-info">
                 <h4 data-name="${m.nama}">${m.nama}</h4>
