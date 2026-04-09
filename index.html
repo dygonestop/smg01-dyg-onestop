@@ -1492,28 +1492,29 @@ async function startApp() {
         return 8000 + (Math.ceil(km - 5) * 2000);
     }
 
-    async function loadMenu() {
+  async function loadMenu() {
     try {
         const resp = await fetch(CONFIG.MENU_CSV_URL);
         const csv = await resp.text();
         menuData = csv.split('\n').slice(1).map((row, i) => {
-            // Regex ini disempurnakan agar bisa menangkap kolom kosong (,,) 
-            // dan teks di dalam tanda kutip (deskripsi panjang)
             const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
             
             return { 
-    id: 'm'+i, 
-    kat: cols[0] || '', 
-    nama: cols[1] || '', 
-    harga: parseInt(cols[2]) || 0,
-    deskripsi: cols[3] || '',
-    foto: cols[4] || ''
-};
+                id: 'm'+i, 
+                kat: cols[0] || '', 
+                nama: cols[1] || '', 
+                harga: parseInt(cols[2]) || 0,
+                deskripsi: cols[3] || '',
+                foto: cols[4] || '',
+                badge: cols[6] || ''  // ✅ TAMBAHAN: Ambil badge dari kolom G
+            };
         }).filter(m => m.nama);
         
         renderTabs();
         renderMenu();
-    } catch (e) { console.error("Menu error:", e); }
+    } catch (e) { 
+        console.error("Menu error:", e); 
+    }
 }
     function renderTabs() {
         const cats = [...new Set(menuData.map(m => m.kat))];
