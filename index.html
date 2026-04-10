@@ -8,6 +8,22 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    50% { transform: translateX(8px); }
+    75% { transform: translateX(-8px); }
+}
+
+/* Smooth transitions untuk semua view */
+#m-view-menu, #m-view-input, #m-view-result, #m-view-reg {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 .menu-item {
     position: relative; /* Penting agar badge menempel di pojok item */
 }
@@ -1354,61 +1370,137 @@ async function apiDaftarMember() {
     }
 }
 
+// ==================== NAVIGATION FUNCTIONS ====================
+
 function openMemberModal() {
     document.getElementById('modalMember').style.display = 'flex';
-    document.getElementById('m-view-input').style.display = 'block';
-    document.getElementById('m-view-result').style.display = 'none';
-    document.getElementById('m-view-reg').style.display = 'none';
-    
-    // Baris menuDropdown dihapus karena kita tidak pakai hamburger menu lagi
+    showMenu(); // Selalu mulai dari menu utama
 }
 
 function closeMemberModal() {
     document.getElementById('modalMember').style.display = 'none';
+    resetAllForms(); // Reset semua form saat tutup
 }
 
-async function apiCekMember() {
-    const phone = document.getElementById('m-phone').value;
-    const btn = document.querySelector('#m-view-input button');
-    const originalText = btn.innerText;
+function showMenu() {
+    // Sembunyikan semua view
+    document.getElementById('m-view-menu').style.display = 'block';
+    document.getElementById('m-view-input').style.display = 'none';
+    document.getElementById('m-view-result').style.display = 'none';
+    document.getElementById('m-view-reg').style.display = 'none';
+}
 
-    // Validasi format: harus diawali 62
-    if (!phone.startsWith('62') || phone.length < 10) {
-        alert("Masukkan nomor WA yang benar diawali 62 (tanpa 0/+)\nContoh: 628123456789");
+function showCekPoinForm() {
+    document.getElementById('m-view-menu').style.display = 'none';
+    document.getElementById('m-view-input').style.display = 'block';
+    document.getElementById('m-phone').focus();
+}
+
+function showDaftarForm() {
+    document.getElementById('m-view-menu').style.display = 'none';
+    document.getElementById('m-view-reg').style.display = 'block';
+    document.getElementById('m-reg-phone').focus();
+}
+
+function backToMenu() {
+    showMenu();
+    resetAllForms();
+}
+
+function backToInput() {
+    document.getElementById('m-view-result').style.display = 'none';
+    document.getElementById('m-view-input').style.display = 'block';
+    document.getElementById('m-phone').value = '';
+    document.getElementById('m-phone').focus();
+}
+
+function resetAllForms() {
+    // Reset input cek poin
+    document.getElementById('m-phone').value = '';
+    
+    // Reset form daftar
+    document.getElementById('m-reg-phone').value = '';
+    document.getElementById('m-reg-nama').value = '';
+    document.getElementById('m-reg-email').value = '';
+    document.getElementById('m-otp-code').value = '';
+    document.getElementById('m-otp-box').style.display = 'none';
+    document.getElementById('btn-kirim-otp').innerText = 'KIRIM OTP';
+    document.getElementById('btn-kirim-otp').disabled = false;
+    document.getElementById('btn-final-daftar').disabled = true;
+    document.getElementById('btn-final-daftar').style.opacity = '0.4';
+    document.getElementById('reg-error-msg').style.display = 'none';
+}
+
+// ==================== MODIFIED API FUNCTIONS ====================
+
+async function apiCekMember() {
+    const phone = document.getElementById('m-phone').value.trim();
+    const btn = document.getElementById('btn-cek-poin');
+    
+    // Validasi format
+    if (!phone.startsWith('62') || phone.length < 10 || phone.length > 15) {
+        shakeElement(document.getElementById('m-phone'));
         return;
     }
 
-    btn.disabled = true;
+    // Loading state
     btn.innerText = "MENGECEK...";
+    btn.disabled = true;
     btn.style.opacity = "0.7";
 
     try {
-        // TAMBAHKAN &mode=full di sini
-        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${phone}&mode=full`);
+        // Panggil backend dengan mode=full (untuk pencocokan lengkap)
+        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${encodeURIComponent(phone)}&mode=full`);
         const res = await resp.json();
 
         if (res.exists) {
+            // Tampilkan hasil
             document.getElementById('m-view-input').style.display = 'none';
             document.getElementById('m-view-result').style.display = 'block';
             document.getElementById('m-res-nama').innerText = res.nama;
-            document.getElementById('m-res-poin').innerText = res.poin;
+            document.getElementById('m-res-poin').innerText = res.poin.toLocaleString('id-ID');
         } else {
-            // Jika tidak ditemukan, tampilkan form registrasi
-            document.getElementById('m-view-input').style.display = 'none';
-            document.getElementById('m-view-reg').style.display = 'block';
-            
-            // Pre-fill nomor di form registrasi
-            document.getElementById('m-reg-nama').focus();
+            // Nomor tidak ditemukan - tanya mau daftar?
+            Swal.fire({
+                title: 'Nomor Belum Terdaftar',
+                text: 'Nomor ' + phone + ' belum terdaftar sebagai member. Mau daftar sekarang?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Daftar',
+                cancelButtonText: 'Coba Nomor Lain',
+                confirmButtonColor: '#1B4332',
+                cancelButtonColor: '#aaa'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Isi nomor di form daftar dan pindah ke form daftar
+                    document.getElementById('m-reg-phone').value = phone;
+                    document.getElementById('m-view-input').style.display = 'none';
+                    document.getElementById('m-view-reg').style.display = 'block';
+                    document.getElementById('m-reg-nama').focus();
+                }
+                // Jika cancel, tetap di form input
+            });
         }
     } catch (e) {
-        alert("Koneksi sibuk, coba lagi.");
+        Swal.fire('Error', 'Gagal cek member. Coba lagi.', 'error');
     } finally {
+        btn.innerText = "CEK SEKARANG";
         btn.disabled = false;
-        btn.innerText = originalText;
         btn.style.opacity = "1";
     }
 }
 
+// Helper untuk shake effect
+function shakeElement(el) {
+    el.style.animation = 'shake 0.4s ease-in-out';
+    el.style.borderColor = 'var(--danger)';
+    setTimeout(() => {
+        el.style.animation = '';
+        el.style.borderColor = 'var(--soft)';
+    }, 400);
+}
+
+// Tambahkan CSS animation shake jika belum ada
 function toggleMenuDropdown() {
     const dropdown = document.getElementById('menuDropdown');
     const isVisible = dropdown.style.display === 'block';
@@ -2681,57 +2773,136 @@ function activateRedPulse(mode) {
         </button>
     </div>
 </div>
+
+<!-- GANTI SELURUH DIV modalMember DENGAN INI -->
 <div id="modalMember" class="modal-overlay" style="display:none; align-items:center; justify-content:center; padding:20px; z-index:10000;">
-    <div class="modal-card" style="max-width:350px; border-radius:24px; overflow:hidden;">
-        <div style="background:var(--primary); color:white; padding:25px; text-align:center;">
-            <div style="font-size:40px; margin-bottom:10px;">🪙</div>
-            <h3 style="font-weight:900; margin:0; letter-spacing:1px;">CEK POIN MEMBER ATAU DAFTAR MEMBER BARU</h3>
-            <p style="font-size:10px; opacity:0.8; margin-top:5px;">WAJIB DIAWALI 628 (TANPA 0 / +)</p>
-        </div>
+    <div class="modal-card" style="max-width:360px; width:100%; border-radius:24px; overflow:hidden; position:relative; background:white;">
         
-        <div id="m-view-input" style="padding:25px; text-align:center;">
-            <div style="margin-bottom:15px;">
-                <label style="font-size:10px; font-weight:900; color:var(--danger); display:block; margin-bottom:5px;">FORMAT: 628xxxxxxxx</label>
-                <input type="text" id="m-phone" inputmode="numeric" placeholder="Contoh: 62812345678" 
-                    style="width:100%; padding:15px; border:2px solid var(--soft); border-radius:15px; font-size:18px; font-weight:900; text-align:center; outline:none;">
+        <!-- CLOSE BUTTON (X) - Selalu ada di pojok kanan atas -->
+        <button onclick="closeMemberModal()" style="position:absolute; top:15px; right:15px; width:32px; height:32px; border-radius:50%; border:none; background:#f0f0f0; color:#666; font-size:18px; cursor:pointer; z-index:100; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f0f0f0'">×</button>
+
+        <!-- ==================== TAB 1: MENU UTAMA ==================== -->
+        <div id="m-view-menu" style="padding:30px 25px; text-align:center;">
+            <div style="font-size:50px; margin-bottom:15px;">🪙</div>
+            <h3 style="font-weight:900; margin:0 0 8px 0; letter-spacing:0.5px; color:var(--primary); font-size:18px;">MEMBER DYG++</h3>
+            <p style="font-size:12px; color:var(--muted); margin-bottom:25px; line-height:1.5;">Cek poin reward atau daftar jadi member baru untuk dapatkan benefit eksklusif!</p>
+            
+            <!-- 2 TOMBOL SEJAJAR -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:15px;">
+                <button onclick="showCekPoinForm()" style="padding:16px 12px; background:var(--primary); color:white; border:none; border-radius:14px; font-weight:800; font-size:13px; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 12px rgba(27,67,50,0.2);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                    <div style="font-size:20px; margin-bottom:4px;">🔍</div>
+                    Cek Poin
+                </button>
+                
+                <button onclick="showDaftarForm()" style="padding:16px 12px; background:white; color:var(--primary); border:2px solid var(--primary); border-radius:14px; font-weight:800; font-size:13px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#f8fbf8'" onmouseout="this.style.background='white'">
+                    <div style="font-size:20px; margin-bottom:4px;">✨</div>
+                    Daftar Baru
+                </button>
             </div>
-            <button onclick="apiCekMember()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:15px; font-weight:900; cursor:pointer;">CEK POIN SAYA atau DAFTAR BARU</button>
-            <button onclick="closeMemberModal()" style="background:none; border:none; color:var(--muted); font-size:12px; margin-top:15px; font-weight:bold;">Tutup</button>
+            
+            <p style="font-size:10px; color:#999; margin-top:15px;">Member dapat poin setiap pembelian Rp20.000 = 100 poin</p>
         </div>
 
-        <div id="m-view-result" style="padding:25px; display:none; text-align:center;">
-            <p style="font-size:12px; color:var(--muted); margin:0;">Halo,</p>
-            <h4 id="m-res-nama" style="margin:5px 0 15px 0; font-weight:900; font-size:20px; color:var(--primary);">...</h4>
-            <div style="background:var(--bg); border:2px dashed var(--primary); padding:20px; border-radius:20px; margin-bottom:15px;">
-                <span id="m-res-poin" style="font-size:40px; font-weight:900; color:var(--primary);">0</span>
-                <p style="margin:0; font-size:10px; font-weight:900; color:var(--primary); opacity:0.7;">TOTAL POIN</p>
+        <!-- ==================== TAB 2: CEK POIN (Input Nomor) ==================== -->
+        <div id="m-view-input" style="display:none; padding:30px 25px; text-align:center;">
+            <button onclick="backToMenu()" style="position:absolute; top:15px; left:15px; background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; font-weight:700;">← Kembali</button>
+            
+            <div style="font-size:40px; margin:20px 0 15px 0;">🔍</div>
+            <h4 style="margin:0 0 20px 0; color:var(--text); font-weight:800;">Cek Poin Member</h4>
+            
+            <div style="margin-bottom:20px;">
+                <label style="font-size:11px; font-weight:700; color:var(--muted); display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Nomor WhatsApp</label>
+                <input type="text" id="m-phone" inputmode="numeric" placeholder="628123456789" 
+                    style="width:100%; padding:16px; border:2px solid var(--soft); border-radius:16px; font-size:16px; font-weight:700; text-align:center; outline:none; transition:all 0.2s;" 
+                    onfocus="this.style.borderColor='var(--primary)'" 
+                    onblur="this.style.borderColor='var(--soft)'">
+                <p style="font-size:10px; color:var(--danger); margin-top:8px; font-weight:600; text-align:left; padding-left:5px;">⚠️ Format wajib: 628xxxxxxxx (tanpa 0/+ di depan)</p>
             </div>
-            <button onclick="closeMemberModal()" style="width:100%; padding:15px; background:var(--soft); color:var(--text); border:none; border-radius:15px; font-weight:900;">OKE</button>
+            
+            <button onclick="apiCekMember()" id="btn-cek-poin" 
+                style="width:100%; padding:16px; background:var(--primary); color:white; border:none; border-radius:14px; font-weight:800; font-size:14px; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 12px rgba(27,67,50,0.2);">
+                CEK SEKARANG
+            </button>
         </div>
 
-        <div id="m-view-reg" style="padding:25px; display:none; text-align:center;">
-    <p style="font-size:14px; font-weight:900; color:var(--danger); margin-bottom:10px;">Nomor Belum Terdaftar!</p>
-    
-    <input type="text" id="m-reg-nama" placeholder="Tulis Nama Anda" 
-        style="width:100%; padding:12px; border:1px solid var(--soft); border-radius:12px; margin-bottom:10px; text-align:center; font-weight:bold;">
-    
-    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-        <input type="email" id="m-reg-email" placeholder="Email Verifikasi" 
-            style="flex: 1; padding:12px; border:1px solid var(--soft); border-radius:12px; font-weight:bold;">
-        <button id="btn-kirim-otp" onclick="requestOTP()" 
-            style="padding: 10px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 10px; font-weight: 900;">KIRIM OTP</button>
-    </div>
+        <!-- ==================== TAB 3: HASIL CEK POIN ==================== -->
+        <div id="m-view-result" style="display:none; padding:30px 25px; text-align:center;">
+            <button onclick="backToInput()" style="position:absolute; top:15px; left:15px; background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; font-weight:700;">← Kembali</button>
+            
+            <div style="font-size:50px; margin-bottom:10px;">🎉</div>
+            <p style="font-size:12px; color:var(--muted); margin:0;">Selamat datang,</p>
+            <h4 id="m-res-nama" style="margin:5px 0 20px 0; font-weight:900; font-size:22px; color:var(--primary);">...</h4>
+            
+            <div style="background:linear-gradient(135deg, var(--primary) 0%, #2D6A4F 100%); border-radius:20px; padding:25px; margin-bottom:20px; color:white; box-shadow:0 8px 25px rgba(27,67,50,0.25);">
+                <div style="font-size:14px; opacity:0.9; margin-bottom:5px; font-weight:600;">TOTAL POIN ANDA</div>
+                <div id="m-res-poin" style="font-size:48px; font-weight:900; text-shadow:0 2px 4px rgba(0,0,0,0.2);">0</div>
+                <div style="font-size:11px; opacity:0.8; margin-top:5px;">poin</div>
+            </div>
+            
+            <p style="font-size:11px; color:#888; margin-bottom:20px; line-height:1.5;">💡 100 poin = Rp1.000 diskon<br>Tunjukkan ini ke kasir saat membayar</p>
+            
+            <button onclick="closeMemberModal()" style="width:100%; padding:16px; background:var(--soft); color:var(--text); border:none; border-radius:14px; font-weight:800; font-size:14px; cursor:pointer;">TUTUP</button>
+        </div>
 
-    <div id="m-otp-box" style="display:none; margin-bottom: 15px; background: #fff4f4; padding: 15px; border-radius: 15px;">
-        <p style="font-size: 10px; font-weight: bold; color: var(--danger); margin-bottom: 5px;">KODE OTP DIKIRIM KE EMAIL</p>
-        <input type="number" id="m-otp-code" placeholder="4 Digit" 
-            style="width:80px; padding:10px; border:2px solid var(--primary); border-radius:10px; text-align:center; font-size: 18px; font-weight: 900;">
-        <button onclick="verifyOTP()" style="display:block; width:100%; margin-top:10px; background:orange; color:white; border:none; padding:8px; border-radius:8px; font-weight:900;">VERIFIKASI</button>
-    </div>
+        <!-- ==================== TAB 4: DAFTAR MEMBER (Form) ==================== -->
+        <div id="m-view-reg" style="display:none; padding:30px 25px; text-align:center;">
+            <button onclick="backToMenu()" style="position:absolute; top:15px; left:15px; background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; font-weight:700;">← Kembali</button>
+            
+            <div style="font-size:40px; margin:20px 0 15px 0;">✨</div>
+            <h4 style="margin:0 0 20px 0; color:var(--text); font-weight:800;">Daftar Member Baru</h4>
+            
+            <div style="text-align:left; margin-bottom:15px;">
+                <label style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">Nomor WhatsApp</label>
+                <input type="text" id="m-reg-phone" inputmode="numeric" placeholder="628123456789" 
+                    style="width:100%; padding:14px; border:2px solid var(--soft); border-radius:12px; font-size:14px; font-weight:700; margin-top:5px; outline:none;"
+                    onfocus="this.style.borderColor='var(--primary)'" 
+                    onblur="this.style.borderColor='var(--soft)'">
+            </div>
+            
+            <div style="text-align:left; margin-bottom:15px;">
+                <label style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">Nama Lengkap</label>
+                <input type="text" id="m-reg-nama" placeholder="Nama Anda" 
+                    style="width:100%; padding:14px; border:2px solid var(--soft); border-radius:12px; font-size:14px; font-weight:600; margin-top:5px; outline:none;"
+                    onfocus="this.style.borderColor='var(--primary)'" 
+                    onblur="this.style.borderColor='var(--soft)'">
+            </div>
+            
+            <div style="text-align:left; margin-bottom:20px;">
+                <label style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">Email (untuk OTP)</label>
+                <div style="display:flex; gap:8px; margin-top:5px;">
+                    <input type="email" id="m-reg-email" placeholder="email@anda.com" 
+                        style="flex:1; padding:14px; border:2px solid var(--soft); border-radius:12px; font-size:14px; font-weight:600; outline:none;"
+                        onfocus="this.style.borderColor='var(--primary)'" 
+                        onblur="this.style.borderColor='var(--soft)'">
+                    <button id="btn-kirim-otp" onclick="requestOTP()" 
+                        style="padding:0 16px; background:var(--primary); color:white; border:none; border-radius:12px; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap;">
+                        KIRIM OTP
+                    </button>
+                </div>
+            </div>
 
-    <button id="btn-final-daftar" onclick="apiDaftarMember()" disabled 
-        style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:15px; font-weight:900; opacity: 0.5;">DAFTAR JADI MEMBER</button>
-</div>
+            <!-- OTP Box -->
+            <div id="m-otp-box" style="display:none; margin-bottom:20px; background:#fff9e6; border:2px dashed var(--accent); padding:20px; border-radius:16px; text-align:center;">
+                <p style="font-size:12px; font-weight:800; color:var(--accent); margin:0 0 10px 0;">📧 CEK EMAIL ANDA!</p>
+                <p style="font-size:11px; color:#666; margin-bottom:15px;">Masukkan 4 digit kode yang dikirim ke email</p>
+                <div style="display:flex; gap:10px; justify-content:center; align-items:center;">
+                    <input type="number" id="m-otp-code" placeholder="1234" maxlength="4"
+                        style="width:100px; padding:14px; border:2px solid var(--primary); border-radius:12px; font-size:20px; font-weight:900; text-align:center; letter-spacing:4px; outline:none;">
+                    <button onclick="verifyOTP()" 
+                        style="padding:14px 20px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:800; font-size:12px; cursor:pointer;">
+                        ✓
+                    </button>
+                </div>
+            </div>
+
+            <button id="btn-final-daftar" onclick="apiDaftarMember()" disabled 
+                style="width:100%; padding:16px; background:var(--primary); color:white; border:none; border-radius:14px; font-weight:800; font-size:14px; cursor:pointer; opacity:0.4; transition:all 0.2s;">
+                SELESAIKAN PENDAFTARAN
+            </button>
+            
+            <p id="reg-error-msg" style="font-size:11px; color:var(--danger); margin-top:10px; display:none;"></p>
+        </div>
+
     </div>
 </div>
 // Fungsi untuk mengambil angka antrean terbaru dari server
