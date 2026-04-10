@@ -1153,7 +1153,7 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
 // Tambahkan 'antrean = 0' di deretan variabel global
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbx5HvU5GWXVg4RHpK11nslayvHHss60Q6T1rNgq8yErCoG4Eu8vJmgc0_QMUbMC8uEHow/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyMgcdyweEmIqvdi7BH549cfXURTREgsyqmnhkaN79ceIVXA91-VFjLJBOSHQkekQ3YSA/exec',
  	MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
 BANNER_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=452967385&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
@@ -1369,35 +1369,40 @@ function closeMemberModal() {
 
 async function apiCekMember() {
     const phone = document.getElementById('m-phone').value;
-    const btn = document.querySelector('#m-view-input button'); // Ambil tombol cek
+    const btn = document.querySelector('#m-view-input button');
     const originalText = btn.innerText;
 
-    if (phone.length < 10) return alert("Masukkan nomor WA yang benar untuk member yang sudah terdaftar, atau ingin mendaftar jadi member dengan diawali 628!");
+    // Validasi format: harus diawali 62
+    if (!phone.startsWith('62') || phone.length < 10) {
+        alert("Masukkan nomor WA yang benar diawali 62 (tanpa 0/+)\nContoh: 628123456789");
+        return;
+    }
 
-    // UI UX: Beri feedback loading
     btn.disabled = true;
     btn.innerText = "MENGECEK...";
     btn.style.opacity = "0.7";
 
     try {
-        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${phone}`);
+        // TAMBAHKAN &mode=full di sini
+        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${phone}&mode=full`);
         const res = await resp.json();
 
         if (res.exists) {
-            // Jika Member Ada
             document.getElementById('m-view-input').style.display = 'none';
             document.getElementById('m-view-result').style.display = 'block';
             document.getElementById('m-res-nama').innerText = res.nama;
             document.getElementById('m-res-poin').innerText = res.poin;
         } else {
-            // Jika Member Tidak Ada
+            // Jika tidak ditemukan, tampilkan form registrasi
             document.getElementById('m-view-input').style.display = 'none';
             document.getElementById('m-view-reg').style.display = 'block';
+            
+            // Pre-fill nomor di form registrasi
+            document.getElementById('m-reg-nama').focus();
         }
     } catch (e) {
         alert("Koneksi sibuk, coba lagi.");
     } finally {
-        // Kembalikan tombol ke asal
         btn.disabled = false;
         btn.innerText = originalText;
         btn.style.opacity = "1";
