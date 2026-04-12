@@ -57,9 +57,11 @@ position: relative;
         <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
     </div>
     <div class="flex items-center gap-1 border-l pl-2">
-        <input id="nohp" type="text" placeholder="No WA (4 Digit)" onblur="cekMember()" class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
-        <button onclick="cekMember()" class="bg-blue-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek</button>
-    </div>
+    <input id="nohp" type="text" placeholder="4 Digit Terakhir" maxlength="4"
+           onkeydown="if(event.key === 'Enter') cekMember()" 
+           class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
+    <button onclick="cekMember()" class="bg-blue-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek</button>
+</div>
 <div class="flex items-center gap-1">
     <input id="voucher" type="text" placeholder="Kode Voucher" 
            onkeydown="if(event.key === 'Enter') applyVoucher()" 
@@ -776,31 +778,9 @@ window.onload = () => {
     const elNohp = document.getElementById('nohp');
     const elVoucher = document.getElementById('voucher');
 
-    // 1. Logic untuk Input Member (Kunci Voucher saat Member diisi)
-    if (elNohp) {
-        elNohp.addEventListener('input', function(e) {
-            if (e.target.value.length > 0) {
-                if(elVoucher) {
-                    elVoucher.disabled = true;
-                    elVoucher.classList.add("opacity-50");
-                }
-            } else {
-                if(elVoucher) {
-                    elVoucher.disabled = false;
-                    elVoucher.classList.remove("opacity-50");
-                }
-            }
-
-            // Pemicu otomatis Cek Member saat 4 digit
-            if (e.target.value.length >= 4) {
-                cekMember();
-                const searchInput = document.getElementById('searchInput');
-                if(searchInput) searchInput.focus(); 
-            }
-        });
-    }
-
-    // 2. Logic untuk Input Voucher (Kunci Member saat Voucher diisi)
+    // Hapus logic auto-trigger di input nohp - sekarang pakai Enter atau tombol Cek
+    
+    // Logic untuk Input Voucher (tetap sama)
     if (elVoucher) {
         elVoucher.addEventListener('input', function(e) {
             if (elNohp) {
@@ -814,14 +794,29 @@ window.onload = () => {
             }
         });
     }
+    
+    // Logic untuk Input Member (kunci voucher saat member diisi)
+    if (elNohp) {
+        elNohp.addEventListener('input', function(e) {
+            if (elVoucher) {
+                if (e.target.value.length > 0) {
+                    elVoucher.disabled = true;
+                    elVoucher.classList.add("opacity-50");
+                } else {
+                    elVoucher.disabled = false;
+                    elVoucher.classList.remove("opacity-50");
+                }
+            }
+        });
+    }
 };
 
 function cekMember() {
     const noInput = document.getElementById("nohp").value.trim();
     const no = noInput.slice(-4); 
     
+    // Reset jika kurang dari 4 digit
     if (no.length < 4) {
-        // Jika input dihapus/kurang dari 4 digit, reset status member & update harga
         member = null;
         selectedMemberFullHP = null;
         document.getElementById("memberInfo").innerText = "";
@@ -829,38 +824,45 @@ function cekMember() {
         return;
     }
     
+    // Validasi: harus angka 4 digit
+    if (!/^\d{4}$/.test(no)) {
+        document.getElementById("memberInfo").innerText = "Format salah (4 angka)";
+        return;
+    }
+    
     document.getElementById("memberInfo").innerText = "Mencari...";
     
-    fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`)
+    // TAMBAHKAN mode=last4 agar backend paham ini pencarian 4 digit
+    fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}&mode=last4`)
         .then(r => r.json())
         .then(d => {
             if (d.exists) {
                 member = d;
-                selectedMemberFullHP = d.noHP; // SIMPAN NO HP FULL DISINI
+                selectedMemberFullHP = d.noHP;
                 
                 document.getElementById("memberInfo").innerHTML = `
                     <span onclick="bukaTukarPoin()" class="text-blue-600 font-bold cursor-pointer underline">
                         ✅ ${d.nama} (${d.poin} P)
                     </span>`;
                 
-                // --- UPDATE HARGA OTOMATIS (DISKON 5% AKTIF) ---
                 renderCart(); 
-                // -----------------------------------------------
                 
                 if (parseInt(d.poin) >= 500) {
                     bukaTukarPoin();
                 }
             } else {
-                document.getElementById("memberInfo").innerText = "Member tidak ditemukan";
+                document.getElementById("memberInfo").innerText = "❌ Tidak ditemukan";
                 member = null;
-                selectedMemberFullHP = null; // Reset jika tidak ketemu
-                
-                // --- UPDATE HARGA OTOMATIS (DISKON 5% MATI) ---
+                selectedMemberFullHP = null;
                 renderCart();
-                // ----------------------------------------------
             }
+        })
+        .catch(err => {
+            document.getElementById("memberInfo").innerText = "Error";
+            console.error(err);
         });
 }
+
 // Fungsi baru untuk menangani logika klik pada nama member
 function bukaTukarPoin() {
     if (!member) return;
